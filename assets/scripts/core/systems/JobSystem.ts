@@ -100,6 +100,7 @@ function gather(
 
 function haul(world: World, s: Survivor, dt: number): void {
     const t = entityTile(s);
+    // 仓库可能中途被摧毁或者新建，所以每次都要找一下（后续可以优化，到目原先的仓库位置附近后，发现仓库没了再重新找，毕竟人幸存者也不可能知道所有的信息，所以是合理的）
     const wh = world.findNearestBuilding(t.col, t.row, (b) => b.built && isWarehouse(b.type));
     if (!wh) {
         // 没有仓库，资源无法入库，丢弃
