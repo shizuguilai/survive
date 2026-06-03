@@ -1,0 +1,8 @@
+library/
+temp/
+local/
+build/
+profiles/
+native/
+.creator/
+node_modules/
