@@ -1,5 +1,5 @@
 {
-  "overall": "LOCAL_REAL_CORE_PASSED_T14_PARTIAL",
+  "overall": "CAMP_GOALS_AND_VITALS_IMPLEMENTED_SCOPED; REAL_TASK_PROGRESS_PASS; FULL_COOPERATION_PENDING",
   "originalSourceUntouched": false,
   "main": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "branch": "work/agent-cognition-20260924",
@@ -66,12 +66,12 @@
     "physical WeChat device verification"
   ],
   "tasks": "task-board.json",
-  "publication": "WEB_PRIVATE_DEPLOYED_LATEST_CODE_UPDATE_PENDING",
+  "publication": "web_public_deployed_scoped_camp",
   "gitSynchronization": "SEE_CURRENT_BRANCH_HEAD",
   "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
   "repository": "shizuguilai/survive",
   "branchUrl": "https://github.com/shizuguilai/survive/tree/work/agent-cognition-20260924",
-  "recordedAt": "2026-09-24T03:20:22.731818+00:00",
+  "recordedAt": "2026-09-24T04:18:51.779868+00:00",
   "historicalCommands": [
     {
       "command": "node tools/verify-real.ts",
@@ -128,17 +128,24 @@
     "publication": "web_private_deployed",
     "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918"
   },
-  "gitSynchronizationNote": "历史实施提交保留；本次模型协议/时延配置修复、真实PASS和浏览器回放证据须以新的最终提交与发布记录确认。main不变。",
+  "gitSynchronizationNote": "本轮实现及脱敏证据同步至work/agent-cognition-20260924；main未合并。",
   "deployment": {
+    "id": "appgdep_6ab4a49a5c808191941491fb9d761951",
+    "project_id": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+    "title": "Survive · 独立居民观察场",
+    "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_83fc5d115c0c8191b2540e92b8fd4b72",
+    "type": "publish",
     "status": "succeeded",
     "url": "https://survive-agent.drtdengruiting.chatgpt.site",
-    "audience": "owner_private",
-    "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
-    "deploymentId": "appgdep_6ab496e52014819193aa2daf12f72da9",
-    "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e5797742b6c081919f2432e1515dd6f5",
-    "runtimeSecretRevision": 2,
-    "evidence": "evidence/cloud-deployment.json",
-    "note": "本次代码修复版本已私有发布；本地真实核心PASS和回放PASS，线上实时浏览器和微信仍待独立验收。"
+    "screenshot_asset_pointer": null,
+    "provider_deployment_id": "site---6ab48dc223e081918869ba05be1b88ed",
+    "failure_message": null,
+    "env_set_revision": 3,
+    "updated_at": "2026-09-24T04:18:51.779868+00:00",
+    "audience": "public",
+    "siteSourceCommit": "feee88ffca3b02946a8a66b3528fb5ce2810eb3f",
+    "browserLive": "not_run",
+    "physicalDevice": "not_run"
   },
   "legacySourcePreserved": true,
   "rootReadmeUpdated": true,
@@ -198,6 +205,17 @@
       "url": "https://survive-agent.drtdengruiting.chatgpt.site",
       "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
       "evidence": "evidence/cloud-deployment.json"
+    },
+    {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "audience": "owner_private",
+      "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
+      "deploymentId": "appgdep_6ab496e52014819193aa2daf12f72da9",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e5797742b6c081919f2432e1515dd6f5",
+      "runtimeSecretRevision": 2,
+      "evidence": "evidence/cloud-deployment.json",
+      "note": "本次代码修复版本已私有发布；本地真实核心PASS和回放PASS，线上实时浏览器和微信仍待独立验收。"
     }
   ],
   "realRecordingBrowser": {
@@ -238,5 +256,12 @@
     "rawReplay": "LOCAL_ONLY_PRIVATE_CONTEXT",
     "screenshots": "LOCAL_ONLY_PRIVATE_CONTEXT",
     "note": "原始回放/截图不在GitHub；文档中的本地路径不代表已上传。"
+  },
+  "campMilestone": {
+    "tests": "84 passed, 1 long-duration test skipped",
+    "realModel": "45 requests, task progress 1, 8821 freeze checks, no mutation",
+    "browser": "desktop and narrow viewport native UI passed, live model browser not_run",
+    "physicalDevice": "not_run",
+    "scope": "CAMP_PROGRESS.md"
   }
 }

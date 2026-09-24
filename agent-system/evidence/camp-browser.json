@@ -1,0 +1,34 @@
+{
+  "status": "passed",
+  "mode": "unconfigured-native-Laya-ui",
+  "profiles": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "taskPanel": true,
+      "resourceSelection": true,
+      "queuedDuringFreeze": true,
+      "vitalsVisible": true,
+      "resourceNodes": 30,
+      "modelRequests": 0,
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "taskPanel": true,
+      "resourceSelection": true,
+      "queuedDuringFreeze": true,
+      "vitalsVisible": true,
+      "resourceNodes": 30,
+      "modelRequests": 0,
+      "errors": []
+    }
+  ],
+  "liveModelBrowser": "not_run",
+  "physicalDevice": "not_run"
+}

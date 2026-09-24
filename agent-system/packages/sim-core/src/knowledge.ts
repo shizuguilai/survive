@@ -59,6 +59,8 @@ export function addModelMemories(resident: Resident, suggestions: Decision['memo
 }
 
 const actionFields: Record<string, string[]> = {
+  haul:['sourceRef','destinationRef','amount'],
+  read_notice:['noticeRef'],accept_task:['taskRef','evidenceRefs'],decline_task:['taskRef','reason'],eat:['foodRef','amount'],
   continue: [], walk: ['targetRef', 'gait'], look: ['targetRef'], listen: ['durationSimMs'],
   gather: ['targetRef', 'amount'], rest: ['placeRef', 'durationSimMs'],
   speak: ['text', 'volume', 'towardRef'], wait: ['durationSimMs', 'scope'],
@@ -70,6 +72,7 @@ export function privateAction(action: Action): Action {
   const params: Record<string, any> = {};
   for (const key of actionFields[action.op] ?? []) {
     const value = action.params[key];
+    if(Array.isArray(value)&&value.every(v=>typeof v==='string'))params[key]=[...value];
     if (value === null || typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') params[key] = value;
   }
   return { op: action.op, stage: action.stage, params };

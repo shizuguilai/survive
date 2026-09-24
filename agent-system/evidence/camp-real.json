@@ -1,0 +1,511 @@
+{
+  "checkedAt": "2026-09-24T04:14:29.821Z",
+  "status": "passed_scoped_real_task_cycle",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "execution": "node-local-real-provider",
+  "requests": 45,
+  "freezeChecks": 8821,
+  "freezeViolation": false,
+  "tick": 203,
+  "taskProgress": 1,
+  "taskAcceptedBy": [
+    "resident-a"
+  ],
+  "operations": [
+    "walk",
+    "gather",
+    "read_notice",
+    "speak",
+    "continue",
+    "accept_task"
+  ],
+  "audit": [
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "gather",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "speak",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "speak",
+        "walk",
+        "gather",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 2,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": [
+        "$.evidenceRefs: reference is not in personal evidence"
+      ]
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 2,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": [
+        "$.actions[3]: must match exactly one allowed shape"
+      ]
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "gather",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "gather",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "gather",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "gather",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "gather",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    }
+  ],
+  "browser": "not_run",
+  "physicalDevice": "not_run",
+  "scope": "Read notice / voluntary accept / actual gather; not full camp cooperation or long-duration anti-loop guarantee"
+}

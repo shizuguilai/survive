@@ -1,5 +1,5 @@
 import {Simulation} from '../../../packages/sim-core/src/cognition.ts';
-import {createWorld} from '../../../packages/sim-core/src/world.ts';
+import {createCampWorld} from '../../../packages/sim-core/src/world.ts';
 import {getOverlay} from '../../../packages/sim-core/src/perception.ts';
 import {ReplayRecorder,ReplayPlayer} from '../../../packages/sim-core/src/replay.ts';
 import type {ReplayFile} from '../../../packages/sim-core/src/replay.ts';
@@ -36,7 +36,7 @@ export async function boot():Promise<void>{
   let selectedId='resident-a',showSenses=true,speed=1;
   const provider=new GatewayProvider();
   function makeSimulation():Simulation{
-    return new Simulation(provider,{world:createWorld(),allowMock:false,
+    return new Simulation(provider,{world:createCampWorld(),allowMock:false,
       onSnapshot:(world:World)=>recorder.capture(world,overlays(world)),
       onCommit:async(record:any)=>{
         // A single replacement stores a complete transaction before world release.
@@ -79,6 +79,7 @@ export async function boot():Promise<void>{
   }
   view=await initialize({
     onPause:pause,onResume:resume,onRetry:()=>{if(!player)void health().then(()=>sim.retry());},
+    onTask:draft=>{if(player){diagnostic='回放中不能发布目标，请先返回现场。';return;}try{sim.queueTask(draft);diagnostic='目标已排队，将在下一模拟步写入公告板。';}catch(e){diagnostic=(e as Error).message;}},
     onStop:()=>{if(player)player.pause();else sim.stop();},
     onSelect:id=>{selectedId=id;},onToggleSenses:()=>{showSenses=!showSenses;},onReplay:replay,
     onLive:()=>{player=null;sim.resume('REPLAY_VIEW');diagnostic='';},
@@ -93,7 +94,8 @@ export async function boot():Promise<void>{
       else{sim.frame(now);world=sim.world;cover=overlays(world);}
       const liveStatus=sim.pauseTokens.has('USER_PAUSE')&&!['ERROR_PAUSED','STOPPED'].includes(sim.status)?'PAUSED':sim.status;
       const modelErrors=Object.values(sim.barrier?.errors??{}).join('；');
-      const s:ViewState={world,overlays:cover,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
+      if(!sim.pendingTaskCount&&diagnostic.startsWith('目标已排队'))diagnostic='';
+      const s:ViewState={world,overlays:cover,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
         mode:player?'REPLAY':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
         error:diagnostic||sim.observerError||modelErrors||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);

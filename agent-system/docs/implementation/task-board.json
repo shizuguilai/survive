@@ -4,7 +4,7 @@
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "latestBindingDecision": "任何居民需要大模型认知时全世界模拟暂停；运行时网络和观察者UI继续；批次完整提交后恢复，不追真实等待帧。",
-  "statusNote": "本地真实核心闭环PASS：glm-4.5-air，10请求/10接受、2居民、2023次冻结检查无变化、无追帧、双方发声并听见后再决定，无Mock。真实记录在本地浏览器回放通过且0模型请求。T14保持partial：实时浏览器与完整L01–L04等仍待验收；旧401已解决并保留历史。最新代码已私有发布，微信/真机未验收。",
+  "statusNote": "用户要求扩展可玩营地和生命饥饿；最小公告采集目标已实现，T15/T16仍partial。真实模型45请求，任务实际进度+1，无冻结违规。详见CAMP_PROGRESS.md。公开发布状态单独记录。",
   "tasks": [
     {
       "id": "T00",
@@ -587,7 +587,23 @@
           "supersededBy": "evidence/real-model-verification.json"
         }
       ],
-      "publicationEvidence": "evidence/cloud-deployment.json"
+      "publicationEvidence": "evidence/cloud-deployment.json",
+      "latestScopedChange": {
+        "scope": "营地动作、本人行动反馈、目标界面与生存状态",
+        "code": "implemented_scoped",
+        "mock": "passed",
+        "realModel": "passed_scoped_45_requests_task_progress_1",
+        "build": "passed",
+        "browser": "passed_UI_only",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed",
+        "evidence": [
+          "evidence/camp-real.json",
+          "evidence/camp-tests.txt",
+          "evidence/camp-browser.json",
+          "evidence/camp-deployment.json"
+        ]
+      }
     },
     {
       "id": "T06",
@@ -1133,7 +1149,23 @@
           "supersededBy": "evidence/real-model-verification.json"
         }
       ],
-      "publicationEvidence": "evidence/cloud-deployment.json"
+      "publicationEvidence": "evidence/cloud-deployment.json",
+      "latestScopedChange": {
+        "scope": "营地动作、本人行动反馈、目标界面与生存状态",
+        "code": "implemented_scoped",
+        "mock": "passed",
+        "realModel": "passed_scoped_45_requests_task_progress_1",
+        "build": "passed",
+        "browser": "passed_UI_only",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed",
+        "evidence": [
+          "evidence/camp-real.json",
+          "evidence/camp-tests.txt",
+          "evidence/camp-browser.json",
+          "evidence/camp-deployment.json"
+        ]
+      }
     },
     {
       "id": "T11",
@@ -1512,7 +1544,23 @@
       },
       "localPrivateEvidence": [
         "evidence/real-meeting-replay.json.gz"
-      ]
+      ],
+      "latestScopedChange": {
+        "scope": "营地动作、本人行动反馈、目标界面与生存状态",
+        "code": "implemented_scoped",
+        "mock": "passed",
+        "realModel": "passed_scoped_45_requests_task_progress_1",
+        "build": "passed",
+        "browser": "passed_UI_only",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed",
+        "evidence": [
+          "evidence/camp-real.json",
+          "evidence/camp-tests.txt",
+          "evidence/camp-browser.json",
+          "evidence/camp-deployment.json"
+        ]
+      }
     },
     {
       "id": "T14",
@@ -1703,7 +1751,7 @@
         "T10",
         "T13"
       ],
-      "status": "not_started",
+      "status": "partial",
       "proposedFiles": [
         "packages/sim-core/src/zones/",
         "packages/sim-core/src/notices/",
@@ -1718,26 +1766,35 @@
       ],
       "definitionOfDone": "只划用途与目标，已知地图布局、预算和公告；无固定职业与瞬间全图同步。",
       "verification": {
-        "static": "not_run",
-        "mock": "not_run",
-        "realModel": "not_run",
-        "webBuild": "not_run",
-        "layaBuild": "not_run",
-        "browser": "not_run",
+        "static": "passed",
+        "mock": "passed_scoped",
+        "realModel": "passed_local_45_requests_progress_1",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_task_ui_only",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_public_deployed_scoped"
       },
       "configurationStatus": "MODEL_KEY_CONFIGURED; PROVIDER_AUTH_RESOLVED_LOCAL_REAL_CORE_PASSED; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
-      "changedFiles": [],
+      "changedFiles": [
+        "packages/sim-core/src/camp.ts",
+        "packages/sim-core/src/actions.ts",
+        "packages/sim-core/src/perception.ts",
+        "apps/laya-client/src/view.ts"
+      ],
       "commandsRun": [],
-      "evidence": [],
+      "evidence": [
+        "evidence/camp-real.json",
+        "evidence/camp-tests.txt",
+        "evidence/camp-browser.json",
+        "evidence/camp-deployment.json"
+      ],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14剩余实时浏览器与完整验收完成；本地核心闭环已通过但T14仍为partial，不提前扩展区域协作/人口"
+        "区域用途划定、建筑项目、协商承诺与资源预留尚未实现"
       ],
-      "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
-      "blockerCode": "pending_T14_remaining_acceptance"
+      "codeStatus": "implemented_scoped_camp_goal_cycle",
+      "scopeNote": "本轮用户明确要求扩展任务及资源，实现公告阅读、自主接受/拒绝、采集进度与个人物资；不标完整区域协作完成。"
     },
     {
       "id": "T16",
@@ -1746,7 +1803,7 @@
         "T11",
         "T15"
       ],
-      "status": "not_started",
+      "status": "partial",
       "proposedFiles": [
         "packages/sim-core/src/projects/",
         "packages/sim-core/src/resources/ReservationLedger.ts"
@@ -1759,26 +1816,35 @@
       ],
       "definitionOfDone": "个人提案与接受；程序只保障依赖/原子账本；资源竞争不按API返回快慢。",
       "verification": {
-        "static": "not_run",
-        "mock": "not_run",
-        "realModel": "not_run",
-        "webBuild": "not_run",
-        "layaBuild": "not_run",
-        "browser": "not_run",
+        "static": "passed",
+        "mock": "passed_scoped",
+        "realModel": "passed_local_45_requests_progress_1",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_task_ui_only",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_public_deployed_scoped"
       },
       "configurationStatus": "MODEL_KEY_CONFIGURED; PROVIDER_AUTH_RESOLVED_LOCAL_REAL_CORE_PASSED; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
-      "changedFiles": [],
+      "changedFiles": [
+        "packages/sim-core/src/camp.ts",
+        "packages/sim-core/src/actions.ts",
+        "packages/sim-core/src/perception.ts",
+        "apps/laya-client/src/view.ts"
+      ],
       "commandsRun": [],
-      "evidence": [],
+      "evidence": [
+        "evidence/camp-real.json",
+        "evidence/camp-tests.txt",
+        "evidence/camp-browser.json",
+        "evidence/camp-deployment.json"
+      ],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14剩余实时浏览器与完整验收完成；本地核心闭环已通过但T14仍为partial，不提前扩展区域协作/人口"
+        "区域用途划定、建筑项目、协商承诺与资源预留尚未实现"
       ],
-      "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
-      "blockerCode": "pending_T14_remaining_acceptance"
+      "codeStatus": "implemented_scoped_camp_goal_cycle",
+      "scopeNote": "本轮用户明确要求扩展任务及资源，实现公告阅读、自主接受/拒绝、采集进度与个人物资；不标完整区域协作完成。"
     },
     {
       "id": "T17",
@@ -2147,10 +2213,62 @@
         }
       ],
       "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918"
+    },
+    {
+      "id": "LIFE01",
+      "title": "饥饿、生命、疲劳与个人食物",
+      "dependsOn": [
+        "T05",
+        "T10"
+      ],
+      "status": "partial",
+      "codeStatus": "implemented_scoped",
+      "scopeNote": "进食和生存后果尚未独立做真实模型长期测试",
+      "verification": {
+        "static": "passed",
+        "mock": "passed",
+        "realModel": "not_run_long_survival",
+        "webBuild": "passed",
+        "browser": "passed_native_laya_ui",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_scoped"
+      },
+      "evidence": [
+        "evidence/camp-real.json",
+        "evidence/camp-tests.txt",
+        "evidence/camp-browser.json",
+        "evidence/camp-deployment.json"
+      ]
+    },
+    {
+      "id": "LOOP01",
+      "title": "自身行动记忆与重复寒暄修复",
+      "dependsOn": [
+        "T05",
+        "T10"
+      ],
+      "status": "partial",
+      "codeStatus": "implemented_scoped",
+      "scopeNote": "真实最小任务循环通过，不保证永不重复或长期协作完成",
+      "verification": {
+        "static": "passed",
+        "mock": "passed",
+        "realModel": "passed_local_scoped_task_cycle",
+        "webBuild": "passed",
+        "browser": "passed_native_laya_ui",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_scoped"
+      },
+      "evidence": [
+        "evidence/camp-real.json",
+        "evidence/camp-tests.txt",
+        "evidence/camp-browser.json",
+        "evidence/camp-deployment.json"
+      ]
     }
   ],
   "implementationDirectory": "agent-system",
-  "recordedAt": "2026-09-24T03:20:22.731818+00:00",
+  "recordedAt": "2026-09-24T04:18:51.779868+00:00",
   "referenceMainVerified": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "workingBranch": "work/agent-cognition-20260924",
   "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
@@ -2178,15 +2296,22 @@
     "replayPublication": "LOCAL_ONLY_PRIVATE_CONTEXT"
   },
   "deployment": {
+    "id": "appgdep_6ab4a49a5c808191941491fb9d761951",
+    "project_id": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+    "title": "Survive · 独立居民观察场",
+    "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_83fc5d115c0c8191b2540e92b8fd4b72",
+    "type": "publish",
     "status": "succeeded",
     "url": "https://survive-agent.drtdengruiting.chatgpt.site",
-    "audience": "owner_private",
-    "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
-    "deploymentId": "appgdep_6ab496e52014819193aa2daf12f72da9",
-    "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e5797742b6c081919f2432e1515dd6f5",
-    "runtimeSecretRevision": 2,
-    "evidence": "evidence/cloud-deployment.json",
-    "note": "本次代码修复版本已私有发布；本地真实核心PASS和回放PASS，线上实时浏览器和微信仍待独立验收。"
+    "screenshot_asset_pointer": null,
+    "provider_deployment_id": "site---6ab48dc223e081918869ba05be1b88ed",
+    "failure_message": null,
+    "env_set_revision": 3,
+    "updated_at": "2026-09-24T04:18:51.779868+00:00",
+    "audience": "public",
+    "siteSourceCommit": "feee88ffca3b02946a8a66b3528fb5ce2810eb3f",
+    "browserLive": "not_run",
+    "physicalDevice": "not_run"
   },
   "historicalRealModelVerifications": [
     {
@@ -2247,6 +2372,17 @@
       "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
       "evidence": "evidence/cloud-deployment.json",
       "note": "Web私有部署不等于真实模型闭环或微信发布。"
+    },
+    {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "audience": "owner_private",
+      "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
+      "deploymentId": "appgdep_6ab496e52014819193aa2daf12f72da9",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e5797742b6c081919f2432e1515dd6f5",
+      "runtimeSecretRevision": 2,
+      "evidence": "evidence/cloud-deployment.json",
+      "note": "本次代码修复版本已私有发布；本地真实核心PASS和回放PASS，线上实时浏览器和微信仍待独立验收。"
     }
   ],
   "realRecordingBrowser": {
@@ -2278,5 +2414,12 @@
     "rawReplay": "LOCAL_ONLY_PRIVATE_CONTEXT",
     "screenshots": "LOCAL_ONLY_PRIVATE_CONTEXT",
     "note": "原始回放/截图不在GitHub；文档中的本地路径不代表已上传。"
+  },
+  "campMilestone": {
+    "realModel": "passed_scoped_real_task_cycle",
+    "realRequests": 45,
+    "taskProgress": 1,
+    "taskBoardNote": "未完成完整T15/T16验收；用户本轮要求推进最小任务与生存循环",
+    "evidence": "docs/implementation/CAMP_PROGRESS.md"
   }
 }

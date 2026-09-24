@@ -22,7 +22,7 @@ export class CharacterMesh {
     if(signature!==this.signature){this.rebuild(character);this.signature=signature;}
     this.node.name=resident.name;
     this.node.transform.position=new L.Vector3(resident.position.x,resident.position.y,resident.position.z);
-    this.node.transform.rotationEuler=new L.Vector3(0,90-resident.heading*180/Math.PI,0);
+    this.node.transform.rotationEuler=new L.Vector3(0,90-resident.heading*180/Math.PI,(resident.health??100)<=0?90:0);
   }
   private color(hex:string):any{const n=parseInt(hex.slice(1),16);return new this.L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);}
   private part(name:string,geometry:any,color:string,x:number,y:number,z:number,sx=1,sy=1,sz=1,parent=this.visuals):any{

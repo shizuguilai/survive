@@ -76,7 +76,7 @@ function vision(world: World, resident: Resident): boolean {
   for (const entry of wasVisible) entry.visible = false;
   const candidates: VisualCandidate[] = [
     ...world.residents.filter(other => other.id !== resident.id).map(other => ({ id: other.id, position: other.position, height: 1.8, appearance: other.character ? publicCharacterSummary(other.character) : '一个人', resident: true })),
-    ...world.objects.map(object => ({ id: object.id, position: object.position, height: object.height, appearance: object.appearance.slice(0, 120), resident: false })),
+    ...world.objects.map(object => ({ id: object.id, position: object.position, height: object.height, appearance: (object.appearance+(object.resourceKind&&object.resources<=0?'；已经采空':'')).slice(0, 120), resident: false })),
   ];
   const percepts: { entry: KnowledgeEntry; detail: Record<string, any>; certainty: Observation['certainty'] }[] = [];
   for (const candidate of candidates) {
@@ -181,6 +181,8 @@ function bodily(world: World, resident: Resident): boolean {
       resident.bodyBands[sense] = band;
     }
   }
+  const healthBand=(resident.health??100)<30?'severe':(resident.health??100)<70?'noticeable':'healthy';
+  if(resident.bodyBands.health!==healthBand){resident.bodyBands.health=healthBand;if(healthBand!=='healthy'){appendObservation(world,resident,'bodily',{bodyPart:'身体',sensation:'pain',intensity:healthBand},'clear');changed=true;}}
   return changed;
 }
 
@@ -188,6 +190,7 @@ function bodily(world: World, resident: Resident): boolean {
 export function samplePerception(world: World): string[] {
   const due: string[] = [];
   for (const resident of world.residents) {
+  for(const kind of ['wood','stone','food'] as const){if(!resident.supplies?.[kind])continue;const id=`supply-${kind}-${resident.id}`;let entry=Object.values(resident.known).find(k=>k.entityId===id);if(!entry){const ref=`known_${++resident.knowledgeSequence}`;entry={ref,entityId:id,description:'',lastPosition:{...resident.position},lastSeenTick:world.tick,visible:false,recognizedName:null};resident.known[ref]=entry;}entry.description=`自己携带的${kind==='wood'?'木材':kind==='stone'?'石料':'可食浆果'}${resident.supplies[kind]}份；可haul到公告板旁的公共仓储${kind==='food'?'，也可eat':''}`;entry.lastPosition={...resident.position};entry.lastSeenTick=world.tick;}
     const visual = world.tick % SCAN_TICKS === 0 || !resident.visualSignature ? vision(world, resident) : false;
     const auditory = hearing(world, resident);
     const body = bodily(world, resident);
@@ -199,7 +202,8 @@ export function samplePerception(world: World): string[] {
 /** Whitelist construction is deliberate: do not stringify/filter World. */
 export function buildContext(world: World, resident: Resident): CharacterContext {
   const observations = resident.observations.slice(-24);
-  const selectedMemories = resident.memories.slice(-32);
+  const recentActions=resident.memories.filter(m=>m.ref.startsWith('memory_spoken_')||m.ref.startsWith('memory_action_')||m.ref.startsWith('memory_task_')).slice(-10);
+  const selectedMemories = [...new Map([...resident.memories.slice(-24),...recentActions].map(m=>[m.ref,m])).values()];
   // Preserve source chains for summaries; do not turn absent evidence into facts.
   const selectedRefs = new Set(selectedMemories.map(memory => memory.ref));
   for (let index = 0; index < selectedMemories.length; index++) {
@@ -214,18 +218,19 @@ export function buildContext(world: World, resident: Resident): CharacterContext
     schemaVersion: '1.0.0',
     identity: { name: resident.name, background: resident.background, personality: resident.personality, personalGoal: resident.personalGoal },
     experiencedWhen: experiencedWhen(world.tick, DT),
-    body: { hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain') },
-    currentPlan: { goal: resident.goal, actions: resident.plan.map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
+    body: { hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain')+`；自身生命${Math.round(resident.health??100)}/100${(resident.health??100)<30?'，虚弱，行动缓慢':''}` },
+    currentPlan: { goal: ((resident.plan.length&&!resident.plan.some(p=>!p.done)?'（计划已完成，需要考虑后续行动）':'')+resident.goal).slice(0,300), actions: resident.plan.filter(progress=>!progress.done).map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.supplies?`；自己携带：木材${resident.supplies.wood??0}、石料${resident.supplies.stone??0}、浆果${resident.supplies.food??0}，容量30。`:'') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
     observations: observations.map(privateObservation), memories: selectedMemories.map(privateMemory),
     knownTargets: [
-      ...Object.values(resident.known).map(entry => ({ ref: entry.ref, description: `${entry.description}；${entry.visible ? '目前可见' : '仅最后已知，当前位置未知'}`, lastObservedWhen: experiencedWhen(entry.lastSeenTick, DT) })),
+      ...Object.values(resident.known).filter(entry=>!entry.entityId.startsWith('supply-')).map(entry => ({ ref: entry.ref, description: `${entry.description}；距其最后已知位置约${planarDistance(resident.position,entry.lastPosition).toFixed(1)}米；${entry.visible ? '目前可见' : '仅最后已知，当前位置未知'}`, lastObservedWhen: experiencedWhen(entry.lastSeenTick, DT) })),
+      ...Object.values(resident.known).filter(entry=>(['wood','stone','food'] as const).some(kind=>entry.entityId===`supply-${kind}-${resident.id}`&&resident.supplies?.[kind])).map(entry=>({ref:entry.ref,description:entry.description,lastObservedWhen:experiencedWhen(world.tick,DT)})),
       ...(resident.character ? listOwnEquipment(resident.character, resident.id).map(item => ({
         ref: item.itemRef,
         description: `自己持有：${item.label}；${item.equippedSlots.length ? `当前穿戴/持握于 ${item.equippedSlots.join('、')}` : '目前收纳，未装备'}；可装备位置 ${item.allowedSlots.join('、')}；需要${item.hands}只手。`,
         lastObservedWhen: experiencedWhen(world.tick, DT),
       })) : []),
     ],
-    allowedActions: ALLOWED.filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
+    allowedActions: [...ALLOWED,...(world.camp?['read_notice','accept_task','decline_task','haul',...(resident.supplies?.food?['eat']:[])]:[])].filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
   };
 }
 

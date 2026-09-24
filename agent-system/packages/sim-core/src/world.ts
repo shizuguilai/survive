@@ -1,4 +1,5 @@
 import type { Resident, World } from './domain.ts';
+import {postTask} from './camp.ts';
 import { createCharacterState } from './character.ts';
 export function createWorld(options: {seed?:number;runId?:string} = {}): World {
   const residents: Resident[] = [
@@ -19,7 +20,7 @@ function makeResident(id:string,name:string,x:number,heading:number,friend:strin
   const background=`你和${friend}是营地里相识多年的朋友，认识彼此的面容和声音。今早你们各自来到营地的空地附近。`;
   return {id,name,character:createCharacterState(id),background,personality:name==='阿林'?'温和、直率，愿意主动与熟人交流。':'友善、细心，愿意回应熟人的问候。',
     personalGoal:`今天希望见到${friend}时打个招呼，听听对方的近况，之后再考虑自己的事情。`,
-    position:{x,y:0,z:0},heading,hunger:0.15,fatigue:0.1,pain:0,inventory:0,
+    position:{x,y:0,z:0},heading,health:100,hunger:0.15,fatigue:0.1,pain:0,inventory:0,
     known:{},familiar:{},observations:[],memories:[{ref:'memory_background',kind:'direct',text:background,evidenceRefs:[],experiencedWhen:'过去多年，在营地共同生活'}],
     observationSequence:0,knowledgeSequence:0,consumedObservationRefs:[],goal:'尚未决定接下来的行动',plan:[],suspendedPlan:[],nextReviewTick:0,lastDecision:null,
     bodyBands:{},visualSignature:'',actionFeedback:[]};
@@ -27,7 +28,27 @@ function makeResident(id:string,name:string,x:number,heading:number,friend:strin
 export function cloneWorld(world:World):World { return structuredClone(world); }
 /** Deterministic environment update; never consults wall clocks or engine timers. */
 export function advanceEnvironment(world:World):void {
-  for(const resident of world.residents){ resident.hunger=Math.min(1,resident.hunger+0.000005); resident.fatigue=Math.min(1,resident.fatigue+0.000002); }
+  for(const resident of world.residents){ resident.hunger=Math.min(1,resident.hunger+(world.camp?0.00012:0.000005)); resident.fatigue=Math.min(1,resident.fatigue+(world.camp?0.00003:0.000002)); }
+  for(const resident of world.residents){if((resident.health??100)<=0)continue;
+    const previous=resident.health??100;resident.health=Math.max(0,Math.min(100,previous+(resident.hunger>=.9?-.015:resident.hunger<.5&&resident.fatigue<.4?.002:0)));
+    if(previous>0&&resident.health===0)world.events.push({tick:world.tick,kind:'incapacitated',agentId:resident.id,text:'生命耗尽，无法行动'});
+  }
   world.daylight=0.65+Math.sin(world.tick/24000)*0.2;
   world.weatherProgress=(world.tick%72000)/72000;
+}
+
+/** Playable camp uses the same simulation; the small encounter fixture remains for regression tests. */
+export function createCampWorld():World{
+  const world=createWorld();world.objects=world.objects.filter(o=>o.kind!=='wall');for(const object of world.objects)object.resourceKind='wood';
+  world.camp={stock:{},sequence:0,noticeVersion:0,tasks:[]};
+  world.objects.push({id:'camp-board',kind:'board',position:{x:0,y:0,z:.4},width:.8,height:1.5,depth:.3,appearance:'营地公告板',resources:0});
+  for(let i=0;i<30;i++){
+    const kind=i%3===0?'tree':i%3===1?'rock':'berry';const ring=Math.floor(i/3);const angle=(i%3)*2*Math.PI/3+ring*.18;
+    const radius=ring<3?5+ring*2:12+(ring-3)*2;
+    world.objects.push({id:`camp-resource-${i}`,kind,resourceKind:kind==='tree'?'wood':kind==='rock'?'stone':'food',position:{x:Math.cos(angle)*radius,y:0,z:Math.sin(angle)*radius},width:1,height:kind==='tree'?3.2:kind==='rock'?1.4:.8,depth:1,appearance:kind==='tree'?'可采集木材的树木':kind==='rock'?'可采集石料的岩石':'结满可食浆果的灌木',resources:kind==='berry'?12:24});
+  }
+  world.objects.push({id:'camp-pond',kind:'pond',position:{x:-12,y:0,z:-10},width:5,height:.2,depth:4,appearance:'一汪池塘，岸边可以休息',resources:0});
+  for(const r of world.residents){r.supplies={};r.hunger=.4;r.personalGoal='照顾自己的温饱与休息，了解营地公告中的发展需要，自主选择有价值的事情并完成。熟人问候结束后继续生活，不必反复寒暄。';r.background+='你会识别木材、石料和浆果，懂得走近资源后采集、吃自己采到的浆果和休息；任务需要走近公告板阅读后自主接受。你不知道未亲见资源的位置。';}
+  postTask(world,{resource:'wood',amount:8,note:'为营地准备第一批材料。可自由选择是否参与，完成后再读新目标。'});
+  return world;
 }

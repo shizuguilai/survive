@@ -6,6 +6,7 @@ import {SimulationClock} from './clock.ts';
 import {createWorld,cloneWorld,advanceEnvironment} from './world.ts';
 import {applyDecision,stepActions,validateActionConcurrency} from './actions.ts';
 import {samplePerception,buildContext} from './perception.ts';
+import {postTask,type TaskDraft} from './camp.ts';
 import {addModelMemories} from './knowledge.ts';
 
 export type SimulationStatus='RUNNING'|'THINKING'|'COMMITTING'|'READY'|'ERROR_PAUSED'|'STOPPED';
@@ -31,6 +32,15 @@ export class Simulation {
   private epoch=0;
   private sequence=0;
   private bootstrapped=false;
+  private plannerInbox:TaskDraft[]=[];
+  get pendingTaskCount():number{return this.plannerInbox.length;}
+  queueTask(draft:TaskDraft):void{
+    if(this.status==='STOPPED')throw Error('本轮已停止，请重新开始后发布目标');
+    if(!this.world.camp)throw Error('当前场景不支持营地任务');
+    const probe=cloneWorld(this.world);for(const entry of this.plannerInbox)postTask(probe,entry);postTask(probe,draft);
+    this.plannerInbox.push(structuredClone(draft));
+  }
+  private applyPlannerInbox():void{for(const draft of this.plannerInbox)postTask(this.world,draft);this.plannerInbox=[];}
   private controllers=new Set<AbortController>();
   constructor(provider:BrainProvider,options:SimulationOptions={}){
     this.provider=provider;this.options=options;this.world=options.world?cloneWorld(options.world):createWorld(options);
@@ -48,6 +58,7 @@ export class Simulation {
   frame(wallMs:number):number{return this.clock.frame(wallMs,()=>this.step());}
   step():boolean{
     if(this.clock.paused||this.status==='STOPPED')return false;
+    this.applyPlannerInbox();
     const nextTick=this.world.tick+1;
     const due=new Set(stepActions(this.world,nextTick));
     this.world.tick=nextTick;advanceEnvironment(this.world);
@@ -55,12 +66,13 @@ export class Simulation {
     for(const resident of this.world.residents)if(resident.nextReviewTick<=nextTick)due.add(resident.id);
     this.world.revision++;
     this.emit('tick');
-    if(due.size)this.begin([...due]);
+    const alive=[...due].filter(id=>(this.world.residents.find(r=>r.id===id)?.health??100)>0);
+    if(alive.length)this.begin(alive);
     return true;
   }
   bootstrap():Promise<void>{
     if(this.bootstrapped||this.status==='STOPPED')return this.active;
-    this.bootstrapped=true;samplePerception(this.world);this.emit('initial');
+    this.bootstrapped=true;this.applyPlannerInbox();samplePerception(this.world);this.emit('initial');
     this.begin(this.world.residents.map(r=>r.id));
     this.clock.release('BOOTSTRAP');
     return this.active;
