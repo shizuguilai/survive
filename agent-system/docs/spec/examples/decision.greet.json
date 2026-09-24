@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1.0.0",
+  "decisionKind": "adjust",
+  "goal": "向刚认出的阿禾打招呼。",
+  "reasonBrief": "我看见阿禾走近，想先与他问好，再继续自己的事情。",
+  "actions": [
+    {
+      "op": "wait",
+      "stage": 0,
+      "params": {
+        "durationSimMs": 1200,
+        "scope": "locomotion"
+      }
+    },
+    {
+      "op": "speak",
+      "stage": 0,
+      "params": {
+        "text": "早上好。",
+        "volume": "normal",
+        "towardRef": "known-ahe"
+      }
+    }
+  ],
+  "nextReviewAfterSimMs": 1000,
+  "watch": [
+    {
+      "kind": "auditory_speech",
+      "knownRef": "known-ahe"
+    }
+  ],
+  "memorySuggestions": []
+}

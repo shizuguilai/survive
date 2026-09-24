@@ -1,0 +1,17 @@
+{
+  "obsRef": "obs-local-0007",
+  "experiencedWhen": "刚才",
+  "certainty": "likely",
+  "modality": "visual",
+  "detail": {
+    "level": "described",
+    "relativeDirection": "front_left",
+    "distanceBand": "medium",
+    "appearance": [
+      "深色外衣",
+      "手中有长条状物"
+    ],
+    "recognizedName": null,
+    "knownRef": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "obsRef": "obs-local-0008",
+  "experiencedWhen": "刚才",
+  "certainty": "uncertain",
+  "modality": "auditory",
+  "detail": {
+    "soundKind": "speech",
+    "relativeDirection": "back_right",
+    "distanceBand": "medium",
+    "heardText": "快……帮……",
+    "recognizedSpeakerName": null,
+    "speakerKnownRef": null
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": "1.0.0",
+  "engine": "LayaAir",
+  "version": "3.3.12",
+  "referenceRepository": "shizuguilai/laya-coin-pusher-wechat",
+  "referenceCommit": "4fd69fde35ba7248b2faf434f535bf1aba1abe1d",
+  "provenance": "Verified GitHub tree and LayaEnv.version; copied local runtime bytes only after matching git blob SHA.",
+  "files": [
+    {
+      "path": "vendor/laya.core.js",
+      "size": 1672662,
+      "gitBlobSha": "a20bdec691862b9e0adafb29132e26ca6845c43d",
+      "sha256": "064eb474b2cad8efb11016059a65a2ac967d80112f9f20d8b996d307b920b8ce"
+    },
+    {
+      "path": "vendor/laya.d3.js",
+      "size": 1184242,
+      "gitBlobSha": "1782397ae435998259e7fbb1b36900724b319bb1",
+      "sha256": "6759e072f05abf82e3ced871acf763382d898feb04dab4bb3ab06654113ac493"
+    },
+    {
+      "path": "vendor/laya.webgl_2D.js",
+      "size": 392223,
+      "gitBlobSha": "98fbe7f5ce3cf4384075f01d2a3c34f074d69fba",
+      "sha256": "4cace5aee9ee984d1a1a2fa2b93d94ac766364488ec485e4de1e5bd0953fbb13"
+    },
+    {
+      "path": "vendor/laya.webgl_3D.js",
+      "size": 120734,
+      "gitBlobSha": "7a9169bfa78f760d5660c76aca985b8bbd47ceca",
+      "sha256": "1e3988bbc890610bd5b702db5c0244f7d0d560ee7bfc23b4ee50bbae8635f530"
+    }
+  ]
+}

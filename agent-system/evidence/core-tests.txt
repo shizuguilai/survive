@@ -1,0 +1,32 @@
+✔ A01: model intention commit changes neither position nor resources nor spoken text (11.658455ms)
+✔ P06/A01: speech only releases physically emitted four-character fragments (0.998172ms)
+✔ A02: body conflict rejected but locomotion and speech can run together (0.79663ms)
+✔ A03: suspend and true continue preserve elapsed work instead of replacing its progress (0.694222ms)
+✔ K03: a personally known position is navigated; actual hidden wall only stops at collision (0.74438ms)
+✔ A01: finite shared tree resource is never duplicated (0.632499ms)
+✔ equipment: only a model intent plus one positive simulated second changes clothing (1.616984ms)
+✔ equipment: foreign item failure leaves all equipment and ownership unchanged (0.657037ms)
+✔ TM01/03: one reply cannot change a frozen batch; independent validated contexts commit once (47.650326ms)
+✔ TM02: resumed frame drops the entire network wait; first action requires a positive tick (21.850206ms)
+✔ TM03/07: reversing response arrival order yields identical accepted world (29.66265ms)
+✔ TM04: failed resident keeps entire world frozen and only that resident retries (13.085371ms)
+✔ TM04: runtime timeout keeps ERROR_PAUSED and never creates a fallback decision (15.654232ms)
+✔ TM05: user pause and background remain after the cognition token releases (8.365839ms)
+✔ TM06: stopped requests settle promptly; ignored AbortSignal and late responses cannot commit (6.893834ms)
+✔ TM06: stale metadata is rejected and cannot become an accepted slot (6.021979ms)
+✔ TM04/S01: durable commit gate freezes world; storage failure retries same accepted batch (13.763066ms)
+✔ TM06: stop during asynchronous durable commit prevents in-memory activation (9.75851ms)
+✔ L01 guard: REAL_MODEL mode rejects test decisions instead of silently accepting them (4.166725ms)
+✔ TM09: invalid immediate heartbeat has bounded attempts, no world advance or fallback (12.313403ms)
+﹣ TM01 actual wall-clock 30s freeze with observer heartbeat and multiple active world systems (0.125807ms) # SKIP
+✔ D01: explicit Mock greeting traverses seen → frozen decision → positive speech → actual hearing → reply (39.591141ms)
+✔ S01 observer boundary: snapshot failure after durable commit cannot replay or roll back that commit (9.319835ms)
+✔ TM06 gateway identity: new runs cannot reuse a previous run request id (16.086101ms)
+ℹ tests 24
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 447.51679

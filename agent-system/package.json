@@ -1,0 +1,26 @@
+{
+  "name": "survive-agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "test": "node --test tests/*.test.ts",
+    "build": "node tools/build.mjs",
+    "start": "node services/brain-gateway/src/server.ts",
+    "verify:real": "node tools/verify-real.ts",
+    "typecheck": "tsc --noEmit",
+    "engine:install": "node tools/install-engine.mjs",
+    "verify:config": "node tools/check-config.mjs",
+    "test:freeze": "LONG_FREEZE_TEST=1 node --test tests/barrier.test.ts",
+    "start:env": "node --env-file=.env services/brain-gateway/src/server.ts",
+    "verify:real:env": "node --env-file=.env tools/verify-real.ts"
+  },
+  "devDependencies": {
+    "@types/node": "24.5.2",
+    "esbuild": "0.25.10",
+    "typescript": "5.9.3"
+  }
+}

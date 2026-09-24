@@ -1,0 +1,21 @@
+{
+  "resolution": {
+    "designWidth": 1280,
+    "designHeight": 720,
+    "scaleMode": "showall",
+    "alignV": "middle",
+    "alignH": "center",
+    "screenMode": "horizontal",
+    "backgroundColor": "#f4f2e9"
+  },
+  "3D": {
+    "enableMultiLight": false
+  },
+  "modules": {
+    "laya.ui": true,
+    "laya.d3": true
+  },
+  "addons": {
+    "laya.ui": "ui2"
+  }
+}

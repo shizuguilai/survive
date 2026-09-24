@@ -1,0 +1,501 @@
+{
+  "test": "production-unconfigured-observer",
+  "source": "NO_MODEL_CALLED",
+  "realModelStatus": "BLOCKED_MISSING_CREDENTIALS",
+  "realDeviceStatus": "NOT_RUN",
+  "browserVersion": "153.0.8010.0",
+  "appSha256": "85628eef51489daf7c8d496ffb4743e2ac7ee02ba6c6612af1d2faba8b8e95b2",
+  "profiles": [
+    {
+      "profile": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "mobileEmulation": false,
+      "realDevice": false,
+      "checks": {
+        "laya3D": true,
+        "twoDressedFourPartResidents": true,
+        "residentSelection": true,
+        "sensesToggle": true,
+        "pauseResumeControls": true,
+        "cameraDuringPause": true,
+        "worldStayedFrozen": true,
+        "noUnconfiguredRequests": true,
+        "emptyReplayRejected": true
+      },
+      "initial": {
+        "texts": [
+          "SURVIVE",
+          "微小世界 · 独立心智",
+          "尚未接入真实模型",
+          "准备开始",
+          "模拟 00:00",
+          "等待模型时，全世界静止",
+          "观察对象",
+          "●  阿林",
+          "小禾",
+          "阿林",
+          "温和、直率，愿意主动与熟人交流。",
+          "此刻的私人感知",
+          "尚未感知到新的线索",
+          "当前意图",
+          "尚未决定接下来的行动",
+          "感官显示  开",
+          "青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知",
+          "可见穿着 · 浅棕肤色，金色齐耳发，络腮胡，修长身形，橙色亚麻上衣，小布背包",
+          "摄影机可拖动；暂停时仍可观察。",
+          "阿林",
+          "",
+          "小禾",
+          "",
+          "两名居民 · 两棵树 · 一堵墙",
+          "服务端尚未配置真实模型。世界保持静止，感官与镜头可操作。",
+          "开始真实认知",
+          "暂停",
+          "重试",
+          "停止",
+          "查看回放",
+          "1× 播放",
+          "网关令牌",
+          "",
+          "连接",
+          "暂无回放",
+          "仅播放模拟时间；网络等待不会出现在回放中"
+        ],
+        "residents": [
+          {
+            "name": "阿林",
+            "position": {
+              "x": -1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "阿林",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "bob side -1",
+              "bob side 1",
+              "full beard",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          },
+          {
+            "name": "小禾",
+            "position": {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "小禾",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "hair tie",
+              "ponytail",
+              "stubble",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          }
+        ],
+        "cameraPosition": {
+          "x": 12,
+          "y": 21,
+          "z": 21
+        },
+        "sensesLines": 189,
+        "canvasCount": 2,
+        "stage": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "after": {
+        "texts": [
+          "SURVIVE",
+          "微小世界 · 独立心智",
+          "尚未接入真实模型",
+          "准备开始",
+          "模拟 00:00",
+          "等待模型时，全世界静止",
+          "观察对象",
+          "阿林",
+          "●  小禾",
+          "小禾",
+          "友善、细心，愿意回应熟人的问候。",
+          "此刻的私人感知",
+          "尚未感知到新的线索",
+          "当前意图",
+          "尚未决定接下来的行动",
+          "感官显示  开",
+          "青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知",
+          "可见穿着 · 棕肤色，灰色马尾，短胡茬，修长身形，橙色亚麻上衣，小布背包",
+          "摄影机可拖动；暂停时仍可观察。",
+          "阿林",
+          "",
+          "小禾",
+          "",
+          "两名居民 · 两棵树 · 一堵墙",
+          "尚无回放，请先完成一次真实模型决策。",
+          "开始真实认知",
+          "暂停",
+          "重试",
+          "停止",
+          "查看回放",
+          "1× 播放",
+          "网关令牌",
+          "",
+          "连接",
+          "暂无回放",
+          "仅播放模拟时间；网络等待不会出现在回放中"
+        ],
+        "residents": [
+          {
+            "name": "阿林",
+            "position": {
+              "x": -1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "阿林",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "bob side -1",
+              "bob side 1",
+              "full beard",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          },
+          {
+            "name": "小禾",
+            "position": {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "小禾",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "hair tie",
+              "ponytail",
+              "stubble",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          }
+        ],
+        "cameraPosition": {
+          "x": 10.11111111111111,
+          "y": 21,
+          "z": 19.454545454545453
+        },
+        "sensesLines": 189,
+        "canvasCount": 2,
+        "stage": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "decisionRequests": 0
+    },
+    {
+      "profile": "mobile_emulation",
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "mobileEmulation": true,
+      "realDevice": false,
+      "checks": {
+        "laya3D": true,
+        "twoDressedFourPartResidents": true,
+        "residentSelection": true,
+        "sensesToggle": true,
+        "pauseResumeControls": true,
+        "cameraDuringPause": true,
+        "worldStayedFrozen": true,
+        "noUnconfiguredRequests": true,
+        "emptyReplayRejected": true
+      },
+      "initial": {
+        "texts": [
+          "SURVIVE",
+          "微小世界 · 独立心智",
+          "尚未接入真实模型",
+          "准备开始",
+          "模拟 00:00",
+          "等待模型时，全世界静止",
+          "观察对象",
+          "●  阿林",
+          "小禾",
+          "阿林",
+          "温和、直率，愿意主动与熟人交流。",
+          "此刻的私人感知",
+          "尚未感知到新的线索",
+          "当前意图",
+          "尚未决定接下来的行动",
+          "感官显示  开",
+          "青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知",
+          "可见穿着 · 浅棕肤色，金色齐耳发，络腮胡，修长身形，橙色亚麻上衣，小布背包",
+          "摄影机可拖动；暂停时仍可观察。",
+          "阿林",
+          "",
+          "小禾",
+          "",
+          "两名居民 · 两棵树 · 一堵墙",
+          "服务端尚未配置真实模型。世界保持静止，感官与镜头可操作。",
+          "开始真实认知",
+          "暂停",
+          "重试",
+          "停止",
+          "查看回放",
+          "1× 播放",
+          "网关令牌",
+          "",
+          "连接",
+          "暂无回放",
+          "仅播放模拟时间；网络等待不会出现在回放中"
+        ],
+        "residents": [
+          {
+            "name": "阿林",
+            "position": {
+              "x": -1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "阿林",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "bob side -1",
+              "bob side 1",
+              "full beard",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          },
+          {
+            "name": "小禾",
+            "position": {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "小禾",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "hair tie",
+              "ponytail",
+              "stubble",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          }
+        ],
+        "cameraPosition": {
+          "x": 12,
+          "y": 21,
+          "z": 21
+        },
+        "sensesLines": 189,
+        "canvasCount": 2,
+        "stage": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "after": {
+        "texts": [
+          "SURVIVE",
+          "微小世界 · 独立心智",
+          "尚未接入真实模型",
+          "准备开始",
+          "模拟 00:00",
+          "等待模型时，全世界静止",
+          "观察对象",
+          "阿林",
+          "●  小禾",
+          "小禾",
+          "友善、细心，愿意回应熟人的问候。",
+          "此刻的私人感知",
+          "尚未感知到新的线索",
+          "当前意图",
+          "尚未决定接下来的行动",
+          "感官显示  开",
+          "青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知",
+          "可见穿着 · 棕肤色，灰色马尾，短胡茬，修长身形，橙色亚麻上衣，小布背包",
+          "摄影机可拖动；暂停时仍可观察。",
+          "阿林",
+          "",
+          "小禾",
+          "",
+          "两名居民 · 两棵树 · 一堵墙",
+          "尚无回放，请先完成一次真实模型决策。",
+          "开始真实认知",
+          "暂停",
+          "重试",
+          "停止",
+          "查看回放",
+          "1× 播放",
+          "网关令牌",
+          "",
+          "连接",
+          "暂无回放",
+          "仅播放模拟时间；网络等待不会出现在回放中"
+        ],
+        "residents": [
+          {
+            "name": "阿林",
+            "position": {
+              "x": -1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "阿林",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "bob side -1",
+              "bob side 1",
+              "full beard",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          },
+          {
+            "name": "小禾",
+            "position": {
+              "x": 1,
+              "y": 0,
+              "z": 0
+            },
+            "parts": [
+              "小禾",
+              "appearance and equipment",
+              "body",
+              "head",
+              "nose",
+              "eye -1",
+              "eye 1",
+              "cloth belt",
+              "tunic collar",
+              "hair crown",
+              "hair tie",
+              "ponytail",
+              "stubble",
+              "round hand -1",
+              "round hand 1",
+              "backpack",
+              "backpack flap",
+              "shoulder strap -1",
+              "shoulder strap 1"
+            ]
+          }
+        ],
+        "cameraPosition": {
+          "x": 10.11111111111111,
+          "y": 21,
+          "z": 19.454545454545453
+        },
+        "sensesLines": 189,
+        "canvasCount": 2,
+        "stage": {
+          "width": 1280,
+          "height": 720
+        }
+      },
+      "errors": [],
+      "consoleErrors": [],
+      "decisionRequests": 0
+    }
+  ],
+  "status": "passed"
+}

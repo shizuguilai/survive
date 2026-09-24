@@ -1,0 +1,53 @@
+{
+  "overall": "BLOCKED_BEFORE_REAL_MODEL_MILESTONE",
+  "originalSourceUntouched": true,
+  "main": "60f5d7eb33860484065a3f98afc5693e9e69c337",
+  "branch": "work/agent-cognition-20260924",
+  "tests": {
+    "regularPassed": 71,
+    "regularSkipped": 1,
+    "separate30SecondFreeze": "passed",
+    "realRequests": 0
+  },
+  "commands": [
+    {
+      "command": "node --test tests/*.test.ts",
+      "exitCode": 0,
+      "result": "71 passed, 1 skipped (long test separately executed)",
+      "evidence": "evidence/unit-tests.txt"
+    },
+    {
+      "command": "LONG_FREEZE_TEST=1 node --test --test-name-pattern=\"actual wall-clock\" tests/barrier.test.ts",
+      "exitCode": 0,
+      "result": "30.033 seconds frozen; 1467 observer heartbeats; tick=100; unchanged complete world hash",
+      "evidence": "evidence/tm01-30s-freeze.txt"
+    },
+    {
+      "command": "npm run build",
+      "exitCode": 0,
+      "result": "TypeScript check and Laya 3.3.12 Web bundle passed; not Laya IDE build",
+      "evidence": "evidence/final-build.txt"
+    },
+    {
+      "command": "node tools/verify-real.ts",
+      "exitCode": 2,
+      "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+      "evidence": "evidence/real-model-verification.json"
+    },
+    {
+      "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
+      "exitCode": 0,
+      "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
+      "evidence": "evidence/browser-smoke.json"
+    }
+  ],
+  "blockingPrerequisites": [
+    "SURVIVE_MODEL_API_KEY",
+    "Laya IDE 3.3.12",
+    "independent WeChat AppID and HTTPS gateway",
+    "physical WeChat device verification"
+  ],
+  "tasks": "task-board.json",
+  "publication": "NOT_PUBLISHED",
+  "gitSynchronization": "pending"
+}

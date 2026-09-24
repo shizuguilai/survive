@@ -1,0 +1,11 @@
+{
+  "obsRef": "obs-local-0009",
+  "experiencedWhen": "刚才",
+  "certainty": "clear",
+  "modality": "bodily",
+  "detail": {
+    "bodyPart": "右脚",
+    "sensation": "pain",
+    "intensity": "noticeable"
+  }
+}

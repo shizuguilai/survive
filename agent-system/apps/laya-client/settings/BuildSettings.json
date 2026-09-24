@@ -1,0 +1,9 @@
+{
+  "name": "SurviveAgent",
+  "startupScene": "res://66bb1ab3-8d0f-4b39-ae77-2a10a14338a4",
+  "copyBinFiles": false,
+  "alwaysIncluded": [],
+  "wxgame": {
+    "appid": ""
+  }
+}

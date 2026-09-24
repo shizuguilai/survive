@@ -1,0 +1,13 @@
+{
+  "description": "Survive 独立居民认知原型",
+  "compileType": "game",
+  "projectname": "SurviveAgent",
+  "appid": "",
+  "isGameTourist": false,
+  "setting": {
+    "urlCheck": true,
+    "es6": true,
+    "minified": true,
+    "uploadWithSourceMap": true
+  }
+}

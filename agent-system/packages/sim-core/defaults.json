@@ -1,0 +1,108 @@
+{
+  "schemaVersion": "1.0.0",
+  "parameterStatus": "prototype_defaults_not_human_or_device_measurements",
+  "simulation": {
+    "fixedDtMs": 50,
+    "mode": "global_cognition_barrier",
+    "catchUpAfterCognition": false,
+    "offlineProgress": false,
+    "initialResidents": 2,
+    "expandedScenarioResidents": 10
+  },
+  "cognition": {
+    "defaultReviewAfterSimMs": 3000,
+    "minReviewAfterSimMs": 1000,
+    "maxReviewAfterSimMs": 10000,
+    "maxToolTurnsPerBarrier": 8,
+    "maxSchemaRepairAttempts": 2,
+    "perAgentConcurrentCommittableRequests": 1,
+    "autoRuleFallback": false
+  },
+  "runtime": {
+    "httpTimeoutWallMs": 120000,
+    "maxTransportRetries": 2,
+    "retryBackoffWallMs": [
+      1000,
+      3000
+    ],
+    "onUnrecoverableError": "ERROR_PAUSED",
+    "initialMode": "UNCONFIGURED"
+  },
+  "vision": {
+    "rangeWorldUnits": 12,
+    "horizontalFovDegrees": 110,
+    "verticalFovDegrees": 80,
+    "focusedFovDegrees": 40,
+    "scanEverySimMs": 200,
+    "targetSamplePoints": [
+      "head",
+      "torso",
+      "feet"
+    ],
+    "renderOnlyOverlay": true
+  },
+  "hearing": {
+    "model": "relative_attenuation_v1",
+    "referenceDistanceWorldUnits": 1,
+    "detectThreshold": 0.03,
+    "comprehendThreshold": 0.15,
+    "recognizeVoiceThreshold": 0.25,
+    "referenceSourceLevels": {
+      "whisper": 0.5,
+      "normal": 2.0,
+      "shout": 8.0
+    },
+    "distancePrecision": "near_medium_far",
+    "directionSectors": 8,
+    "transmission": {
+      "open": 1.0,
+      "woodenWall": 0.35,
+      "stoneWall": 0.1,
+      "closedDoor": 0.25
+    },
+    "maskingRange": [
+      0.05,
+      1.0
+    ],
+    "propagationSpeedWorldUnitsPerSimSecond": 340,
+    "minimumDeliveryTicks": 1,
+    "ringLegendRequired": true
+  },
+  "speech": {
+    "minDurationSimMs": 600,
+    "estimatedCharactersPerSimSecond": 4,
+    "deliverOnlyEmittedFragments": true,
+    "realTtsRequired": false
+  },
+  "attention": {
+    "deduplicatePersistentEvents": true,
+    "cooldownClock": "simulation",
+    "startupCognitionForEveryResident": true,
+    "forceHeartbeatEvenWhenQuiet": true
+  },
+  "debug": {
+    "defaultOverlay": "off",
+    "scope": "selected_resident",
+    "vision": true,
+    "hearingReferenceRings": true,
+    "actualAuditoryCues": true,
+    "lastKnownPositions": true,
+    "overlayChangesPerception": false
+  },
+  "replay": {
+    "readOnly": true,
+    "requeryModel": false,
+    "checkpointEverySimTicks": 200,
+    "recordActualPercepts": true,
+    "recordAcceptedDecisions": true,
+    "onBufferUnderrun": "PAUSE_PLAYBACK"
+  },
+  "world": {
+    "oldZombieWavesEnabled": false,
+    "regions": [
+      "residential",
+      "agriculture",
+      "work_storage"
+    ]
+  }
+}

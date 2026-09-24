@@ -1,0 +1,67 @@
+{
+  "task": "T00",
+  "verifiedOn": "2026-09-23",
+  "referenceRepository": "git@github.com:shizuguilai/survive.git",
+  "sourceMethod": "GitHub connector read-only fetch; recreated Git objects from verified bytes, not git clone",
+  "remoteMain": "60f5d7eb33860484065a3f98afc5693e9e69c337",
+  "head": "60f5d7eb33860484065a3f98afc5693e9e69c337",
+  "localBranch": "main",
+  "localOriginMain": "60f5d7eb33860484065a3f98afc5693e9e69c337",
+  "rootTree": "ad33e4284a93932af2fa66023a5abcd33e633a0f",
+  "initialCommitParents": [],
+  "commitHashVerified": true,
+  "treeHashVerified": true,
+  "allBlobHashesVerified": true,
+  "sourceFiles": 28,
+  "sourceBytes": 89340,
+  "workingDirectory": "/workspace/scratch/4be8967a8182/reference-survive",
+  "workingDirectoryStatus": "Clean verified reference checkout; baseline evidence excluded locally via .git/info/exclude",
+  "initialEnvironment": {
+    "cwd": "/workspace/scratch/4be8967a8182",
+    "cwdGitInspection": "git rev-parse --show-toplevel failed with exit 128: not a git repository",
+    "workspaceParentGitInspection": "git -C /workspace rev-parse --show-toplevel failed with exit 128: not a git repository",
+    "preexistingReferenceCheckout": false,
+    "userLocalMachineUncommittedChanges": "Unavailable in this environment; no claim of inspection",
+    "existingUserFilesChanged": false,
+    "existingSaveDataChanged": false
+  },
+  "remoteVerification": {
+    "branchEndpoint": "https://api.github.com/repos/shizuguilai/survive/branches/main",
+    "commitEndpoint": "https://api.github.com/repos/shizuguilai/survive/git/commits/60f5d7eb33860484065a3f98afc5693e9e69c337",
+    "treeEndpoint": "https://api.github.com/repos/shizuguilai/survive/git/trees/60f5d7eb33860484065a3f98afc5693e9e69c337?recursive=1",
+    "treeTruncated": false,
+    "trackedFileContents": "All 28 fetched by immutable commit ref with base64 encoding, including icon.png",
+    "gitTransport": "Direct SSH cloning not available in this environment; connector reads succeeded"
+  },
+  "oldEngine": "Cocos Creator 3.8.6 declared in package.json",
+  "tests": [
+    {"command": "GitHub API main, commit and recursive tree fetch", "result": "pass"},
+    {"command": "python .baseline/reconstruct.py", "exitCode": 0, "result": "28 blob hashes, root tree and original commit exactly match"},
+    {"command": "git fsck --full", "exitCode": 0, "result": "pass"},
+    {"command": "git status --short --branch", "exitCode": 0, "result": "## main...origin/main"},
+    {"command": "git diff --exit-code && git diff --cached --exit-code", "exitCode": 0, "result": "no tracked changes"}
+  ],
+  "status": {
+    "code": "read-only baseline complete",
+    "staticChecks": "Git integrity verified; old TypeScript not built",
+    "mock": "not applicable to baseline",
+    "realModel": "not tested",
+    "layaBuild": "not tested; old repository is Cocos",
+    "browser": "not tested",
+    "device": "not tested",
+    "publish": "not performed",
+    "push": "not performed"
+  },
+  "migrationRisks": [
+    "Old render and UI depend on Cocos cc Graphics and UI_2D; new Laya 3D adapter must be implemented separately.",
+    "GameRoot accumulates real frame dt; a global barrier must discard waiting time and reset accumulators, while UI and network remain alive.",
+    "World and JobSystem assign work through fixed JobType rules. These decisions cannot be reused as autonomous real-model residents.",
+    "Survivor has no private perception, personal memory, personality, relationship or independently authenticated request identity.",
+    "World.placeBuilding directly places and spends resources; planning regions must avoid preserving direct planner construction semantics.",
+    "Legacy save key project_outpost_save_v1 must remain untouched. New transaction-aware saves need a new schema and namespace.",
+    "SaveManager silently ignores write failures and only lightly validates load data; new implementation needs explicit recoverable error records.",
+    "Old 45-second days and early zombie waves are unsuitable as prerequisites for the first two-resident vertical slice.",
+    "Repository has no complete Laya IDE project or build pipeline; reference WeChat project version must be locked independently."
+  ],
+  "evidenceFiles": [".baseline/github-metadata.json", ".baseline/github-files-base64.json", ".baseline/reconstruct.py"]
+}

@@ -1,0 +1,10 @@
+{"evidence":"TM01","mode":"MOCK_TEST","wallElapsedMs":30033,"observerHeartbeats":1467,"worldTick":100,"frozenHash":"fnv1a64:1029d448ea32db02"}
+✔ TM01 actual wall-clock 30s freeze with observer heartbeat and multiple active world systems (30061.935279ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30292.510594

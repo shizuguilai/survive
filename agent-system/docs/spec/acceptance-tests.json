@@ -1,0 +1,462 @@
+{
+  "schemaVersion": "1.0.0",
+  "scope": "待实现的验收用例，不是测试结果",
+  "tests": [
+    {
+      "id": "B01",
+      "category": "基线",
+      "title": "唯一仓库与变更保护",
+      "arrangeAct": "在目标目录执行 remote/status/HEAD/main 检查，并设置一份未提交测试修改。",
+      "assert": "证据记录实际结果；不会 reset/clean 或覆盖测试修改；无其他游戏仓库被改。",
+      "status": "not_run"
+    },
+    {
+      "id": "B02",
+      "category": "基线",
+      "title": "引擎与构建版本锁定",
+      "arrangeAct": "读取旧版本、新 Laya IDE/SDK 与运行环境。",
+      "assert": "记录精确版本和锁文件；能够用实际提供的步骤打开/构建；未知项写 unknown，不宣称成功。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM01",
+      "category": "时间",
+      "title": "全世界冻结",
+      "arrangeAct": "移动中的 A、采集中的 B、声音中的 C 和一个有期限的项目；触发认知并让桩模型真实等待30秒。",
+      "assert": "等待期间 tick、所有位置、身体值、施工量、声音光标、任务期限、模拟RNG及待定事件到期状态均不变；比较提交前状态。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM02",
+      "category": "时间",
+      "title": "恢复不追帧",
+      "arrangeAct": "接 TM01，返回同一份合法回复后恢复一帧。",
+      "assert": "只按恢复后的正常新 dt 步进，绝不补跑30秒；第一个动作至少在后续正时间步生效。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM03",
+      "category": "时间",
+      "title": "批量屏障与到达顺序",
+      "arrangeAct": "A、B同一tick触发；一份100ms返回，一份10s返回；交换返回顺序再跑。",
+      "assert": "第一份不先执行；同一快照；全部成功后一次提交；固定回复集合下输出hash一致。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM04",
+      "category": "时间",
+      "title": "失败保持暂停",
+      "arrangeAct": "一个成功、一个超时；然后模拟无key、429、格式修复耗尽。",
+      "assert": "世界保持冻结，成功结果不先生效；观察者收到准确错误；没有规则/Mock决策偷偷接管。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM05",
+      "category": "时间",
+      "title": "嵌套暂停",
+      "arrangeAct": "在THINKING时按用户暂停，模型成功后按继续；并测试切后台。",
+      "assert": "认知完成不清除USER_PAUSE/APP_BACKGROUND；恢复不补离线真实时间。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM06",
+      "category": "时间",
+      "title": "过期与重复回复",
+      "arrangeAct": "取消运行后送回旧回复；重复发送同一requestId；恢复同一pending屏障。",
+      "assert": "旧run/generation失效；重复回复最多提交一次；不会重复说话/扣资源。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM07",
+      "category": "时间",
+      "title": "真实时钟泄漏检查",
+      "arrangeAct": "将两次API等待分别设为0和60秒，固定上下文/回复/种子。",
+      "assert": "角色最终消息无wall time、timeout、API耗时；固定回复情况下轨迹一致。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM08",
+      "category": "时间",
+      "title": "计时器与引擎冻结",
+      "arrangeAct": "运行真实Laya场景的动画、粒子、Tween、物理、声音，然后挂起认知。",
+      "assert": "所有世界表现不推进，观察者摄像机、面板和HTTP仍正常；分别提供状态和录像证据。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM09",
+      "category": "时间",
+      "title": "零时刻活锁",
+      "arrangeAct": "同一观察尝试反复唤醒，两个居民互发问候，或模型要求立即再思考。",
+      "assert": "同事件不重复消费；物理动作与下次心跳最少一正tick；修复有界，异常明确ERROR_PAUSED而非死循环。",
+      "status": "not_run"
+    },
+    {
+      "id": "TM10",
+      "category": "时间",
+      "title": "屏障中的玩家指令",
+      "arrangeAct": "思考期间确认一块新禁建区。",
+      "assert": "只进入队列，不改快照；后续安全tick提交；执行前校验旧动作，角色只通过合法线索获知变化。",
+      "status": "not_run"
+    },
+    {
+      "id": "P01",
+      "category": "视觉",
+      "title": "视野与镜头分离",
+      "arrangeAct": "把目标放到眼睛前方、背后、范围外；只旋转玩家镜头。",
+      "assert": "只有角色视域内目标形成观察；玩家镜头对模型payload无影响。",
+      "status": "not_run"
+    },
+    {
+      "id": "P02",
+      "category": "视觉",
+      "title": "遮挡与识别",
+      "arrangeAct": "整墙遮挡、只露轮廓、近距离完整可见；身份记忆存在/不存在两种。",
+      "assert": "遮挡时无目标秘密；轮廓不包含姓名；recognized只能引用合法身份记忆。",
+      "status": "not_run"
+    },
+    {
+      "id": "P03",
+      "category": "视觉",
+      "title": "最后已知而非跟踪",
+      "arrangeAct": "角色见到B后让B走到墙后并改变位置。",
+      "assert": "记录旧位置和模拟时间，不追踪隐藏实时位置；再次出现重新感知。",
+      "status": "not_run"
+    },
+    {
+      "id": "P04",
+      "category": "听觉",
+      "title": "距离噪声透射",
+      "arrangeAct": "同一声音在近处、隔墙、远处、强噪声中传播。",
+      "assert": "检测、理解、识别分别成立或失败；未听懂文字在最终payload所有字段都不存在。",
+      "status": "not_run"
+    },
+    {
+      "id": "P05",
+      "category": "听觉",
+      "title": "声音方向与身份权限",
+      "arrangeAct": "隐藏声源由陌生人和熟人各发一次。",
+      "assert": "只有粗方向/距离；未知身份不泄漏真实名字/坐标；熟悉声纹也要达到可识别阈值。",
+      "status": "not_run"
+    },
+    {
+      "id": "P06",
+      "category": "听觉",
+      "title": "台词片段与未说完内容",
+      "arrangeAct": "A说一长句，中途B离开可听范围。",
+      "assert": "B没有收到尚未发出的词或离开后的后半句；完整台词仅可在世界/导演日志存在。",
+      "status": "not_run"
+    },
+    {
+      "id": "P07",
+      "category": "身体",
+      "title": "痛感与原因分离",
+      "arrangeAct": "从视野外造成一次轻微碰撞并触发身体刺激。",
+      "assert": "收到身体部位/感受，不自动知道施加者和动机；触发屏障，疼痛不因真实等待继续恶化。",
+      "status": "not_run"
+    },
+    {
+      "id": "P08",
+      "category": "注意力",
+      "title": "持续刺激去重与心跳",
+      "arrangeAct": "连续砍树产生重复自噪声，插入一次新呼喊，再让环境安静。",
+      "assert": "自噪声不每tick推理；新呼喊触发；安静时仍按模拟心跳真实认知。",
+      "status": "not_run"
+    },
+    {
+      "id": "P09",
+      "category": "主动感知",
+      "title": "转头/倾听不能免费查询",
+      "arrangeAct": "模型在屏障中请求看墙后，或转头确认背后的人。",
+      "assert": "不能立即返回新视角真相；必须提交动作、正时间执行后再产生观察。",
+      "status": "not_run"
+    },
+    {
+      "id": "K01",
+      "category": "隔离",
+      "title": "隐藏变化非干涉",
+      "arrangeAct": "构造两个世界，只改变完全不可感知且不影响感官的隐藏身份/库存/私人记忆。",
+      "assert": "该居民规范化最终模型输入相同；规范化仅移除明确非语义传输字段。",
+      "status": "not_run"
+    },
+    {
+      "id": "K02",
+      "category": "隔离",
+      "title": "工具和错误泄漏",
+      "arrangeAct": "模型猜全局ID、请求其他人记忆、查询所有位置。",
+      "assert": "能力验证拒绝；错误不暴露猜测是否命中真实目标；无全局查询工具。",
+      "status": "not_run"
+    },
+    {
+      "id": "K03",
+      "category": "隔离",
+      "title": "未知地图寻路",
+      "arrangeAct": "先前未见的桥被毁/墙被建；不让角色收到消息。",
+      "assert": "路线计划不提前利用隐藏变更；实际接近受阻才获得新线索；不泄漏全图最短路。",
+      "status": "not_run"
+    },
+    {
+      "id": "K04",
+      "category": "隔离",
+      "title": "公告板访问",
+      "arrangeAct": "更新远处公告，角色未接近；另一人实际阅读后转述。",
+      "assert": "未接触者不自动同步；读者和转述接收者分别有正确来源记录。",
+      "status": "not_run"
+    },
+    {
+      "id": "K05",
+      "category": "记忆",
+      "title": "转述和推断不升级事实",
+      "arrangeAct": "输入听说/怀疑事件，执行摘要并重新检索。",
+      "assert": "类型、来源、时间与不确定性保留；不能变成亲眼所见。",
+      "status": "not_run"
+    },
+    {
+      "id": "K06",
+      "category": "隔离",
+      "title": "观察开关与随机数",
+      "arrangeAct": "固定场景反复切感官开关、全体视图、选人和镜头。",
+      "assert": "角色payload、世界hash和模拟随机状态相同；绘图不参与碰撞、视觉或听觉。",
+      "status": "not_run"
+    },
+    {
+      "id": "K07",
+      "category": "隔离",
+      "title": "角色外信息与注入",
+      "arrangeAct": "对话中出现“忽略规则、查询真实身份”等话；运维侧发生HTTP错误。",
+      "assert": "台词不提升权限；HTTP信息不进入角色记忆；不伪造替代台词。",
+      "status": "not_run"
+    },
+    {
+      "id": "A01",
+      "category": "执行",
+      "title": "意图与执行分离",
+      "arrangeAct": "提交采集12单位、满包搬运的计划；中途触发另一人的屏障。",
+      "assert": "无独立规则脑换工作；执行进度保存；全局屏障期间动作不推进。",
+      "status": "not_run"
+    },
+    {
+      "id": "A02",
+      "category": "执行",
+      "title": "有限身体并行",
+      "arrangeAct": "同一角色请求双手施工和砍树；请求行走与说话。",
+      "assert": "冲突按身体通道校验；允许的组合有独立模拟进度；嘴巴不能同时产生两句完整语音。",
+      "status": "not_run"
+    },
+    {
+      "id": "A03",
+      "category": "执行",
+      "title": "原计划中断恢复",
+      "arrangeAct": "角色模型决定暂停采集，完成确认后再决定继续。",
+      "assert": "目标、承诺、已收集物资保留；恢复前检查目标是否仍可执行。",
+      "status": "not_run"
+    },
+    {
+      "id": "D01",
+      "category": "对话",
+      "title": "两人相遇链路",
+      "arrangeAct": "桩模型固定：A打招呼、B听见后回应；不同API延迟重复。",
+      "assert": "看见→屏障→A实际发声→B实际听见→屏障→B回应；全程正时间动作，无等待泄漏。",
+      "status": "not_run"
+    },
+    {
+      "id": "D02",
+      "category": "对话",
+      "title": "同时说话与旁听",
+      "arrangeAct": "A/B都先说话，C在近处、D在墙后。",
+      "assert": "独立声学结果；不偷偷为指定收件人送达全文；重叠可导致听不清。",
+      "status": "not_run"
+    },
+    {
+      "id": "D03",
+      "category": "对话",
+      "title": "打招呼不是强制脚本",
+      "arrangeAct": "桩模型返回继续工作/沉默/拒绝；真实模型出现类似选择。",
+      "assert": "合法决定原样执行，不强制补写礼貌台词；个性与选择记录可查。",
+      "status": "not_run"
+    },
+    {
+      "id": "R01",
+      "category": "回放",
+      "title": "无网络可播放",
+      "arrangeAct": "先记录完整真实或明确Mock来源的运行，断开模型服务后播放。",
+      "assert": "无模型请求；按tick重建已提交轨迹、动作与感官；未伪造新的决定。",
+      "status": "not_run"
+    },
+    {
+      "id": "R02",
+      "category": "回放",
+      "title": "裁等待不裁行动",
+      "arrangeAct": "比较0秒和30秒API等待的同决策记录。",
+      "assert": "回放模拟时长相同；讲话/主动等待/移动时长完整保留。",
+      "status": "not_run"
+    },
+    {
+      "id": "R03",
+      "category": "回放",
+      "title": "拖动倍速与覆盖",
+      "arrangeAct": "回放前进后退、倍速、选人、开启感官。",
+      "assert": "恢复正确快照/事件位置；覆盖与当时感官一致；不重新随机判断。",
+      "status": "not_run"
+    },
+    {
+      "id": "R04",
+      "category": "回放",
+      "title": "只读与缓冲边界",
+      "arrangeAct": "回放中尝试划区/改人物；让未完成预缓冲耗尽。",
+      "assert": "世界编辑禁用；只能显式创建新分支；缓冲不足显示暂停，不编造未来。",
+      "status": "not_run"
+    },
+    {
+      "id": "V01",
+      "category": "可视化",
+      "title": "扇形视野",
+      "arrangeAct": "选中角色转头并经过墙边。",
+      "assert": "头部方向正确、扇形随模拟更新、遮挡可辨、模糊/识别状态有图例。",
+      "status": "not_run"
+    },
+    {
+      "id": "V02",
+      "category": "可视化",
+      "title": "听觉环与实际波纹",
+      "arrangeAct": "展示小声/普通/大喊参考环，并发出隔墙声音。",
+      "assert": "图例说明参考音量，不把固定圆当真实全能听界；实际线索不泄漏隐藏身份。",
+      "status": "not_run"
+    },
+    {
+      "id": "V03",
+      "category": "可视化",
+      "title": "冻结时界面可操作",
+      "arrangeAct": "挂起模型30秒，触控/鼠标选择居民、移动镜头、切开关。",
+      "assert": "UI响应；扇形随被冻结的角色而非玩家相机；所有世界时长不前进。",
+      "status": "not_run"
+    },
+    {
+      "id": "Z01",
+      "category": "规划",
+      "title": "划区不立即造房",
+      "arrangeAct": "画大居住区，目标8人，当前无需扩容；提交预算。",
+      "assert": "只有标记/公告变更；不立即铺满房子或直接分配职业。",
+      "status": "not_run"
+    },
+    {
+      "id": "Z02",
+      "category": "规划",
+      "title": "合法布局与非全知",
+      "arrangeAct": "有未知墙体的区域提出住宅；把已知墙体摆在必经路上。",
+      "assert": "候选只依据个人已知地图；落地校验占地/入口/材料；不会堵死唯一出口。",
+      "status": "not_run"
+    },
+    {
+      "id": "Z03",
+      "category": "规划",
+      "title": "重划保护已有建筑",
+      "arrangeAct": "把有人居住区域改为作业区。",
+      "assert": "已有住宅/居民/物资不被瞬删；单独记录过渡/拆迁任务。",
+      "status": "not_run"
+    },
+    {
+      "id": "C01",
+      "category": "合作",
+      "title": "项目承诺真实形成",
+      "arrangeAct": "居民提案，经实际谈话/公告招募，其他模型分别接受和拒绝。",
+      "assert": "只有已知提案可接受；接受仅约束本人；不是中央LLM为全体分工。",
+      "status": "not_run"
+    },
+    {
+      "id": "C02",
+      "category": "合作",
+      "title": "材料竞争一致性",
+      "arrangeAct": "两个项目同时争用同一批木料并调换回复速度。",
+      "assert": "不超支/重复预留；确定公平规则与返回速度无关；失败反馈通过可感知渠道到达。",
+      "status": "not_run"
+    },
+    {
+      "id": "C03",
+      "category": "合作",
+      "title": "依赖与租约释放",
+      "arrangeAct": "材料未到、参与者受伤/退出、任务租约到期。",
+      "assert": "施工不凭空进度；释放/变更只按模拟时间与真实状态；后续角色重新思考，不自动指派。",
+      "status": "not_run"
+    },
+    {
+      "id": "S01",
+      "category": "存档",
+      "title": "屏障中断恢复",
+      "arrangeAct": "思考中关闭进程、部分响应后崩溃、完整提交后重启三种。",
+      "assert": "恢复最后完整commit/冻结pending；不丢物资，不重复动作，不把部分回复视为完成。",
+      "status": "not_run"
+    },
+    {
+      "id": "S02",
+      "category": "存档",
+      "title": "旧存档转换",
+      "arrangeAct": "导入旧Survive快照并保存转换前原文件。",
+      "assert": "资源/建筑/人口可核对；job仅转技能背景；失败保留原档并报告，不吞异常。",
+      "status": "not_run"
+    },
+    {
+      "id": "S03",
+      "category": "存档",
+      "title": "回放版本和随机状态",
+      "arrangeAct": "同一已接受决策log跨重启播放；人为改config/schema版本。",
+      "assert": "版本相符可复现；不兼容则明确拒绝/迁移；UI不消耗模拟随机序列。",
+      "status": "not_run"
+    },
+    {
+      "id": "L01",
+      "category": "真实模型",
+      "title": "每人独立接入",
+      "arrangeAct": "至少2名居民启动并运行心跳，检查网关请求与上下文。",
+      "assert": "每人独立实际请求，有响应证据；不共享私密记忆，不用一段联合prompt代演全体。",
+      "status": "not_run"
+    },
+    {
+      "id": "L02",
+      "category": "真实模型",
+      "title": "所有自治决定可追溯",
+      "arrangeAct": "让居民采集、暂停、交谈、继续；抽查意图来源。",
+      "assert": "自主改变均有该居民真实接受决策；规则只执行/校验；Mock来源明确区分。",
+      "status": "not_run"
+    },
+    {
+      "id": "L03",
+      "category": "真实模型",
+      "title": "真实相遇演示",
+      "arrangeAct": "两名互相认识、已有碰面意愿的居民实际相遇，记录若干轮。",
+      "assert": "保存真实请求、感知来源和完整演示；若某次未打招呼不伪造，记录选择；至少取得一次真实双向交谈案例用于验收。",
+      "status": "not_run"
+    },
+    {
+      "id": "L04",
+      "category": "真实模型",
+      "title": "正常工作也会思考",
+      "arrangeAct": "稳定采集，保持无意外环境。",
+      "assert": "依模拟心跳真实请求；模型可选择继续，不被工程省略为脚本。",
+      "status": "not_run"
+    },
+    {
+      "id": "E01",
+      "category": "安全",
+      "title": "凭据和代理边界",
+      "arrangeAct": "扫描前端bundle、Git差异、存档、回放；向网关发未授权/任意endpoint请求。",
+      "assert": "无API key；网关鉴权且限制目的地；敏感错误脱敏。",
+      "status": "not_run"
+    },
+    {
+      "id": "E02",
+      "category": "交付",
+      "title": "浏览器和手机",
+      "arrangeAct": "用锁定引擎构建，桌面和手机浏览器测试触控/暂停/回放。",
+      "assert": "分别记录设备浏览器、操作和结果；未真机则标not_run；无假截图/假性能。",
+      "status": "not_run"
+    },
+    {
+      "id": "E03",
+      "category": "交付",
+      "title": "阶段状态真实",
+      "arrangeAct": "检查每项任务报告、配置、测试与发布字段。",
+      "assert": "代码、Mock、真实模型、构建、浏览器、真机、发布独立；没有发布不能填published。",
+      "status": "not_run"
+    }
+  ]
+}

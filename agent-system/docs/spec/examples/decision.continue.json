@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0.0",
+  "decisionKind": "continue",
+  "goal": "把已答应提供的木材收集齐。",
+  "reasonBrief": "采集过程正常，剩余数量不多；我继续完成这项承诺。",
+  "actions": [
+    {
+      "op": "continue",
+      "stage": 0,
+      "params": {}
+    }
+  ],
+  "nextReviewAfterSimMs": 3000,
+  "watch": [
+    {
+      "kind": "auditory_speech",
+      "knownRef": null
+    },
+    {
+      "kind": "action_failed",
+      "knownRef": null
+    }
+  ],
+  "memorySuggestions": []
+}

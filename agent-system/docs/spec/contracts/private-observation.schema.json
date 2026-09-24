@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:survive:private-observation:1.0.0",
+  "title": "角色可见观察DTO，不是世界真相",
+  "oneOf": [
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "obsRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "experiencedWhen": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "certainty": {
+          "type": "string",
+          "enum": [
+            "uncertain",
+            "likely",
+            "clear"
+          ]
+        },
+        "modality": {
+          "const": "visual"
+        },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "level": {
+              "type": "string",
+              "enum": [
+                "detected",
+                "described",
+                "recognized"
+              ]
+            },
+            "relativeDirection": {
+              "type": "string",
+              "enum": [
+                "front",
+                "front_right",
+                "right",
+                "back_right",
+                "back",
+                "back_left",
+                "left",
+                "front_left"
+              ]
+            },
+            "distanceBand": {
+              "type": "string",
+              "enum": [
+                "near",
+                "medium",
+                "far"
+              ]
+            },
+            "appearance": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 120
+              },
+              "minItems": 0,
+              "maxItems": 8
+            },
+            "recognizedName": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "knownRef": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "level",
+            "relativeDirection",
+            "distanceBand",
+            "appearance",
+            "recognizedName",
+            "knownRef"
+          ]
+        }
+      },
+      "required": [
+        "obsRef",
+        "experiencedWhen",
+        "certainty",
+        "modality",
+        "detail"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "obsRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "experiencedWhen": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "certainty": {
+          "type": "string",
+          "enum": [
+            "uncertain",
+            "likely",
+            "clear"
+          ]
+        },
+        "modality": {
+          "const": "auditory"
+        },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "soundKind": {
+              "type": "string",
+              "enum": [
+                "speech",
+                "impact",
+                "steps",
+                "ambient",
+                "unclassified"
+              ]
+            },
+            "relativeDirection": {
+              "type": "string",
+              "enum": [
+                "front",
+                "front_right",
+                "right",
+                "back_right",
+                "back",
+                "back_left",
+                "left",
+                "front_left",
+                "uncertain"
+              ]
+            },
+            "distanceBand": {
+              "type": "string",
+              "enum": [
+                "near",
+                "medium",
+                "far",
+                "uncertain"
+              ]
+            },
+            "heardText": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 300
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "recognizedSpeakerName": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "speakerKnownRef": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 80,
+                  "pattern": "^[A-Za-z0-9_-]+$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "soundKind",
+            "relativeDirection",
+            "distanceBand",
+            "heardText",
+            "recognizedSpeakerName",
+            "speakerKnownRef"
+          ]
+        }
+      },
+      "required": [
+        "obsRef",
+        "experiencedWhen",
+        "certainty",
+        "modality",
+        "detail"
+      ]
+    },
+    {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "obsRef": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80,
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "experiencedWhen": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "certainty": {
+          "type": "string",
+          "enum": [
+            "uncertain",
+            "likely",
+            "clear"
+          ]
+        },
+        "modality": {
+          "const": "bodily"
+        },
+        "detail": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "bodyPart": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "sensation": {
+              "type": "string",
+              "enum": [
+                "pain",
+                "touch",
+                "hunger",
+                "fatigue",
+                "imbalance",
+                "obstructed"
+              ]
+            },
+            "intensity": {
+              "type": "string",
+              "enum": [
+                "mild",
+                "noticeable",
+                "severe"
+              ]
+            }
+          },
+          "required": [
+            "bodyPart",
+            "sensation",
+            "intensity"
+          ]
+        }
+      },
+      "required": [
+        "obsRef",
+        "experiencedWhen",
+        "certainty",
+        "modality",
+        "detail"
+      ]
+    }
+  ]
+}

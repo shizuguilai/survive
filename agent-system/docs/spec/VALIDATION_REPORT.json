@@ -1,0 +1,1345 @@
+{
+  "scope": "specification_package_structure_only_not_game_implementation_or_game_tests",
+  "generatedAtUtc": "2026-09-23T12:48:38.823105+00:00",
+  "passed": true,
+  "checkCount": 260,
+  "taskCount": 22,
+  "futureGameTestCount": 57,
+  "schemaCount": 3,
+  "positiveFixtureCount": 5,
+  "negativeFixtureCount": 6,
+  "topologicalTaskOrder": [
+    "T00",
+    "T01",
+    "T02",
+    "T03",
+    "T04",
+    "T05",
+    "T06",
+    "T07",
+    "T09",
+    "T08",
+    "T10",
+    "T11",
+    "T12",
+    "T13",
+    "T14",
+    "T15",
+    "T16",
+    "T17",
+    "T18",
+    "T19",
+    "T20",
+    "T21"
+  ],
+  "explicitlyNotRun": [
+    "game unit tests",
+    "live LLM",
+    "LayaAir build",
+    "browser gameplay",
+    "physical device",
+    "publication"
+  ],
+  "checks": [
+    {
+      "name": "file:AGENT_START_HERE.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:SYSTEM_DESIGN.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:TIME_BARRIER_PROTOCOL.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:PERCEPTION_AND_MEMORY.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:LLM_CONTRACT.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:IMPLEMENTATION_PLAN.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:ACCEPTANCE_TESTS.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:SOURCES_AND_BASELINE.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:DELIVERY_STATUS.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:task-board.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:acceptance-tests.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:config/defaults.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:config/README.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:config/server.env.example",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "file:contracts/README.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all_package_json_parse",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "unique_task_ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "unique_test_ids",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "separate_task_test_namespaces",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "correct_target_repository",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_reference:T20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "acyclic_task_graph",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "initial_task_status:T21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "valid_test_links:T21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "all_tests_have_task_coverage",
+      "passed": true,
+      "detail": "57 / 57"
+    },
+    {
+      "name": "all_tests_unexecuted",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T00",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T11",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T12",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T13",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T14",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T15",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T16",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T17",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T18",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T19",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T20",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "task_documented:T21",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:B01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:B02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:TM10",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P08",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:P09",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K05",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K06",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:K07",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:A01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:A02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:A03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:D01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:D02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:D03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:R01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:R02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:R03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:R04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:V01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:V02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:V03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:Z01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:Z02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:Z03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:C01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:C02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:C03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:S01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:S02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:S03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:L01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:L02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:L03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:L04",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:E01",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:E02",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "test_documented:E03",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "schema_valid:agent-decision.schema.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "schema_valid:private-observation.schema.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "schema_valid:replay-manifest.schema.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fixture_valid:examples/decision.continue.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fixture_valid:examples/decision.greet.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fixture_valid:examples/observation.visual.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fixture_valid:examples/observation.hearing.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "fixture_valid:examples/observation.pain.json",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_fixture_rejected:zero_heartbeat",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_fixture_rejected:unknown_action",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_fixture_rejected:incomplete_speak",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_fixture_rejected:global_id_field",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_fixture_rejected:unheard_text_field",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "negative_fixture_rejected:wallclock_field",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "hard_global_barrier_default",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "no_catchup_or_fallback",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "no_false_live_configuration",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "read_only_replay",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tick_aligned:defaultReviewAfterSimMs,minReviewAfterSimMs,maxReviewAfterSimMs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "tick_aligned:scanEverySimMs",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:PERCEPTION_AND_MEMORY.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:SOURCES_AND_BASELINE.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:AGENT_START_HERE.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:TIME_BARRIER_PROTOCOL.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:IMPLEMENTATION_PLAN.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:ACCEPTANCE_TESTS.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:LLM_CONTRACT.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:README.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:SYSTEM_DESIGN.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:DELIVERY_STATUS.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:config/README.md",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "name": "balanced_markdown_fences:contracts/README.md",
+      "passed": true,
+      "detail": ""
+    }
+  ]
+}
