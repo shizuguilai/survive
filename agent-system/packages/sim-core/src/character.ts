@@ -9,7 +9,7 @@ export type CharacterAppearance = {
 };
 export type EquipmentSlot = 'torso'|'head'|'leftHand'|'rightHand'|'back';
 export type EquipmentCatalogItem = {
-  id:string; label:string; kind:'clothing'|'headwear'|'weapon'|'backpack'; slot:'torso'|'head'|'hand'|'back';
+  id:string; label:string; kind:'clothing'|'headwear'|'weapon'|'backpack'|'tool'; slot:'torso'|'head'|'hand'|'back';
   hands:0|1|2; inventoryUnits:number; extraCapacity:number; appearance:string; color:string;
 };
 /** Item instances have stable IDs and a single owner, including while equipped. */
@@ -22,6 +22,8 @@ export type CharacterState = {
 export type EquipmentAction = {type:'equip_item';itemRef:string;slot?:EquipmentSlot}|{type:'unequip_item';itemRef:string};
 export type CharacterEditResult<R> = {ok:true;resident:R}|{ok:false;error:string};
 export const EQUIPMENT_CATALOG:Readonly<Record<string,Readonly<EquipmentCatalogItem>>> = Object.freeze(Object.fromEntries([
+  {id:'stone_axe',label:'石斧',kind:'tool',slot:'hand',hands:1,inventoryUnits:2,extraCapacity:0,appearance:'单手石斧',color:'#94a6a3'},
+  {id:'stone_hoe',label:'石锄',kind:'tool',slot:'hand',hands:1,inventoryUnits:2,extraCapacity:0,appearance:'单手石锄',color:'#94a6a3'},
   {id:'linen_tunic',label:'亚麻上衣',kind:'clothing',slot:'torso',hands:0,inventoryUnits:1,extraCapacity:0,appearance:'亚麻上衣',color:'#789e84'},
   {id:'travel_coat',label:'旅行外套',kind:'clothing',slot:'torso',hands:0,inventoryUnits:2,extraCapacity:0,appearance:'长旅行外套',color:'#a37c55'},
   {id:'brim_hat',label:'宽檐帽',kind:'headwear',slot:'head',hands:0,inventoryUnits:1,extraCapacity:0,appearance:'宽檐帽',color:'#a18659'},
@@ -50,7 +52,7 @@ export function generateCharacterAppearance(seed:number):CharacterAppearance {
 export function characterSeed(residentId:string):number {let hash=2166136261;for(const c of residentId)hash=Math.imul(hash^c.charCodeAt(0),16777619);return hash>>>0;}
 /** Explicit starter kit creation only. Editing cannot mint items. */
 export function createCharacterState(residentId:string,seed=characterSeed(residentId)):CharacterState {
-  const items=Object.keys(EQUIPMENT_CATALOG).map((catalogId,index)=>({id:`${residentId}:${catalogId}:starter`,itemRef:`item_${index+1}`,catalogId,ownerId:residentId}));
+  const items=Object.keys(EQUIPMENT_CATALOG).filter(id=>!['stone_axe','stone_hoe'].includes(id)).map((catalogId,index)=>({id:`${residentId}:${catalogId}:starter`,itemRef:`item_${index+1}`,catalogId,ownerId:residentId}));
   return {schemaVersion:'1.0.0',appearance:generateCharacterAppearance(seed),inventory:{baseCapacity:6,items},loadout:{torso:items.find(i=>i.catalogId==='linen_tunic')!.id,back:items.find(i=>i.catalogId==='satchel')!.id}};
 }
 export function equippedItem(character:CharacterState,slot:EquipmentSlot):{item:EquipmentItem;definition:Readonly<EquipmentCatalogItem>}|null {

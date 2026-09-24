@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-09-24T05:09:56.409080+00:00",
+  "status": "passed",
+  "tests": 95,
+  "passed": 94,
+  "failed": 0,
+  "skipped": 1,
+  "skipReason": "Optional 30-second wall-clock freeze soak; regular cognition and new house queue freeze tests executed",
+  "typecheck": "passed",
+  "scope": [
+    "private recipe learning",
+    "atomic craft and exchange",
+    "owned equipped tool speed",
+    "three construction phases and contention",
+    "frozen house queue",
+    "observer-only history and replay cutoff",
+    "stock memory and typed reference feedback"
+  ]
+}

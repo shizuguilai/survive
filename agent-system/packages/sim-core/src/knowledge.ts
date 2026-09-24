@@ -59,6 +59,7 @@ export function addModelMemories(resident: Resident, suggestions: Decision['memo
 }
 
 const actionFields: Record<string, string[]> = {
+  craft:['stationRef','recipeRef'],exchange:['stationRef','recipeRef'],withdraw:['storageRef','resource','amount'],build:['projectRef','stepRef'],
   haul:['sourceRef','destinationRef','amount'],
   read_notice:['noticeRef'],accept_task:['taskRef','evidenceRefs'],decline_task:['taskRef','reason'],eat:['foodRef','amount'],
   continue: [], walk: ['targetRef', 'gait'], look: ['targetRef'], listen: ['durationSimMs'],

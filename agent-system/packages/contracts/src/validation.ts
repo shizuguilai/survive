@@ -58,7 +58,7 @@ const contextSchema = object({
   observations:array(observationSchema,128),
   memories:array(object({ref,kind:{enum:['direct','hearsay','belief','summary']},text:text(2000),evidenceRefs:array(ref,64),experiencedWhen:text(80)}),128),
   knownTargets:array(object({ref,description:text(1000),lastObservedWhen:text(80)}),128),
-  allowedActions:{type:'array',items:{enum:decisionSchema.properties.actions.items.oneOf.map(a=>a.properties.op.const)},minItems:1,maxItems:19}
+  allowedActions:{type:'array',items:{enum:decisionSchema.properties.actions.items.oneOf.map(a=>a.properties.op.const)},minItems:1,maxItems:24}
 });
 const metadataSchema=object({runId:ref,barrierId:ref,agentId:ref,requestId:ref,generation:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER},tick:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER},snapshotHash:text(100),contextHash:text(100),schemaVersion:{const:'1.0.0'}});
 export function validateObservation(value:unknown):Observation { validateSchema(value,observationSchema);return value as Observation; }
@@ -79,7 +79,7 @@ export function validateBrainRequest(value: unknown): BrainRequest {
   if(request.metadata.contextHash!==hashCanonical(request.context))fail('$.metadata.contextHash','context fingerprint mismatch');
   return request;
 }
-const channels:Record<string,string[]>={walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
+const channels:Record<string,string[]>={craft:['hands','locomotion'],exchange:['hands','locomotion'],withdraw:['hands','locomotion'],walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
 export function validateDecision(value: unknown, context: CharacterContext): Decision {
   validateSchema(value,decisionSchema);
   const decision=value as Decision;

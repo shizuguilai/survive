@@ -50,6 +50,16 @@ node --env-file=.env services/brain-gateway/src/server.ts
 
 居民初始化就穿衣。原生角色由圆头、圆润或修长身体和两个圆手构成，初始化可配置肤色、尺寸、发型、胡须和衣物颜色。**后续穿换衣、持拿武器与收纳物品由居民自己的模型决定，没有玩家换装面板。** 装备动作具有模拟时长、归属与容量限制；武器目前仅为造型和持拿，不包含攻击或伤害实现。
 
+## 居民历史、工作台与建房
+
+- 左侧「历史 / 档案」：按居民查看计划、实际行动、发声和私人记忆；点击条目打开详情，翻页或切换之前轮次。本机自动保存最近2000条；仅是观察者档案，不会给居民增加知识，也不等于恢复现场存档。
+- 右上「工作台配方」：石斧需要2木材+3石料，石锄需要2木材+2石料。本人装备后，木材或浆果采收每份由1秒降为0.6秒。置换支持3木材→2石料、3石料→2木材、2木材→2浆果。
+- 「规划 / 建房」：发布采集或制作目标，或在东/北/西三个预设地块建立木石小屋项目。总需12木材+8石料，按地基、墙体、屋顶顺序施工；材料从公共仓储扣除，建成后门廊休息恢复更快。
+- 居民必须亲自读公告、工作台配方，自愿接取任务，自己取料、合成、装备和施工。程序只处理规则和原子结算。加工与建造熟练度每3点升一级，每级缩短4%耗时，最高5级。
+- 世界思考冻结期间可以翻历史、拖镜头、查看配方或发布目标；发布仅进队列，完整模型批次提交后下一模拟步才写入世界。
+
+具体范围及分项证据见 [WORKSHOP_PROGRESS.md](docs/implementation/WORKSHOP_PROGRESS.md)。
+
 ## 工程入口
 
 | 路径 | 内容 |
@@ -65,7 +75,7 @@ node --env-file=.env services/brain-gateway/src/server.ts
 
 使用 **LayaAir IDE 3.3.12** 打开 `apps/laya-client/LayaProject.laya`。运行时版本、参考提交与文件哈希见 `apps/laya-client/engine-lock.json`。
 
-微信版还需要本项目自己的 AppID、微信开发者工具、可访问的 HTTPS 网关及合法域名配置。`src/platform-config.ts` 中的微信网关地址尚待配置。Web 云端网关使用账号身份保护接口；微信鉴权和合法域名仍需另行配置，不能直接复用 Web 账号入口。
+微信版还需要本项目自己的 AppID、微信开发者工具、可访问的 HTTPS 网关及合法域名配置。`src/platform-config.ts` 中的微信网关地址尚待配置。Web站点已按用户要求公开，服务端开启公开试玩；微信鉴权和合法域名仍需另行配置。
 
 本环境缺少 LayaAir IDE 和微信真机。Web 打包、浏览器交互、IDE 构建、微信真机和正式发布分别记录，不能互相代替。
 
@@ -78,9 +88,9 @@ npm run typecheck
 
 本地真实核心闭环已通过：2名居民独立发起10次 `glm-4.5-air` 请求，接受10个真实决定；双方发声并听见后再次决定，2023次冻结检查无世界变化、无补跑，0个Mock决定。真实记录无损保存在本地 `evidence/real-meeting-replay.json.gz`，包含居民私人上下文，不上传GitHub。本地浏览器播放该记录、seek、选人和感官检查通过，期间0次模型请求。
 
-**T14仍为partial**：上述浏览器结果是播放已有真实记录，不是实时模型浏览器、线上浏览器或真机验收；完整L01–L04等仍待核对。真实自主换装案例未验收。按用户要求，T15–T21区域规划、营地合作及扩展继续等待T14剩余验收。9项网关测试通过；旧HTTP401及后续协议/超时失败保留为已解决的历史记录。可复现实测脚本和脱敏统计随代码同步；原始回放与截图仅保留本地。发布的模型审计记录保留decisionHash等校验信息，不包含原始私人决定。
+**T14仍为partial**：上述浏览器结果是播放已有真实记录，不是实时模型浏览器、线上浏览器或真机验收；完整L01–L04等仍待核对。普通衣物自主换装案例仍待专项验收；本轮石斧/石锄真实制作与装备单独记录。按用户追加要求，实现T15/T16的最小任务、工作台和小屋项目；完整区域规划及协作仍未验收。9项网关测试通过；旧HTTP401及后续协议/超时失败保留为已解决的历史记录。可复现实测脚本和脱敏统计随代码同步；原始回放与截图仅保留本地。发布的模型审计记录保留decisionHash等校验信息，不包含原始私人决定。
 
-T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是已完成的启动读档、断电恢复或旧存档迁移；回放读取也不等于恢复现场模拟。`haul`、`build`、`eat` 等设计动作尚未接入时不能被当作可运行功能。
+T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是已完成的启动读档、断电恢复或旧存档迁移；回放读取也不等于恢复现场模拟。当前已接入 `haul`、`withdraw`、`eat`、`craft`、`exchange`、`build`。战斗、交易谈判、任意建筑蓝图及救援尚未实现。
 
 详见 [范围与阻塞](docs/implementation/SCOPE_AND_BLOCKERS.md)、[仓库基线](docs/implementation/baseline.md)、[角色装备说明](docs/implementation/character-system.md) 和 [任务记录](docs/implementation/task-board.json)。最终验收以实际运行证据为准。
 
@@ -90,8 +100,8 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 
 ## 云端发布
 
-已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（仅所属账号可访问）。服务端凭据已更新且旧HTTP401已解除；本地真实核心闭环通过，线上实时浏览器尚未验收。本次协议修复版本已发布，托管源码提交 `464eb67ab7717cf80ba8f82e3f7d3d2e4554d918`，运行时配置 revision 2。部署记录见 [cloud-deployment.json](evidence/cloud-deployment.json)。
+已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [workshop-deployment.json](evidence/workshop-deployment.json)，早期部署保留为历史。
 
-`services/brain-gateway/src/worker.ts` 使用托管平台认证后的账号标头，API 拒绝匿名和跨域调用。`/api/health` 只返回配置状态，不返回密钥，也不表示上游认证已成功。云端请求缓存和并发限制仅在单个实例内有效；完整批次和重复响应保护仍由模拟屏障负责。
+`services/brain-gateway/src/worker.ts` 仅在服务端明确开启 `SURVIVE_PUBLIC_PLAY` 时接受公开试玩请求；仍校验同源、输入合同及指定模型。`/api/health` 不返回密钥。线上实时模型浏览器验收与本地真实模型验证分开记录，不能用页面可访问代替真实行为验证。
 
 带有 `.openai/hosting.json` 的托管检出目录运行 `npm run build` 会生成 `dist/client` 与 `dist/server/index.js`；普通本地目录仍生成原有 Web 包。密钥通过发布平台的运行时 secret 配置，不能打包进产物。

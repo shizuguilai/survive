@@ -8,6 +8,7 @@ import type {BrainProvider,BrainRequest,BrainResponse} from '../../../packages/c
 import {initialize} from './view.ts';
 import type {ObserverView,ViewState} from './view.ts';
 import {gatewayRequest} from './transport.ts';
+import {ResidentJournal} from './journal.ts';
 
 class GatewayProvider implements BrainProvider{
   async decide(request:BrainRequest,signal?:AbortSignal):Promise<BrainResponse>{
@@ -33,11 +34,15 @@ function loadReplay():ReplayFile|null{
 export async function boot():Promise<void>{
   let view:ObserverView;let configured=false;let canStart=false;let hosted=false;let diagnostic='';let started=false;
   let recorder=new ReplayRecorder();let player:ReplayPlayer|null=null;
+  let replayJournal:ResidentJournal|null=null;
   let selectedId='resident-a',showSenses=true,speed=1;
+  let journal:ResidentJournal;let savedJournalVersion=-1;let lastJournalSave=0;let historyWarning='';
+  try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_resident_history_v1'):globalThis.localStorage.getItem('survive_resident_history_v1');journal=new ResidentJournal(raw?JSON.parse(raw):undefined);}catch{journal=new ResidentJournal();historyWarning='历史存储读取失败，本次记录仍可在会话内查看。';}
+  function saveJournal():void{if(savedJournalVersion===journal.version)return;try{persist('survive_resident_history_v1',journal.rows);savedJournalVersion=journal.version;historyWarning='';}catch{historyWarning='本机历史存储失败；本次会话内仍可查看，刷新可能丢失。';}}
   const provider=new GatewayProvider();
   function makeSimulation():Simulation{
     return new Simulation(provider,{world:createCampWorld(),allowMock:false,
-      onSnapshot:(world:World)=>recorder.capture(world,overlays(world)),
+      onSnapshot:(world:World)=>{recorder.capture(world,overlays(world));journal.collect(world);},
       onCommit:async(record:any)=>{
         // A single replacement stores a complete transaction before world release.
         persist('survive_agent_commit_v1',{schemaVersion:'1.0.0',world:record.nextWorld,commit:record});
@@ -47,6 +52,7 @@ export async function boot():Promise<void>{
   }
   let sim=makeSimulation();sim.pause('NOT_STARTED');
   recorder.capture(sim.world,overlays(sim.world));
+  journal.collect(sim.world);
   async function health():Promise<void>{
     try{
       const r=await gatewayRequest('/api/health');const h=await r.json();
@@ -71,7 +77,7 @@ export async function boot():Promise<void>{
     try{
       const recording=recorder.commits.length?recorder.export(sim.status==='STOPPED'):loadReplay();
       if(!recording)throw Error('尚无回放，请先完成一次真实模型决策。');
-      player=new ReplayPlayer(recording);sim.pause('REPLAY_VIEW');player.play();diagnostic='';
+      player=new ReplayPlayer(recording);replayJournal=new ResidentJournal();for(const frame of recording.frames)replayJournal.collect(frame.world);sim.pause('REPLAY_VIEW');player.play();diagnostic='';
       // Save only on explicit replay action; never disguise storage failure as success.
       try{persist('survive_agent_replay_v1',recording);}catch{diagnostic='回放已在本次会话打开；本机存储空间不足，未能持久保存。';}
       if(recording.manifest.decisionMode!=='real')diagnostic='当前回放明确包含 Mock 测试决策，不是已验证真实模型运行。';
@@ -80,9 +86,9 @@ export async function boot():Promise<void>{
   view=await initialize({
     onPause:pause,onResume:resume,onRetry:()=>{if(!player)void health().then(()=>sim.retry());},
     onTask:draft=>{if(player){diagnostic='回放中不能发布目标，请先返回现场。';return;}try{sim.queueTask(draft);diagnostic='目标已排队，将在下一模拟步写入公告板。';}catch(e){diagnostic=(e as Error).message;}},
-    onStop:()=>{if(player)player.pause();else sim.stop();},
+    onStop:()=>{if(player)player.pause();else sim.stop();saveJournal();},
     onSelect:id=>{selectedId=id;},onToggleSenses:()=>{showSenses=!showSenses;},onReplay:replay,
-    onLive:()=>{player=null;sim.resume('REPLAY_VIEW');diagnostic='';},
+    onLive:()=>{player=null;replayJournal=null;sim.resume('REPLAY_VIEW');diagnostic='';},
     onSeek:tick=>{if(player)player.seek(tick);},onSpeed:value=>{speed=value;if(player)player.setSpeed(value);},
     onStart:()=>{void start().catch(e=>{diagnostic=e.message;});},
     onConnect:token=>{void gatewayRequest('/api/session',{method:'POST',body:{token}}).then(health).catch(()=>{diagnostic='本地登录失败，请使用服务端提供的登录链接。';});}
@@ -95,7 +101,8 @@ export async function boot():Promise<void>{
       const liveStatus=sim.pauseTokens.has('USER_PAUSE')&&!['ERROR_PAUSED','STOPPED'].includes(sim.status)?'PAUSED':sim.status;
       const modelErrors=Object.values(sim.barrier?.errors??{}).join('；');
       if(!sim.pendingTaskCount&&diagnostic.startsWith('目标已排队'))diagnostic='';
-      const s:ViewState={world,overlays:cover,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
+      if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
+      const s:ViewState={world,overlays:cover,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
         mode:player?'REPLAY':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
         error:diagnostic||sim.observerError||modelErrors||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);
@@ -103,7 +110,7 @@ export async function boot():Promise<void>{
   }
   const L=(globalThis as any).Laya;L.timer.frameLoop(1,null,frame);
   const wx=(globalThis as any).wx;
-  if(wx?.onHide){wx.onHide(()=>{sim.pause('APP_BACKGROUND');player?.pause();});wx.onShow(()=>sim.resume('APP_BACKGROUND'));}
-  else document.addEventListener('visibilitychange',()=>{if(document.hidden){sim.pause('APP_BACKGROUND');player?.pause();}else sim.resume('APP_BACKGROUND');});
+  if(wx?.onHide){wx.onHide(()=>{sim.pause('APP_BACKGROUND');player?.pause();saveJournal();});wx.onShow(()=>sim.resume('APP_BACKGROUND'));}
+  else {globalThis.addEventListener('pagehide',saveJournal);document.addEventListener('visibilitychange',()=>{if(document.hidden){sim.pause('APP_BACKGROUND');player?.pause();saveJournal();}else sim.resume('APP_BACKGROUND');});}
   await health();frame();
 }

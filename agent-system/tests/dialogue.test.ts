@@ -19,7 +19,7 @@ test('D01/R01: explicitly MOCK greeting travels through perception, two barriers
   }};
   const sim=new Simulation(provider,{runId:'mock-dialogue',allowMock:true,maxRetries:0,
     onCommit:r=>recording.commit(r),onSnapshot:w=>recording.capture(w,Object.fromEntries(w.residents.map(r=>[r.id,getOverlay(w,r)])))});
-  await sim.bootstrap();assert.equal(sim.world.tick,0);assert.equal(sim.world.events.length,0);
+  await sim.bootstrap();assert.equal(sim.world.tick,0);assert.equal(sim.world.events.filter(e=>e.kind!=='decision').length,0);assert.equal(sim.world.events.filter(e=>e.kind==='decision').length,2);
   for(let i=0;i<100;i++){assert.equal(sim.step(),true);await sim.settled();assert.notEqual(sim.status,'ERROR_PAUSED');}
   const utterances=sim.world.events.filter(e=>e.kind==='speech_fragment');
   assert.ok(utterances.some(e=>e.agentId==='resident-a'));assert.ok(utterances.some(e=>e.agentId==='resident-b'));

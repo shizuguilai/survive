@@ -117,6 +117,7 @@ export class Simulation {
         const decision=validateDecision(entry.response.decision,entry.request.context);
         applyDecision(resident,decision,nextWorld.tick);addModelMemories(resident,decision.memorySuggestions,nextWorld.tick);
         resident.consumedObservationRefs=[...new Set([...resident.consumedObservationRefs,...entry.request.context.observations.map(o=>o.obsRef)])];
+        nextWorld.events.push({tick:nextWorld.tick,kind:'decision',agentId:resident.id,source:entry.response.source,text:`目标：${decision.goal}。理由：${decision.reasonBrief}。计划动作：${decision.actions.map(a=>a.op).join(' → ')}。`});
         resident.actionFeedback=[];
       }
       nextWorld.revision++;

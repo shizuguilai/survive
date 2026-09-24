@@ -24,7 +24,8 @@ test('A02: body conflict rejected but locomotion and speech can run together',()
   assert.throws(()=>validateActionConcurrency([speak,speak]),/body channel/);
   assert.throws(()=>validateActionConcurrency([{op:'gather',stage:0,params:{}},{op:'walk',stage:0,params:{}}]),/body channel/);
   assert.doesNotThrow(()=>validateActionConcurrency([speak,{op:'walk',stage:0,params:{}}]));
-  assert.throws(()=>validateActionConcurrency([{op:'build',stage:0,params:{}}]),/not implemented/);
+  assert.throws(()=>validateActionConcurrency([{op:'build',stage:0,params:{}},{op:'walk',stage:0,params:{}}]),/body channel/);
+  assert.throws(()=>validateActionConcurrency([{op:'teleport',stage:0,params:{}}]),/not implemented/);
 });
 
 test('A03: suspend and true continue preserve elapsed work instead of replacing its progress',()=>{

@@ -1,13 +1,16 @@
 import type { Action, Decision, Vec3 } from '../../contracts/src/types.ts';
 import type { ActionProgress, Resident, World } from './domain.ts';
 import { FIXED_DT_MS } from './clock.ts';
+import {readWorkbench,finishRecipe,findRecipe,finishBuild,withdraw,skillDuration,gatherPeriod,addSkill} from './workshop.ts';
+import {HOUSE_STEPS,taskTitle} from './recipes.ts';
 import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS} from './camp.ts';
 import { applyEquipmentAction } from './character.ts';
-export const IMPLEMENTED_ACTIONS = ['haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
+export const IMPLEMENTED_ACTIONS = ['craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
 const distance=(a:Vec3,b:Vec3)=>Math.hypot(a.x-b.x,a.z-b.z);
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
 function channels(action:Action):string[] {
   switch(action.op){
+    case 'craft':case 'exchange':case 'withdraw':case 'build':
     case 'haul':return ['hands','locomotion'];
     case 'read_notice':return ['head'];case 'eat':return ['hands','mouth'];
     case 'equip_item':case 'unequip_item':return ['hands'];
@@ -101,14 +104,31 @@ export function stepActions(world:World,nextTick:number):string[] {
           const object=world.objects.find(o=>o.id===knowledge!.entityId);
           if(!object||!['tree','rock','berry'].includes(object.kind)){fail(world,resident,progress,nextTick,'这个目标不是可采集资源，不能对它执行gather。');due.add(resident.id);break;}
           if(distance(resident.position,object.position)>1.8){fail(world,resident,progress,nextTick,'我距离这个采集目标太远，需要先实际走到它附近。');due.add(resident.id);break;}
-          if(progress.elapsedTicks%20===0){
+          const period=gatherPeriod(resident,object.resourceKind??'wood');
+          if(progress.elapsedTicks%period===0){
             if(object.resources<=0){fail(world,resident,progress,nextTick,'眼前已没有可取的资源。');due.add(resident.id);break;}
             if(resident.supplies&&resident.inventory>=30){fail(world,resident,progress,nextTick,'采集袋已满（30份），需要先消耗食物或停止采集。');due.add(resident.id);break;}
-            object.resources--;resident.inventory++;
+            object.resources--;resident.inventory++;progress.producedUnits=(progress.producedUnits??0)+1;addSkill(resident,'gathering');
             const kind=object.resourceKind??'wood';if(resident.supplies){resident.supplies[kind]=(resident.supplies[kind]??0)+1;creditGather(world,resident,kind);}resident.fatigue=Math.min(1,resident.fatigue+0.005);
-            if(Math.floor(progress.elapsedTicks/20)>=params.amount)progress.done=true;
+            if(progress.producedUnits>=params.amount)progress.done=true;
           }
           break;
+        }
+        case 'craft':case 'exchange':{
+          const recipe=findRecipe(resident,params.recipeRef);
+          if(!recipe){fail(world,resident,progress,nextTick,'尚未在工作台学到该配方。');due.add(resident.id);break;}
+          if(progress.elapsedTicks*FIXED_DT_MS>=skillDuration(resident,'crafting',recipe.durationMs)){
+            const error=finishRecipe(world,resident,params.stationRef,params.recipeRef,progress.action.op);
+            if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;
+          }break;
+        }
+        case 'withdraw':{
+          if(progress.elapsedTicks*FIXED_DT_MS>=500){const error=withdraw(world,resident,params.storageRef,params.resource,params.amount);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;}break;
+        }
+        case 'build':{
+          const step=HOUSE_STEPS.find(s=>resident.known[params.stepRef]?.entityId.endsWith(':'+s.id));
+          if(!step){fail(world,resident,progress,nextTick,'尚未知晓这个施工步骤。');due.add(resident.id);break;}
+          if(progress.elapsedTicks*FIXED_DT_MS>=skillDuration(resident,'construction',step.durationMs)){const error=finishBuild(world,resident,params.projectRef,params.stepRef);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;}break;
         }
         case 'haul':{
           const source=resident.known[params.sourceRef],destination=resident.known[params.destinationRef];
@@ -118,14 +138,15 @@ export function stepActions(world:World,nextTick:number):string[] {
           if(progress.elapsedTicks%10===0){resident.supplies[kind]!--;resident.inventory--;world.camp.stock??={};world.camp.stock[kind]=(world.camp.stock[kind]??0)+1;if(Math.floor(progress.elapsedTicks/10)>=params.amount||!resident.supplies[kind])progress.done=true;}break;
         }
         case 'read_notice':{
-          const board=world.objects.find(o=>o.id===knowledge!.entityId&&o.kind==='board');
-          if(!board||distance(resident.position,board.position)>2.5){fail(world,resident,progress,nextTick,'离公告板太远，无法读清；需要走近。');due.add(resident.id);break;}
-          if(progress.elapsedTicks*FIXED_DT_MS>=1000){readBoard(world,resident,board);progress.done=true;due.add(resident.id);}break;
+          const board=world.objects.find(o=>o.id===knowledge!.entityId&&['board','workbench'].includes(o.kind));
+          if(!board){fail(world,resident,progress,nextTick,'这个引用不是公告板或工作台实体。已读任务应直接accept_task，施工步骤应build；read_notice只能使用描述为公告板实体或工作台的引用。');due.add(resident.id);break;}
+          if(distance(resident.position,board.position)>2.5){fail(world,resident,progress,nextTick,'离公告板或工作台太远，无法读清；需要先走到该实体引用的位置。');due.add(resident.id);break;}
+          if(progress.elapsedTicks*FIXED_DT_MS>=1000){if(board.kind==='workbench')readWorkbench(world,resident,board);else readBoard(world,resident,board);progress.done=true;due.add(resident.id);}break;
         }
         case 'accept_task':case 'decline_task':{
           const task=world.camp?.tasks.find(t=>t.id===knowledge!.entityId);
           if(!task||task.status!=='open'){fail(world,resident,progress,nextTick,'这项已读目标当前不可接取或已经完成。');due.add(resident.id);break;}
-          if(progress.action.op==='accept_task'){if(!task.acceptedBy.includes(resident.id))task.acceptedBy.push(resident.id);ownReceipt(resident,world,`我已自愿接受采集${RESOURCE_LABELS[task.resource]}${task.amount}份的公告目标，接下来要实际采集，空口问候不推进目标。`);}
+          if(progress.action.op==='accept_task'){if(!task.acceptedBy.includes(resident.id))task.acceptedBy.push(resident.id);ownReceipt(resident,world,`我已自愿接受${taskTitle(task)}。接下来准备材料、完成实际工作，空口问候不推进目标。`);}
           else{task.acceptedBy=task.acceptedBy.filter(id=>id!==resident.id);ownReceipt(resident,world,`我拒绝了这项公告目标，理由：${params.reason}`);}
           progress.done=true;break;
         }
@@ -135,7 +156,7 @@ export function stepActions(world:World,nextTick:number):string[] {
         }
         case 'rest':
           if(progress.targetPosition&&distance(resident.position,progress.targetPosition)>1.8){fail(world,resident,progress,nextTick,'我还没有到达想休息的地方。');due.add(resident.id);break;}
-          resident.fatigue=Math.max(0,resident.fatigue-0.0002);
+          resident.fatigue=Math.max(0,resident.fatigue-(world.objects.some(o=>o.kind==='house'&&distance(resident.position,o.position)<=3)?.0005:.0002));
           progress.done=progress.elapsedTicks*FIXED_DT_MS>=params.durationSimMs;break;
         case 'equip_item':case 'unequip_item':{
           if(progress.elapsedTicks*FIXED_DT_MS<1000)break;
@@ -147,7 +168,7 @@ export function stepActions(world:World,nextTick:number):string[] {
         case 'continue':progress.done=true;break;
         default:fail(world,resident,progress,nextTick,'当前动作无法执行。');due.add(resident.id);
       }
-      if(progress.done&&resident.actionFeedback.length===feedbackBefore){ownReceipt(resident,world,`我实际完成了${progress.action.op}${targetRef?`，目标${targetRef}（${knowledge?.description??'本人已知目标'}）`:''}${progress.action.op==='walk'?'，我已到达该目标最后已知位置附近，不需要重复走到同一个位置':''}${progress.action.op==='gather'?`，本次采集${Math.floor(progress.elapsedTicks/20)}份`:''}。目前携带${resident.inventory}份资源。`);world.events.push({tick:nextTick,kind:'action_completed',agentId:resident.id,text:progress.action.op});}
+      if(progress.done&&resident.actionFeedback.length===feedbackBefore){const receipt=`我实际完成了${progress.action.op}${targetRef?`，目标${targetRef}（${knowledge?.description??'本人已知目标'}）`:''}${progress.action.op==='walk'?'，我已到达该目标最后已知位置附近，不需要重复走到同一个位置':''}${progress.action.op==='gather'?`，本次采集${progress.producedUnits??0}份`:''}。目前携带${resident.inventory}份资源。`;ownReceipt(resident,world,receipt);world.events.push({tick:nextTick,kind:'action_completed',agentId:resident.id,text:progress.action.op});}
     }
     if(!resident.plan.some(p=>!p.done))due.add(resident.id);
   }

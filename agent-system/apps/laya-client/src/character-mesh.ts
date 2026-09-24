@@ -86,6 +86,11 @@ export class CharacterMesh {
         const holder=new L.Sprite3D('two hand spear');this.visuals.addChild(holder);holder.transform.localPosition=new L.Vector3(0,handY,width*1.23);holder.transform.localRotationEuler=new L.Vector3(0,0,-64);
         this.part('spear shaft',L.PrimitiveMesh.createCylinder(.027,2.1,6),'#9b7148',0,0,0,1,1,1,holder);
         this.part('spear point',L.PrimitiveMesh.createSphere(.09,6,8),'#c3c9c6',0,1.13,0,.6,2,.45,holder);
+      }else if(gear.definition.id==='stone_axe'||gear.definition.id==='stone_hoe'){
+        const x=side*width*1.2,hoe=gear.definition.id==='stone_hoe';
+        this.part('tool wood handle',L.PrimitiveMesh.createCylinder(.035,.8,6),'#8c6540',x,handY+.1,.12);
+        this.box(hoe?'stone hoe head':'stone axe head','#81908c',hoe?.38:.32,hoe?.10:.22,hoe?.13:.09,x+.1,handY+.44,.12);
+        this.box('tool binding','#c9b787',.09,.10,.12,x,handY+.4,.12);
       }else{
         const x=side*width*1.2;
         this.part('knife grip',L.PrimitiveMesh.createCylinder(.037,.22,6),'#725442',x,handY+.08,.12);

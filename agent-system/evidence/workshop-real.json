@@ -1,0 +1,263 @@
+{
+  "checkedAt": "2026-09-24T05:08:29.548Z",
+  "status": "passed_scoped",
+  "previousHouseAttempt": {
+    "status": "partial",
+    "requests": 25,
+    "tick": 248,
+    "constructionStages": 0,
+    "freezeViolation": false
+  },
+  "reports": [
+    {
+      "scenario": "tools",
+      "status": "passed",
+      "model": "glm-4.5-air",
+      "execution": "node-local-real-provider-prepared-fixture",
+      "mockUsed": false,
+      "requests": 10,
+      "freezeChecks": 3028,
+      "freezeViolation": false,
+      "tick": 85,
+      "craftCount": 2,
+      "constructionStages": 0,
+      "taskProgress": [
+        {
+          "kind": "craft",
+          "progress": 1,
+          "amount": 1,
+          "status": "done"
+        },
+        {
+          "kind": "craft",
+          "progress": 1,
+          "amount": 1,
+          "status": "done"
+        }
+      ],
+      "equippedTools": [
+        {
+          "agentId": "resident-a",
+          "tools": [
+            "stone_axe"
+          ]
+        },
+        {
+          "agentId": "resident-b",
+          "tools": [
+            "stone_hoe"
+          ]
+        }
+      ],
+      "audit": [
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "accept_task"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-b",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 2,
+          "ops": [
+            "accept_task",
+            "craft"
+          ],
+          "validationIssues": [
+            "$.evidenceRefs: reference is not in personal evidence"
+          ]
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 2,
+          "ops": [
+            "accept_task"
+          ],
+          "validationIssues": [
+            "$.evidenceRefs: reference is not in personal evidence"
+          ]
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "walk"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "walk"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "walk"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 2,
+          "ops": [
+            "craft"
+          ],
+          "validationIssues": [
+            "$.evidenceRefs: reference is not in personal evidence"
+          ]
+        },
+        {
+          "agentId": "resident-b",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 2,
+          "ops": [
+            "equip_item",
+            "walk",
+            "gather"
+          ],
+          "validationIssues": [
+            "$.evidenceRefs: reference is not in personal evidence"
+          ]
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "equip_item"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": false,
+          "code": "MODEL_CANCELLED",
+          "attempts": 0,
+          "validationIssues": []
+        }
+      ],
+      "browser": "not_run",
+      "physicalDevice": "not_run",
+      "scope": "Two independent real residents; prepared personal materials, prior read recipe and notice fixtures; verifies voluntary craft and equip, not autonomous sourcing"
+    },
+    {
+      "scenario": "house",
+      "status": "passed",
+      "model": "glm-4.5-air",
+      "execution": "node-local-real-provider-prepared-fixture",
+      "mockUsed": false,
+      "requests": 7,
+      "freezeChecks": 1678,
+      "freezeViolation": false,
+      "tick": 282,
+      "craftCount": 0,
+      "constructionStages": 3,
+      "taskProgress": [
+        {
+          "kind": "house",
+          "progress": 3,
+          "amount": 3,
+          "status": "done"
+        }
+      ],
+      "equippedTools": [
+        {
+          "agentId": "resident-a",
+          "tools": []
+        }
+      ],
+      "audit": [
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "accept_task",
+            "walk",
+            "build"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "continue"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "build"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 2,
+          "ops": [
+            "continue"
+          ],
+          "validationIssues": [
+            "$.evidenceRefs: reference is not in personal evidence"
+          ]
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "build"
+          ],
+          "validationIssues": []
+        },
+        {
+          "agentId": "resident-a",
+          "accepted": true,
+          "code": "ACCEPTED",
+          "attempts": 1,
+          "ops": [
+            "continue"
+          ],
+          "validationIssues": []
+        }
+      ],
+      "browser": "not_run",
+      "physicalDevice": "not_run",
+      "scope": "Single real builder; prepared public stock and prior notice fixture; verifies actual phased construction, not end-to-end cooperative material gathering"
+    }
+  ]
+}

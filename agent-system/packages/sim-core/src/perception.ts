@@ -2,6 +2,7 @@ import defaults from '../defaults.json' with { type: 'json' };
 import type { CharacterContext, Observation, Vec3 } from '../../contracts/src/types.ts';
 import type { KnowledgeEntry, Resident, SensoryOverlay, SoundFragment, World, WorldObject } from './domain.ts';
 import { experiencedWhen, privateAction, privateMemory, privateObservation, rememberObservation } from './knowledge.ts';
+import {skillLevel} from './recipes.ts';
 import { listOwnEquipment, publicCharacterSummary } from './character.ts';
 
 const DT = defaults.simulation.fixedDtMs;
@@ -219,7 +220,7 @@ export function buildContext(world: World, resident: Resident): CharacterContext
     identity: { name: resident.name, background: resident.background, personality: resident.personality, personalGoal: resident.personalGoal },
     experiencedWhen: experiencedWhen(world.tick, DT),
     body: { hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain')+`；自身生命${Math.round(resident.health??100)}/100${(resident.health??100)<30?'，虚弱，行动缓慢':''}` },
-    currentPlan: { goal: ((resident.plan.length&&!resident.plan.some(p=>!p.done)?'（计划已完成，需要考虑后续行动）':'')+resident.goal).slice(0,300), actions: resident.plan.filter(progress=>!progress.done).map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.supplies?`；自己携带：木材${resident.supplies.wood??0}、石料${resident.supplies.stone??0}、浆果${resident.supplies.food??0}，容量30。`:'') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
+    currentPlan: { goal: ((resident.plan.length&&!resident.plan.some(p=>!p.done)?'（计划已完成，需要考虑后续行动）':'')+resident.goal).slice(0,300), actions: resident.plan.filter(progress=>!progress.done).map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.supplies?`；自己携带：木材${resident.supplies.wood??0}、石料${resident.supplies.stone??0}、浆果${resident.supplies.food??0}，容量30。自身熟练度：采集${skillLevel(resident.skills?.gathering)}级，加工${skillLevel(resident.skills?.crafting)}级，建造${skillLevel(resident.skills?.construction)}级。`:'') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
     observations: observations.map(privateObservation), memories: selectedMemories.map(privateMemory),
     knownTargets: [
       ...Object.values(resident.known).filter(entry=>!entry.entityId.startsWith('supply-')).map(entry => ({ ref: entry.ref, description: `${entry.description}；距其最后已知位置约${planarDistance(resident.position,entry.lastPosition).toFixed(1)}米；${entry.visible ? '目前可见' : '仅最后已知，当前位置未知'}`, lastObservedWhen: experiencedWhen(entry.lastSeenTick, DT) })),
@@ -230,7 +231,7 @@ export function buildContext(world: World, resident: Resident): CharacterContext
         lastObservedWhen: experiencedWhen(world.tick, DT),
       })) : []),
     ],
-    allowedActions: [...ALLOWED,...(world.camp?['read_notice','accept_task','decline_task','haul',...(resident.supplies?.food?['eat']:[])]:[])].filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
+    allowedActions: [...ALLOWED,...(world.camp?['read_notice','accept_task','decline_task','haul','withdraw','build',...(Object.values(resident.known).some(k=>k.entityId.startsWith('recipe:'))?['craft','exchange']:[]),...(resident.supplies?.food?['eat']:[])]:[])].filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
   };
 }
 

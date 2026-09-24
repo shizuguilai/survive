@@ -4,7 +4,7 @@
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "latestBindingDecision": "任何居民需要大模型认知时全世界模拟暂停；运行时网络和观察者UI继续；批次完整提交后恢复，不追真实等待帧。",
-  "statusNote": "用户要求扩展可玩营地和生命饥饿；最小公告采集目标已实现，T15/T16仍partial。真实模型45请求，任务实际进度+1，无冻结违规。详见CAMP_PROGRESS.md。公开发布状态单独记录。",
+  "statusNote": "用户追加需求：居民历史、简化工作台、工具和小屋项目已接入。T14、完整T15/T16与微信验收仍分别保留；Mock和真实模型证据分开。",
   "tasks": [
     {
       "id": "T00",
@@ -1767,34 +1767,42 @@
       "definitionOfDone": "只划用途与目标，已知地图布局、预算和公告；无固定职业与瞬间全图同步。",
       "verification": {
         "static": "passed",
-        "mock": "passed_scoped",
-        "realModel": "passed_local_45_requests_progress_1",
+        "mock": "passed_scoped_workshop_and_house",
+        "realModel": "passed_scoped_two_real_crafters_and_single_builder_prepared_materials",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
-        "browser": "passed_task_ui_only",
+        "browser": "passed_native_Laya_UI_and_explicit_house_fixture",
         "physicalDevice": "not_run",
         "publication": "web_public_deployed_scoped"
       },
-      "configurationStatus": "MODEL_KEY_CONFIGURED; PROVIDER_AUTH_RESOLVED_LOCAL_REAL_CORE_PASSED; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
+      "configurationStatus": "MODEL_KEY_CONFIGURED_SERVER_ONLY; glm-4.5-air; WEB_PUBLIC; IDE_UNAVAILABLE; wx_appid_empty; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/camp.ts",
         "packages/sim-core/src/actions.ts",
         "packages/sim-core/src/perception.ts",
-        "apps/laya-client/src/view.ts"
+        "apps/laya-client/src/view.ts",
+        "packages/sim-core/src/workshop.ts",
+        "packages/sim-core/src/recipes.ts",
+        "apps/laya-client/src/world-mesh.ts"
       ],
       "commandsRun": [],
       "evidence": [
         "evidence/camp-real.json",
         "evidence/camp-tests.txt",
         "evidence/camp-browser.json",
-        "evidence/camp-deployment.json"
+        "evidence/camp-deployment.json",
+        "evidence/workshop-tests.json",
+        "evidence/workshop-real.json",
+        "evidence/workshop-browser.json",
+        "evidence/workshop-deployment.json"
       ],
       "commit": null,
       "blockers": [
-        "区域用途划定、建筑项目、协商承诺与资源预留尚未实现"
+        "自由区域划定、居民自主提案、承诺协商及资源预留未实现",
+        "完整多人从零备料到竣工真实自治尚未验收"
       ],
-      "codeStatus": "implemented_scoped_camp_goal_cycle",
-      "scopeNote": "本轮用户明确要求扩展任务及资源，实现公告阅读、自主接受/拒绝、采集进度与个人物资；不标完整区域协作完成。"
+      "codeStatus": "implemented_scoped_goals_workbench_three_house_sites",
+      "scopeNote": "按用户追加需求交付最小建房项目：公告读取、自愿接取、公共库存、三阶段依赖与原子扣料。完整自由区域、个人提案、承诺协商、资源预留和长期协作未完成。"
     },
     {
       "id": "T16",
@@ -1817,34 +1825,42 @@
       "definitionOfDone": "个人提案与接受；程序只保障依赖/原子账本；资源竞争不按API返回快慢。",
       "verification": {
         "static": "passed",
-        "mock": "passed_scoped",
-        "realModel": "passed_local_45_requests_progress_1",
+        "mock": "passed_scoped_workshop_and_house",
+        "realModel": "passed_scoped_two_real_crafters_and_single_builder_prepared_materials",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
-        "browser": "passed_task_ui_only",
+        "browser": "passed_native_Laya_UI_and_explicit_house_fixture",
         "physicalDevice": "not_run",
         "publication": "web_public_deployed_scoped"
       },
-      "configurationStatus": "MODEL_KEY_CONFIGURED; PROVIDER_AUTH_RESOLVED_LOCAL_REAL_CORE_PASSED; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
+      "configurationStatus": "MODEL_KEY_CONFIGURED_SERVER_ONLY; glm-4.5-air; WEB_PUBLIC; IDE_UNAVAILABLE; wx_appid_empty; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/camp.ts",
         "packages/sim-core/src/actions.ts",
         "packages/sim-core/src/perception.ts",
-        "apps/laya-client/src/view.ts"
+        "apps/laya-client/src/view.ts",
+        "packages/sim-core/src/workshop.ts",
+        "packages/sim-core/src/recipes.ts",
+        "apps/laya-client/src/world-mesh.ts"
       ],
       "commandsRun": [],
       "evidence": [
         "evidence/camp-real.json",
         "evidence/camp-tests.txt",
         "evidence/camp-browser.json",
-        "evidence/camp-deployment.json"
+        "evidence/camp-deployment.json",
+        "evidence/workshop-tests.json",
+        "evidence/workshop-real.json",
+        "evidence/workshop-browser.json",
+        "evidence/workshop-deployment.json"
       ],
       "commit": null,
       "blockers": [
-        "区域用途划定、建筑项目、协商承诺与资源预留尚未实现"
+        "自由区域划定、居民自主提案、承诺协商及资源预留未实现",
+        "完整多人从零备料到竣工真实自治尚未验收"
       ],
-      "codeStatus": "implemented_scoped_camp_goal_cycle",
-      "scopeNote": "本轮用户明确要求扩展任务及资源，实现公告阅读、自主接受/拒绝、采集进度与个人物资；不标完整区域协作完成。"
+      "codeStatus": "implemented_scoped_goals_workbench_three_house_sites",
+      "scopeNote": "按用户追加需求交付最小建房项目：公告读取、自愿接取、公共库存、三阶段依赖与原子扣料。完整自由区域、个人提案、承诺协商、资源预留和长期协作未完成。"
     },
     {
       "id": "T17",
@@ -2265,10 +2281,106 @@
         "evidence/camp-browser.json",
         "evidence/camp-deployment.json"
       ]
+    },
+    {
+      "id": "HISTORY01",
+      "title": "居民可点击历史、详情与本机留存",
+      "dependsOn": [
+        "T10",
+        "T12",
+        "T13"
+      ],
+      "status": "partial",
+      "codeStatus": "implemented_local_2000_rows",
+      "verification": {
+        "static": "passed",
+        "mock": "passed",
+        "realModel": "not_run_live_real_browser",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_native_Laya_desktop_mobile_emulation",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_scoped"
+      },
+      "evidence": [
+        "evidence/workshop-tests.json",
+        "evidence/workshop-real.json",
+        "evidence/workshop-browser.json",
+        "evidence/workshop-deployment.json"
+      ],
+      "blockers": [
+        "微信AppID、鉴权、合法域名和真机未具备；微信未发布",
+        "线上实时模型浏览器与完整从零备料协作不在本轮通过范围"
+      ],
+      "scopeNote": "观察者档案最近2000条，本机自动保存；计划与实际结果分开，不进入模型上下文。不是完整现场存档恢复。"
+    },
+    {
+      "id": "WORKSHOP01",
+      "title": "私有配方学习、石斧石锄、置换和熟练度",
+      "dependsOn": [
+        "T05",
+        "T06",
+        "T10",
+        "T11"
+      ],
+      "status": "partial",
+      "codeStatus": "implemented_scoped",
+      "verification": {
+        "static": "passed",
+        "mock": "passed",
+        "realModel": "passed_two_residents_real_craft_and_equip_prepared_materials",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_native_Laya_desktop_mobile_emulation",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_scoped"
+      },
+      "evidence": [
+        "evidence/workshop-tests.json",
+        "evidence/workshop-real.json",
+        "evidence/workshop-browser.json",
+        "evidence/workshop-deployment.json"
+      ],
+      "blockers": [
+        "微信AppID、鉴权、合法域名和真机未具备；微信未发布",
+        "线上实时模型浏览器与完整从零备料协作不在本轮通过范围"
+      ],
+      "scopeNote": "真实准备材料夹具验证两居民各自合成和装备；兑换规则单元测试通过，未独立做真实模型兑换案例。"
+    },
+    {
+      "id": "HOUSE01",
+      "title": "预设地块与小屋三阶段施工项目",
+      "dependsOn": [
+        "T15",
+        "T16"
+      ],
+      "status": "partial",
+      "codeStatus": "implemented_scoped",
+      "verification": {
+        "static": "passed",
+        "mock": "passed",
+        "realModel": "passed_single_real_builder_prepared_public_stock_three_phases",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_native_Laya_desktop_mobile_emulation",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_scoped"
+      },
+      "evidence": [
+        "evidence/workshop-tests.json",
+        "evidence/workshop-real.json",
+        "evidence/workshop-browser.json",
+        "evidence/workshop-deployment.json"
+      ],
+      "blockers": [
+        "微信AppID、鉴权、合法域名和真机未具备；微信未发布",
+        "线上实时模型浏览器与完整从零备料协作不在本轮通过范围"
+      ],
+      "scopeNote": "三预设地块，木石小屋12木材8石料，地基/墙体/屋顶。原子库存无预留；未实现任意布局和多人协作承诺。"
     }
   ],
   "implementationDirectory": "agent-system",
-  "recordedAt": "2026-09-24T04:18:51.779868+00:00",
+  "recordedAt": "2026-09-24T05:09:56.409080+00:00",
   "referenceMainVerified": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "workingBranch": "work/agent-cognition-20260924",
   "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
@@ -2421,5 +2533,52 @@
     "taskProgress": 1,
     "taskBoardNote": "未完成完整T15/T16验收；用户本轮要求推进最小任务与生存循环",
     "evidence": "docs/implementation/CAMP_PROGRESS.md"
+  },
+  "workshopMilestone": {
+    "simCoreVersion": "0.3.0",
+    "baselineMain": "60f5d7eb33860484065a3f98afc5693e9e69c337",
+    "baselineHead": "51505da589d9353ff1543b0cde91b2a1622d20cd",
+    "initialWorktree": "clean",
+    "userEditsPreserved": true,
+    "report": "docs/implementation/WORKSHOP_PROGRESS.md",
+    "realModel": "evidence/workshop-real.json",
+    "browser": "evidence/workshop-browser.json",
+    "publication": "evidence/workshop-deployment.json",
+    "realSummary": {
+      "tools": {
+        "status": "passed",
+        "requests": 10,
+        "freezeChecks": 3028,
+        "freezeViolation": false,
+        "craftCount": 2,
+        "constructionStages": 0
+      },
+      "house": {
+        "status": "passed",
+        "requests": 7,
+        "freezeChecks": 1678,
+        "freezeViolation": false,
+        "craftCount": 0,
+        "constructionStages": 3
+      }
+    },
+    "deployment": {
+      "status": "succeeded",
+      "checkedAt": "2026-09-24T05:12:14.785375+00:00",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "access": "public",
+      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_910b0f91cd1c8191a93d7921c7082d50",
+      "deploymentId": "appgdep_6ab4b1274bf881919ec2774e187ae3d2",
+      "sourceCommit": "92847483dda516edadfb3de8da5659367b97030d",
+      "envSetRevision": 3,
+      "siteVersion": 8,
+      "browser": "passed_local_native_Laya_UI",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "wechatPublication": "not_run",
+      "model": "glm-4.5-air",
+      "secretLocation": "server_runtime_only"
+    }
   }
 }

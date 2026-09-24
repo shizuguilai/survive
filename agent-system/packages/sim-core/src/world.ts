@@ -42,13 +42,13 @@ export function createCampWorld():World{
   const world=createWorld();world.objects=world.objects.filter(o=>o.kind!=='wall');for(const object of world.objects)object.resourceKind='wood';
   world.camp={stock:{},sequence:0,noticeVersion:0,tasks:[]};
   world.objects.push({id:'camp-board',kind:'board',position:{x:0,y:0,z:.4},width:.8,height:1.5,depth:.3,appearance:'营地公告板',resources:0});
+  world.objects.push({id:'camp-workbench',kind:'workbench',position:{x:2.5,y:0,z:3},width:2,height:1.4,depth:1,appearance:'配方工作台兼物资置换台；走近read_notice可学习工具制作和资源兑换配方',resources:0});
   for(let i=0;i<30;i++){
-    const kind=i%3===0?'tree':i%3===1?'rock':'berry';const ring=Math.floor(i/3);const angle=(i%3)*2*Math.PI/3+ring*.18;
-    const radius=ring<3?5+ring*2:12+(ring-3)*2;
-    world.objects.push({id:`camp-resource-${i}`,kind,resourceKind:kind==='tree'?'wood':kind==='rock'?'stone':'food',position:{x:Math.cos(angle)*radius,y:0,z:Math.sin(angle)*radius},width:1,height:kind==='tree'?3.2:kind==='rock'?1.4:.8,depth:1,appearance:kind==='tree'?'可采集木材的树木':kind==='rock'?'可采集石料的岩石':'结满可食浆果的灌木',resources:kind==='berry'?12:24});
+    const kind=i%3===0?'tree':i%3===1?'rock':'berry',n=Math.floor(i/3),centers=[{x:-11,z:7},{x:10,z:9},{x:9,z:-9}],center=centers[i%3],angle=n*2.4,radius=1.8+Math.sqrt(n)*2;
+    world.objects.push({id:`camp-resource-${i}`,kind,resourceKind:kind==='tree'?'wood':kind==='rock'?'stone':'food',position:{x:center.x+Math.cos(angle)*radius,y:0,z:center.z+Math.sin(angle)*radius},width:1,height:kind==='tree'?3.2:kind==='rock'?1.4:.8,depth:1,appearance:kind==='tree'?'可采集木材的树木':kind==='rock'?'可采集石料的岩石':'结满可食浆果的灌木',resources:kind==='berry'?12:24});
   }
   world.objects.push({id:'camp-pond',kind:'pond',position:{x:-12,y:0,z:-10},width:5,height:.2,depth:4,appearance:'一汪池塘，岸边可以休息',resources:0});
-  for(const r of world.residents){r.supplies={};r.hunger=.4;r.personalGoal='照顾自己的温饱与休息，了解营地公告中的发展需要，自主选择有价值的事情并完成。熟人问候结束后继续生活，不必反复寒暄。';r.background+='你会识别木材、石料和浆果，懂得走近资源后采集、吃自己采到的浆果和休息；任务需要走近公告板阅读后自主接受。你不知道未亲见资源的位置。';}
+  for(const r of world.residents){r.supplies={};r.skills={gathering:0,crafting:0,construction:0};r.hunger=.4;r.personalGoal='照顾自己的温饱与休息，了解营地公告中的发展需要，自主选择有价值的事情并完成。熟人问候结束后继续生活，不必反复寒暄。';r.background+='你会识别木材、石料和浆果，懂得走近资源后采集、吃自己采到的浆果和休息；任务需要走近公告板阅读后自主接受。工作台上的具体配方要亲自走近阅读才能学会，公共仓储可存取材料，小屋建成后门廊适合休息。你不知道未亲见资源的位置。';}
   postTask(world,{resource:'wood',amount:8,note:'为营地准备第一批材料。可自由选择是否参与，完成后再读新目标。'});
   return world;
 }

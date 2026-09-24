@@ -1,6 +1,9 @@
 import type { World, SensoryOverlay } from '../../../packages/sim-core/src/domain.ts';
 import {RESOURCE_LABELS,type TaskDraft} from '../../../packages/sim-core/src/camp.ts';
 import {CharacterMesh} from './character-mesh.ts';
+import {WorldMesh} from './world-mesh.ts';
+import {RECIPES,BUILD_SITES,HOUSE_STEPS,materialText,taskTitle,skillLevel} from '../../../packages/sim-core/src/recipes.ts';
+import {selectJournal,journalTime,JOURNAL_LABELS,readableAction,type JournalEntry,type JournalCategory} from './journal.ts';
 import {publicCharacterSummary} from '../../../packages/sim-core/src/character.ts';
 import defaults from '../../../packages/sim-core/defaults.json' with {type:'json'};
 
@@ -11,6 +14,7 @@ export type ViewCallbacks = {
   onSeek(tick:number):void; onSpeed(value:number):void; onStart():void; onConnect(token:string):void;
 };
 export type ViewState = {
+  history?:JournalEntry[];historyVersion?:number;historyWarning?:string;
   pendingTasks?:number;world:World; overlays:Record<string,SensoryOverlay>; status:string; error?:string;
   mode:'UNCONFIGURED'|'REAL_MODEL'|'REPLAY'; selectedId:string; showSenses:boolean;
   playbackTick:number; maxTick:number; speed:number; hosted?:boolean;
@@ -38,9 +42,12 @@ export async function initialize(api:ViewCallbacks):Promise<ObserverView>{
 export class ObserverView {
   readonly root:any; readonly scene:any; readonly camera:any;
   private labels:Record<string,any>={};private buttons:Record<string,NativeButton>={};
-  private residents=new Map<string,CharacterMesh>();private objects=new Map<string,any>();
+  private residents=new Map<string,CharacterMesh>();private objects=new Map<string,WorldMesh>();private objectSignatures=new Map<string,string>();private placeLabels=new Map<string,any>();
   private nameLabels=new Map<string,any>();private speechLabels=new Map<string,any>();private senseLines:any;private selection:any;
   private planner:any;private taskNote:any;private draftResource:TaskDraft['resource']='wood';private draftAmount=8;private vitality:any;
+  private draftKind:'gather'|'craft'|'house'='gather';private draftRecipe='stone_axe';private draftSite='east';
+  private historyPanel:any;private workshopPanel:any;private historyFilter:JournalCategory|'all'='all';private historyPage=0;private historyAllRuns=false;private historyDetail:JournalEntry|null=null;
+  private historyRows:any[]=[];private displayedHistory:JournalEntry[]=[];private historyCache='';
   private state:ViewState|null=null;private token:any;private timeline:any;
   private offset={x:0,z:0};private drag:{x:number;y:number;ox:number;oz:number;moved:boolean}|null=null;
   private markers:any;private sceneInput:any;private zoom=26;private scrubbing=false;
@@ -57,9 +64,11 @@ export class ObserverView {
     const light=new L.Sprite3D('Daylight');this.scene.addChild(light);
     light.transform.rotationEuler=new L.Vector3(-55,25,0);const dl=light.addComponent(L.DirectionLightCom);dl.color=new L.Color(.65,.63,.55,1);dl.intensity=.8;
     this.mesh('ground',L.PrimitiveMesh.createBox(72,.12,72),{x:0,y:-.12,z:0},'#cbd4b5');
-    this.mesh('clearing',L.PrimitiveMesh.createCylinder(8,.025,60),{x:0,y:-.038,z:0},'#d9d5b8');
-    const grid=new L.PixelLineSprite3D(70,'terrain grid');this.scene.addChild(grid);
-    for(let n=-16;n<=16;n+=2){this.line(grid,{x:n,y:-.012,z:-14},{x:n,y:-.012,z:14},'#b8c4a7');this.line(grid,{x:-18,y:-.012,z:n},{x:18,y:-.012,z:n},'#b8c4a7');}
+    this.mesh('central clearing',L.PrimitiveMesh.createCylinder(5,.025,40),{x:0,y:-.038,z:0},'#d8cfaf');
+    this.mesh('east west path',L.PrimitiveMesh.createBox(23,.02,1.6),{x:0,y:-.02,z:0},'#c5bc9c');
+    this.mesh('north path',L.PrimitiveMesh.createBox(1.5,.02,14),{x:0,y:-.018,z:-3},'#c5bc9c');
+    for(const [x,z,r,c] of [[-11,7,8,'#b9cb9f'],[10,9,7,'#c4c1a7'],[9,-9,7,'#b4c79a'],[-12,-10,4,'#bfc5a6']] as const)this.mesh('terrain region',L.PrimitiveMesh.createCylinder(r,.015,25),{x,y:-.03,z},c);
+    for(let i=0;i<48;i++){const a=i*2.4,r=15+(i%7)*2;this.mesh('grass tuft',L.PrimitiveMesh.createBox(.08,.15+(i%3)*.06,.15),{x:Math.cos(a)*r,y:.015,z:Math.sin(a)*r},i%2?'#a6b788':'#afbe92');}
     this.senseLines=new L.PixelLineSprite3D(1200,'有限感知参考');this.scene.addChild(this.senseLines);
     this.selection=new L.PixelLineSprite3D(72,'selected resident');this.scene.addChild(this.selection);
     this.root=new L.Sprite();this.root.name='Observer UI';L.stage.addChild(this.root);
@@ -103,7 +112,9 @@ export class ObserverView {
     this.labels.perception=this.text(this.root,'暂无感知事件',20,312,14,'#e5f1df',250);this.labels.perception.height=118;this.labels.perception.overflow='hidden';
     this.text(this.root,'当前意图',20,444,12,palette.muted);
     this.labels.goal=this.text(this.root,'尚未得到真实模型决策',20,468,14,'#e5f1df',252);this.labels.goal.height=53;this.labels.goal.overflow='hidden';
-    this.button('senses','感官显示  开',18,538,254,()=>this.api.onToggleSenses());
+    this.button('history','历史 / 档案',18,538,121,()=>this.openHistory(),true);
+    this.button('senses','感官显示 开',151,538,121,()=>this.api.onToggleSenses());
+    this.labels.person.mouseEnabled=true;this.labels.person.on(L.Event.CLICK,this,()=>this.openHistory());
     this.text(this.root,'青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知',20,584,12,'#95b3a6',254);
     this.labels.equipment=this.text(this.root,'',20,633,11,'#aac2b7',254);this.labels.equipment.height=36;this.labels.equipment.overflow='hidden';
     this.text(this.root,'摄影机可拖动；暂停时仍可观察。',20,685,11,'#95b3a6',254);
@@ -116,7 +127,8 @@ export class ObserverView {
     this.labels.caption.mouseEnabled=false;
     this.button('zoomOut','−',966,94,38,()=>{this.zoom=Math.min(68,this.zoom+6);this.camera.orthographicVerticalSize=this.zoom;this.positionLabels();});
     this.button('zoomIn','＋',1014,94,38,()=>{this.zoom=Math.max(10,this.zoom-6);this.camera.orthographicVerticalSize=this.zoom;this.positionLabels();});
-    this.button('tasks','布置营地目标',1064,94,185,()=>{this.planner.visible=!this.planner.visible;},true);
+    this.button('workshop','工作台配方',812,94,140,()=>{this.hideModals();this.workshopPanel.visible=true;});
+    this.button('tasks','规划 / 建房',1064,94,185,()=>{this.hideModals();this.planner.visible=true;},true);
     this.labels.taskSummary=this.text(this.root,'',320,122,12,'#426356',560);this.labels.taskSummary.mouseEnabled=false;
     this.labels.error=this.text(this.root,'',326,494,16,'#7b3e24',908);this.labels.error.height=104;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
     this.button('start','开始真实认知',315,628,130,()=>this.api.onStart(),true);
@@ -133,21 +145,72 @@ export class ObserverView {
     this.timeline.on(L.Event.MOUSE_DOWN,this,()=>{this.scrubbing=true;this.seekAtPointer();});
     this.labels.timeline=this.text(this.root,'暂无回放',1210,675,12,'#60786d',67);
     this.text(this.root,'仅播放模拟时间；网络等待不会出现在回放中',320,699,10,'#82907f',650);
-    this.buildPlanner();
+    this.buildPlanner();this.buildWorkshop();this.buildHistory();
   }
 
+  private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel])if(panel)panel.visible=false;}
+  private modal(name:string,width=910):any{const p=new L.Sprite();p.name=name;this.root.addChild(p);const background=this.panel(p,320,145,width,450,palette.panel,12);background.mouseEnabled=true;background.hitArea=new L.Rectangle(0,0,width,450);p.visible=false;return p;}
+  private modalButton(parent:any,id:string,label:string,x:number,y:number,w:number,fn:()=>void,bright=true):NativeButton{const b=this.button(id,label,x,y,w,fn,bright);parent.addChild(b.root);return b;}
   private buildPlanner():void{
-    this.planner=new L.Sprite();this.planner.name='Camp planner';this.root.addChild(this.planner);
-    this.panel(this.planner,320,145,670,450,palette.panel,12);
-    this.text(this.planner,'营地目标 · 发布到世界里的公告板',344,168,21,'#f1f4dc',595);
-    this.text(this.planner,'居民需走近读到公告，再自行接受或拒绝。仅实际采集计入进度。',344,205,12,palette.muted,610);
-    const add=(id:string,label:string,x:number,y:number,w:number,fn:()=>void)=>{const b=this.button(id,label,x,y,w,fn,true);this.planner.addChild(b.root);return b;};
-    for(const [i,resource]of (['wood','stone','food'] as const).entries())add('task-'+resource,RESOURCE_LABELS[resource],344+i*115,239,105,()=>{this.draftResource=resource;});
-    add('amount','数量 8',704,239,120,()=>{this.draftAmount=this.draftAmount>=20?4:this.draftAmount+4;this.buttons.amount.set('数量 '+this.draftAmount);});
-    this.taskNote=new L.Input();this.taskNote.pos(344,289);this.taskNote.size(610,36);this.taskNote.fontSize=14;this.taskNote.color=palette.ink;this.taskNote.bgColor='#e0e6d9';this.taskNote.prompt='补充说明（可选）：例如优先准备过夜材料';this.taskNote.maxChars=120;this.planner.addChild(this.taskNote);
-    this.labels.taskList=this.text(this.planner,'',344,341,13,'#e5f1df',610);this.labels.taskList.height=175;this.labels.taskList.overflow='hidden';
-    add('publishTask','发布木材目标',344,535,200,()=>{this.api.onTask({resource:this.draftResource,amount:this.draftAmount,note:this.taskNote.text});this.taskNote.text='';});
-    add('closeTasks','返回观察',820,535,134,()=>{this.planner.visible=false;});this.planner.visible=false;
+    this.planner=this.modal('Camp planner');
+    this.text(this.planner,'规划营地',344,166,23,'#f1f4dc',500);
+    this.text(this.planner,'把目标写上公告板，居民亲自阅读后，自主接取、备料与执行。',344,205,13,palette.muted,840);
+    const add=(id:string,label:string,x:number,y:number,w:number,fn:()=>void)=>this.modalButton(this.planner,id,label,x,y,w,fn);
+    for(const [i,kind]of (['gather','craft','house'] as const).entries())add('kind-'+kind,['采集物资','制作工具','建造小屋'][i],344+i*131,239,121,()=>{this.draftKind=kind;});
+    this.labels.draftTitle=this.text(this.planner,'',344,292,17,'#f1f4dc',385);
+    for(const [i,resource]of (['wood','stone','food'] as const).entries())add('task-'+resource,RESOURCE_LABELS[resource],344+i*125,330,115,()=>{this.draftResource=resource;});
+    for(const [i,recipe]of RECIPES.filter(r=>r.kind==='craft').entries())add('recipe-'+recipe.id,recipe.label,344+i*184,330,174,()=>{this.draftRecipe=recipe.id;});
+    for(const [i,site]of BUILD_SITES.entries())add('site-'+site.id,site.label.slice(0,2)+'地块',344+i*125,330,115,()=>{this.draftSite=site.id;});
+    add('amount','数量 8',344,379,110,()=>{this.draftAmount=this.draftKind==='craft'?(this.draftAmount>=3?1:this.draftAmount+1):(this.draftAmount>=20?4:this.draftAmount+4);});
+    this.labels.requirements=this.text(this.planner,'',469,379,12,'#c9d8bd',250);this.labels.requirements.height=40;
+    this.taskNote=new L.Input();this.taskNote.pos(344,430);this.taskNote.size(374,36);this.taskNote.fontSize=14;this.taskNote.color=palette.ink;this.taskNote.bgColor='#e0e6d9';this.taskNote.prompt='目标说明（可选）';this.taskNote.maxChars=120;this.planner.addChild(this.taskNote);
+    this.labels.draftHelp=this.text(this.planner,'',344,481,12,palette.muted,380);this.labels.draftHelp.height=43;
+    this.text(this.planner,'已发布的目标',756,246,14,palette.mint,430);
+    this.labels.taskList=this.text(this.planner,'',756,282,13,'#e5f1df',448);this.labels.taskList.height=207;this.labels.taskList.overflow='hidden';
+    this.labels.stock=this.text(this.planner,'',756,496,13,palette.amber,442);
+    add('publishTask','发布目标',344,535,204,()=>{this.api.onTask({kind:this.draftKind,resource:this.draftResource,amount:this.draftKind==='house'?3:this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount,note:this.taskNote.text,recipeId:this.draftRecipe,siteId:this.draftSite});this.taskNote.text='';});
+    add('closeTasks','返回观察',1062,535,142,()=>{this.planner.visible=false;});
+    this.labels.taskNotice=this.text(this.planner,'',565,538,11,palette.amber,480);this.labels.taskNotice.height=35;
+  }
+  private buildWorkshop():void{
+    this.workshopPanel=this.modal('Recipe book',735);
+    this.text(this.workshopPanel,'工作台 · 配方与置换',344,168,23,'#f1f4dc',650);
+    this.text(this.workshopPanel,'居民必须靠近工作台读取配方，备齐随身材料，再由自己决定合成。',344,205,13,palette.muted,665);
+    RECIPES.forEach((recipe,i)=>{const y=244+i*53;this.text(this.workshopPanel,recipe.label,344,y,16,palette.mint,155);this.text(this.workshopPanel,materialText(recipe.cost)+' → '+(recipe.item?recipe.label:materialText(recipe.output!)),512,y,14,'#eff4df',510);this.text(this.workshopPanel,recipe.effect,512,y+23,11,palette.muted,510);});
+    this.text(this.workshopPanel,'制作、建造每获得3点熟练度升1级，每级缩短4%耗时，最高5级。',344,516,11,palette.muted,650);
+    this.modalButton(this.workshopPanel,'workshopGoal','发布制作目标',344,545,175,()=>{this.hideModals();this.draftKind='craft';this.draftAmount=1;this.planner.visible=true;});
+    this.modalButton(this.workshopPanel,'closeWorkshop','返回观察',881,545,147,()=>{this.workshopPanel.visible=false;});
+  }
+  private openHistory():void{this.hideModals();this.historyPanel.visible=true;this.historyPage=0;this.historyDetail=null;this.historyCache='';}
+  private buildHistory():void{
+    this.historyPanel=this.modal('Resident history');
+    this.labels.historyTitle=this.text(this.historyPanel,'居民档案',344,166,22,'#f1f4dc',840);
+    this.labels.historyMeta=this.text(this.historyPanel,'',344,203,12,palette.muted,852);
+    for(const [i,filter]of (['all','action','decision','speech','memory'] as const).entries())this.modalButton(this.historyPanel,'history-'+filter,['全部','实际行动','模型计划','已说出口','私人记忆'][i],344+i*126,231,115,()=>{this.historyFilter=filter;this.historyPage=0;this.historyDetail=null;});
+    this.modalButton(this.historyPanel,'historyScope','本轮记录',1004,231,199,()=>{this.historyAllRuns=!this.historyAllRuns;this.historyPage=0;this.historyDetail=null;});
+    for(let i=0;i<5;i++){const row=this.panel(this.historyPanel,344,280+i*45,860,39,'#234144',6);row.mouseEnabled=true;row.hitArea=new L.Rectangle(0,0,860,39);const heading=this.text(row,'',10,4,10,palette.mint,820),body=this.text(row,'',10,19,12,'#e5f1df',822);body.height=16;body.overflow='hidden';row.on(L.Event.CLICK,this,()=>{this.historyDetail=this.displayedHistory[this.historyPage*5+i]??null;});this.historyRows.push({root:row,heading,body});}
+    this.labels.historyDetail=this.text(this.historyPanel,'',350,287,15,'#e5f1df',842);this.labels.historyDetail.height=203;this.labels.historyDetail.overflow='scroll';
+    this.labels.historyCount=this.text(this.historyPanel,'',344,515,11,palette.muted,850);
+    this.modalButton(this.historyPanel,'historyNewer','较新记录',344,545,126,()=>{this.historyDetail=null;this.historyPage=Math.max(0,this.historyPage-1);});
+    this.modalButton(this.historyPanel,'historyOlder','较早记录',484,545,126,()=>{this.historyDetail=null;this.historyPage=Math.min(Math.max(0,Math.ceil(this.displayedHistory.length/5)-1),this.historyPage+1);});
+    this.modalButton(this.historyPanel,'historyBack','返回列表',624,545,126,()=>{this.historyDetail=null;});
+    this.modalButton(this.historyPanel,'closeHistory','返回观察',1061,545,143,()=>{this.historyPanel.visible=false;});
+  }
+  private renderHistory(state:ViewState):void{
+    if(!this.historyPanel.visible)return;
+    const key=[state.historyVersion,state.world.runId,state.world.tick,state.selectedId,this.historyFilter,this.historyPage,this.historyAllRuns,this.historyDetail?.id,state.mode,state.historyWarning].join('|');if(this.historyCache===key)return;this.historyCache=key;
+    const r=state.world.residents.find(r=>r.id===state.selectedId)!;
+    const replay=state.mode==='REPLAY';this.displayedHistory=selectJournal(state.history??[],r.id,this.historyFilter,replay||!this.historyAllRuns?state.world.runId:undefined,replay?state.world.tick:Infinity);
+    const pages=Math.max(1,Math.ceil(this.displayedHistory.length/5));this.historyPage=Math.min(this.historyPage,pages-1);
+    this.labels.historyTitle.text=r.name+'的档案 · 点击记录查看详情';
+    this.labels.historyMeta.text=`采集熟练 ${skillLevel(r.skills?.gathering)}级 · 加工 ${skillLevel(r.skills?.crafting)}级 · 建造 ${skillLevel(r.skills?.construction)}级   |   计划不代表已完成，实际行动以结果为准`;
+    this.buttons.historyScope.set(replay?'回放此刻以前':this.historyAllRuns?'含之前的轮次':'本轮记录');
+    for(const filter of ['all','action','decision','speech','memory'])this.buttons['history-'+filter].label.color=filter===this.historyFilter?'#1c5335':'#5a7067';
+    this.historyRows.forEach((row,i)=>{const item=this.displayedHistory[this.historyPage*5+i];row.root.visible=!this.historyDetail&&!!item;if(!item)return;row.heading.text=`${journalTime(item.tick)}  ${JOURNAL_LABELS[item.category]}${item.source?' · '+(item.source==='REAL_MODEL'?'真实模型':'Mock 测试'):''}${item.runId!==state.world.runId?' · 之前轮次':''}`;row.body.text=readableAction(item.text);});
+    this.labels.historyDetail.visible=!!this.historyDetail;
+    if(this.historyDetail){const d=this.historyDetail;this.labels.historyDetail.text=`${journalTime(d.tick)} · ${JOURNAL_LABELS[d.category]}\n\n${readableAction(d.text)}`;}
+    this.labels.historyCount.text=state.historyWarning||`${this.displayedHistory.length}条 · 第${this.historyPage+1}/${pages}页 · 本机最多保留2000条；刷新仍可查看。${replay?'回放只显示此刻以前记录。':''}${this.displayedHistory.length?'':'开始真实自治后，记录会出现在这里。'}`;
+    this.buttons.historyBack.root.visible=!!this.historyDetail;
   }
   private selectIndex(index:number):void{const id=this.state?.world.residents[index]?.id;if(id)this.api.onSelect(id);}
   private seekAtPointer():void{if(this.state?.mode!=='REPLAY')return;this.api.onSeek(Math.round(Math.max(0,Math.min(1,(L.stage.mouseX-320)/880))*this.state.maxTick));}
@@ -181,24 +244,17 @@ export class ObserverView {
       if(!node){node=new CharacterMesh(r);this.scene.addChild(node.node);this.residents.set(r.id,node);const t=this.text(this.markers,r.name,0,0,13,palette.ink,120);t.align='center';t.bold=true;t.mouseEnabled=false;this.nameLabels.set(r.id,t);const speech=this.text(this.markers,'',0,0,14,palette.ink,230);speech.bgColor='#f4f2e9';speech.padding=[7,9,7,9];speech.align='center';speech.mouseEnabled=false;this.speechLabels.set(r.id,speech);}
       node.update(r);
     }
-    for(const o of world.objects){if(this.objects.has(o.id))continue;let node:any;
-      if(o.kind==='wall')node=this.mesh(o.id,L.PrimitiveMesh.createBox(o.width,o.height,o.depth),{...o.position,y:o.position.y+o.height/2},'#92958b');
-      else if(o.kind==='board')node=this.mesh(o.id,L.PrimitiveMesh.createBox(1.2,1.5,.25),{...o.position,y:.75},'#bda377');
-      else if(o.kind==='rock')node=this.mesh(o.id,L.PrimitiveMesh.createSphere(.75,6,6),{...o.position,y:.5},'#8c9694');
-      else if(o.kind==='berry')node=this.mesh(o.id,L.PrimitiveMesh.createSphere(.65,6,6),{...o.position,y:.45},'#a85d70');
-      else if(o.kind==='pond')node=this.mesh(o.id,L.PrimitiveMesh.createCylinder(2.6,.05,30),{...o.position,y:.02},'#75a9b1');
-      else {node=new L.Sprite3D(o.id);this.scene.addChild(node);node.transform.position=new L.Vector3(o.position.x,o.position.y,o.position.z);
-        const trunk=this.mesh(o.id+' trunk',L.PrimitiveMesh.createCylinder(.17,1.6,8),{x:0,y:.8,z:0},'#8a7759');node.addChild(trunk);
-        const leaves=this.mesh(o.id+' leaves',L.PrimitiveMesh.createSphere(.95,7,8),{x:0,y:2.2,z:0},'#65876c');node.addChild(leaves);
-        const crown=this.mesh(o.id+' crown',L.PrimitiveMesh.createSphere(.72,6,7),{x:.23,y:2.8,z:.08},'#86a071');node.addChild(crown);
-      }this.objects.set(o.id,node);
+    const ids=new Set(world.objects.map(o=>o.id));
+    for(const [id,node]of this.objects)if(!ids.has(id)){node.dispose();this.objects.delete(id);this.objectSignatures.delete(id);this.placeLabels.get(id)?.destroy();this.placeLabels.delete(id);}
+    for(const o of world.objects){const signature=[o.kind,o.buildStage,o.resources===0].join(':');if(this.objectSignatures.get(o.id)!==signature){this.objects.get(o.id)?.dispose();const node=new WorldMesh(o);this.scene.addChild(node.node);this.objects.set(o.id,node);this.objectSignatures.set(o.id,signature);}
+      if(['board','workbench','plot','house','pond'].includes(o.kind)){let label=this.placeLabels.get(o.id);if(!label){label=this.text(this.markers,'',0,0,12,'#365346',168);label.align='center';label.bgColor='#edf0d9';label.padding=[3,5,3,5];this.placeLabels.set(o.id,label);}label.text=o.kind==='board'?'公告板 / 公共仓储':o.kind==='workbench'?'工作台 · 配方 / 置换':o.kind==='pond'?'池塘':o.kind==='house'?'木石小屋 · 已竣工':`小屋施工 · ${o.buildStage??0}/3`;}
     }
-    for(const o of world.objects){const node=this.objects.get(o.id);if(node)node.active=!(o.resourceKind&&o.resources===0);}
     this.positionLabels();
   }
   private project(p:{x:number;y:number;z:number}):{x:number;y:number}{const out=new L.Vector4();this.camera.worldToViewportPoint(new L.Vector3(p.x,p.y,p.z),out);return {x:out.x,y:out.y};}
   private positionLabels():void{if(!this.state)return;for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>SIDE+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
     const speech=this.speechLabels.get(r.id);if(speech){const fragments=this.state.world.sounds.filter(s=>s.sourceId===r.id&&this.state!.world.tick-s.emittedTick<3000/defaults.simulation.fixedDtMs);const text=fragments.map(s=>s.text).join('').slice(-55);speech.text=text?`“${text}”`:'';speech.visible=!!text&&t?.visible;const offset=this.state.world.residents.indexOf(r)%2?-5:-225;speech.pos(Math.max(SIDE+12,Math.min(WIDTH-242,p.x+offset)),Math.max(TOP+30,p.y-75));}}
+    for(const object of this.state.world.objects){const label=this.placeLabels.get(object.id);if(!label)continue;const p=this.project({...object.position,y:object.kind==='house'?3.8:object.kind==='plot'?.5:object.height+.3});label.pos(p.x-84,p.y-8);label.visible=p.x>SIDE+85&&p.x<WIDTH-85&&p.y>TOP+64&&p.y<BOTTOM-30;}
   }
   private drawSenses(state:ViewState):void{
     this.senseLines.clear();this.selection.clear();const r=state.world.residents.find(r=>r.id===state.selectedId);if(r)this.ring(this.selection,r.position,.56,'#355e48');
@@ -225,9 +281,22 @@ export class ObserverView {
     this.buttons.pause.set(/PAUS|STOP|暂停/i.test(state.status)?'继续':'暂停');
     this.labels.error.text=state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
     this.labels.caption.text=state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'营地 · 林地 / 采石区 / 浆果丛 · 滚轮缩放、拖动探索':'两名居民 · 两棵树 · 一堵墙';
-    const tasks=state.world.camp?.tasks??[];this.buttons.publishTask.set(`发布${RESOURCE_LABELS[this.draftResource]}目标`);
+    const tasks=state.world.camp?.tasks??[],recipe=RECIPES.find(r=>r.id===this.draftRecipe)!;
+    this.buttons.publishTask.set(this.draftKind==='house'?'发布建房项目':this.draftKind==='craft'?`发布${recipe.label}制作目标`:`发布${RESOURCE_LABELS[this.draftResource]}目标`);
+    for(const kind of ['gather','craft','house'])this.buttons['kind-'+kind].label.color=kind===this.draftKind?'#1c5335':'#5a7067';
+    for(const resource of ['wood','stone','food']){this.buttons['task-'+resource].root.visible=this.draftKind==='gather';this.buttons['task-'+resource].set((this.draftResource===resource?'● ':'')+RESOURCE_LABELS[resource as TaskDraft['resource']]);}
+    for(const entry of RECIPES.filter(r=>r.kind==='craft')){this.buttons['recipe-'+entry.id].root.visible=this.draftKind==='craft';this.buttons['recipe-'+entry.id].set((this.draftRecipe===entry.id?'● ':'')+entry.label);}
+    for(const site of BUILD_SITES){const used=state.world.objects.some(o=>o.id==='plot-'+site.id);this.buttons['site-'+site.id].root.visible=this.draftKind==='house';this.buttons['site-'+site.id].set((this.draftSite===site.id?'● ':'')+site.label.slice(0,2)+(used?'(已占用)':'地块'));}
+    this.buttons.amount.root.visible=this.draftKind!=='house';this.buttons.amount.set('数量 '+(this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount));
+    this.labels.draftTitle.text=this.draftKind==='house'?'木石小屋 · 选择一块建设用地':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
+    this.labels.requirements.pos(this.draftKind==='house'?344:469,379);this.labels.requirements.width=this.draftKind==='house'?374:250;
+    this.labels.requirements.text=this.draftKind==='house'?'总需 12木材 + 8石料 · 地基 → 墙体 → 屋顶':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
+    this.labels.draftHelp.text=this.draftKind==='house'?'材料集中存入公共仓储；居民到地块分阶段施工。建成后门廊休息更快。':this.draftKind==='craft'?'先读工作台配方；消耗自己的随身材料。成品归制作者，需要自行持握。':'采集计入目标，入库由居民自主搬运。';
     this.labels.taskSummary.text=`营地目标 ${tasks.filter(t=>t.status==='done').length}/${tasks.length} 已完成${state.pendingTasks?` · ${state.pendingTasks}项待写入公告`:''}`;
-    this.labels.taskList.text=tasks.slice(-6).map(t=>`${t.status==='done'?'✓':'○'} 采集${RESOURCE_LABELS[t.resource]} ${t.progress}/${t.amount} · ${t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'尚无人接受'}${t.note?' · '+t.note:''}`).join('\n\n');
+    this.labels.taskList.text=tasks.slice(-6).map(t=>`${t.status==='done'?'✓':'○'} ${taskTitle(t)} ${t.progress}/${t.amount}${t.kind==='house'&&t.status==='open'?' · 待'+HOUSE_STEPS[t.progress]?.label:''}\n   ${t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'尚无人接受'}${t.note?' · '+t.note.slice(0,24):''}`).join('\n');
+    this.labels.stock.text='公共仓储：'+(materialText(state.world.camp?.stock??{})||'暂无材料');
+    this.labels.taskNotice.text=state.pendingTasks?`已排队${state.pendingTasks}项，世界恢复后写入`:(state.error??'').slice(0,70);
+    this.renderHistory(state);
     this.timeline.graphics.clear();this.timeline.graphics.drawRoundRect(0,0,880,8,4,4,4,4,'#c8d4c2');const progress=state.maxTick>0?Math.max(0,Math.min(1,state.playbackTick/state.maxTick)):0;
     if(progress>0)this.timeline.graphics.drawRoundRect(0,0,880*progress,8,4,4,4,4,'#4c8970');this.timeline.graphics.drawCircle(880*progress,4,6,'#4c8970');
     this.labels.timeline.text=state.maxTick?`${state.playbackTick}/${state.maxTick}`:'暂无回放';

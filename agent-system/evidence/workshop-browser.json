@@ -1,0 +1,48 @@
+{
+  "status": "passed",
+  "execution": "native-Laya-desktop-and-mobile-viewport",
+  "modelMode": "NO_MODEL_CALLED",
+  "profiles": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "recipeBook": true,
+      "houseAndToolGoalsQueuedWhileFrozen": true,
+      "historyEntry": true,
+      "historyPagination": true,
+      "historyDetail": true,
+      "historyFilter": true,
+      "historySurvivesReload": true,
+      "nativeWorld": {
+        "resources": 30,
+        "bench": true
+      },
+      "modelRequests": 0,
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "recipeBook": true,
+      "houseAndToolGoalsQueuedWhileFrozen": true,
+      "historyEntry": true,
+      "historyPagination": true,
+      "historyDetail": true,
+      "historyFilter": true,
+      "historySurvivesReload": true,
+      "nativeWorld": {
+        "resources": 30,
+        "bench": true
+      },
+      "modelRequests": 0,
+      "errors": []
+    }
+  ],
+  "houseAndToolGeometry": "passed_explicit_mock_ui_fixture",
+  "physicalDevice": "not_run",
+  "liveModelBrowser": "not_run"
+}
