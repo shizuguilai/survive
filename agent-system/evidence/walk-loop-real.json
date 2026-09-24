@@ -1,0 +1,250 @@
+{
+  "mapMemory": [
+    {
+      "residentId": "resident-a",
+      "cells": 163,
+      "landmarks": 16,
+      "trail": 15,
+      "textMemories": 57
+    },
+    {
+      "residentId": "resident-b",
+      "cells": 159,
+      "landmarks": 15,
+      "trail": 14,
+      "textMemories": 55
+    }
+  ],
+  "simVersion": "0.3.3",
+  "zeroDistanceWalkAccepted": 0,
+  "checkedAt": "2026-09-24T10:01:56.139Z",
+  "status": "passed_real_movement_then_gather",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "execution": "node-local-real-provider",
+  "requests": 17,
+  "freezeChecks": 5002,
+  "freezeViolation": false,
+  "tick": 537,
+  "taskProgress": 1,
+  "taskAcceptedBy": [
+    "resident-a"
+  ],
+  "completedOperations": [
+    "walk",
+    "gather",
+    "read_notice",
+    "eat",
+    "accept_task"
+  ],
+  "failedActions": [
+    "我距离这个采集目标太远，需要先实际走到它附近。"
+  ],
+  "inventories": [
+    {
+      "agentId": "resident-a",
+      "supplies": {
+        "food": 0,
+        "wood": 1
+      }
+    },
+    {
+      "agentId": "resident-b",
+      "supplies": {
+        "wood": 5,
+        "food": 3
+      }
+    }
+  ],
+  "operations": [
+    "walk",
+    "gather",
+    "continue",
+    "eat",
+    "read_notice",
+    "accept_task"
+  ],
+  "audit": [
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "gather",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "eat"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "read_notice",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather",
+        "accept_task"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "eat",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    }
+  ],
+  "browser": "not_run",
+  "physicalDevice": "not_run",
+  "scope": "Default unprepared camp, independent real residents: read notice / voluntary accept / actual gather; no accepted initial walk to already reached location. Not long-duration or physical-device acceptance"
+}

@@ -263,5 +263,53 @@
     "browser": "desktop and narrow viewport native UI passed, live model browser not_run",
     "physicalDevice": "not_run",
     "scope": "CAMP_PROGRESS.md"
+  },
+  "mapMemoryMilestone": {
+    "task": "MAPMEM01",
+    "verification": {
+      "static": "passed",
+      "code": "implemented_scoped",
+      "mock": "passed_120_tests_119_pass_1_optional_skip",
+      "realModel": "passed_local_glm_4_5_air_17_requests_task_progress_1",
+      "webBuild": "passed",
+      "layaBuild": "blocked_missing_ide",
+      "browser": "passed_desktop_touch_explicit_mock_ui",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "publication": "web_public_deployed_v12",
+      "wechatPublication": "not_run"
+    },
+    "realRequests": 17,
+    "freezeChecks": 5002,
+    "freezeViolation": false,
+    "evidence": [
+      "docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md",
+      "evidence/walk-loop-before.json",
+      "evidence/walk-loop-tests.json",
+      "evidence/walk-loop-real-before-map.json",
+      "evidence/memory-map-real-first-attempt.json",
+      "evidence/walk-loop-real.json",
+      "evidence/memory-map-browser.json",
+      "evidence/web-build.json"
+    ],
+    "deployment": {
+      "id": "appgdep_6ab4f5adefec8191b2b5cea2220d2cf2",
+      "project_id": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "title": "Survive · 独立居民观察场",
+      "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e4ba0986ca5881918bee90a24e706c35",
+      "type": "publish",
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "screenshot_asset_pointer": null,
+      "provider_deployment_id": "site---6ab48dc223e081918869ba05be1b88ed",
+      "failure_message": null,
+      "env_set_revision": 3,
+      "updated_at": "2026-09-24T10:04:37.381801+00:00",
+      "siteSourceCommit": "db48d2472c4c1ba9e9990ed480f5b547394d9042",
+      "versionNumber": 12,
+      "audience": "public",
+      "browserLive": "not_run",
+      "physicalDevice": "not_run"
+    }
   }
 }

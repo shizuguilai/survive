@@ -1,0 +1,72 @@
+{
+  "mapMemory": [
+    {
+      "residentId": "resident-a",
+      "cells": 35,
+      "landmarks": 6,
+      "trail": 1,
+      "textMemories": 9
+    },
+    {
+      "residentId": "resident-b",
+      "cells": 36,
+      "landmarks": 4,
+      "trail": 1,
+      "textMemories": 7
+    }
+  ],
+  "simVersion": "0.3.3",
+  "zeroDistanceWalkAccepted": 0,
+  "checkedAt": "2026-09-24T09:55:26.404Z",
+  "status": "partial",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "execution": "node-local-real-provider",
+  "requests": 2,
+  "freezeChecks": 1420,
+  "freezeViolation": false,
+  "tick": 0,
+  "taskProgress": 0,
+  "taskAcceptedBy": [],
+  "completedOperations": [],
+  "failedActions": [],
+  "inventories": [
+    {
+      "agentId": "resident-a",
+      "supplies": {}
+    },
+    {
+      "agentId": "resident-b",
+      "supplies": {}
+    }
+  ],
+  "operations": [
+    "walk"
+  ],
+  "audit": [
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": false,
+      "code": "MODEL_INVALID_DECISION",
+      "attempts": 3,
+      "validationIssues": [
+        "$.actions[4]: must match exactly one allowed shape",
+        "$.actions[4]: must match exactly one allowed shape",
+        "$.actions[4]: must match exactly one allowed shape"
+      ]
+    }
+  ],
+  "browser": "not_run",
+  "physicalDevice": "not_run",
+  "scope": "Default unprepared camp, independent real residents: read notice / voluntary accept / actual gather; no accepted initial walk to already reached location. Not long-duration or physical-device acceptance"
+}

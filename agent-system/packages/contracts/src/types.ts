@@ -8,12 +8,14 @@ export type Decision = {
 };
 export type Observation = {obsRef:string;experiencedWhen:string;certainty:'uncertain'|'likely'|'clear';modality:'visual'|'auditory'|'bodily';detail:Record<string,any>};
 export type Memory = {ref:string;kind:'direct'|'hearsay'|'belief'|'summary';text:string;evidenceRefs:string[];experiencedWhen:string};
+export type SpatialMemoryContext={frame:'personal_start_relative';cellSize:number;currentCell:{x:number;z:number};cells:{x:number;z:number;state:'seen'|'visited'|'blocked'}[];trail:{x:number;z:number}[];landmarks:{knownRef:string;kind:'tree'|'wall'|'rock'|'berry'|'board'|'pond'|'workbench'|'plot'|'house'|'person';x:number;z:number;state:'remembered'|'depleted';lastObservedWhen:string}[]};
 export type CharacterContext = {
+  spatialMemory?:SpatialMemoryContext;
   schemaVersion:'1.0.0'; identity:{name:string;background:string;personality:string;personalGoal:string};
   experiencedWhen:string; body:{hunger:string;fatigue:string;pain:string};
   currentPlan:{goal:string;actions:Action[];progress:string};
   observations:Observation[]; memories:Memory[];
-  knownTargets:{ref:string;description:string;lastObservedWhen:string}[];
+  knownTargets:{ref:string;description:string;lastObservedWhen:string;atLastKnownPosition?:boolean}[];
   allowedActions:string[];
 };
 export type RequestMetadata = {runId:string;barrierId:string;agentId:string;requestId:string;generation:number;tick:number;snapshotHash:string;contextHash:string;schemaVersion:'1.0.0'};

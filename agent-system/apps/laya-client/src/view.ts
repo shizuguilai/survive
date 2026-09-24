@@ -1,5 +1,6 @@
 import type { World, SensoryOverlay } from '../../../packages/sim-core/src/domain.ts';
 import {RESOURCE_LABELS,type TaskDraft} from '../../../packages/sim-core/src/camp.ts';
+import {MemoryMapView} from './memory-map.ts';
 import {CharacterMesh} from './character-mesh.ts';
 import {WorldMesh} from './world-mesh.ts';
 import {RECIPES,BUILD_SITES,HOUSE_STEPS,materialText,taskTitle,skillLevel} from '../../../packages/sim-core/src/recipes.ts';
@@ -50,6 +51,7 @@ export class ObserverView {
   private labels:Record<string,any>={};private buttons:Record<string,NativeButton>={};
   private residents=new Map<string,CharacterMesh>();private objects=new Map<string,WorldMesh>();private objectSignatures=new Map<string,string>();private placeLabels=new Map<string,any>();
   private nameLabels=new Map<string,any>();private speechLabels=new Map<string,any>();private senseLines:any;private selection:any;
+  private memoryPanel:any;private memoryMap!:MemoryMapView;
   private planner:any;private taskNote:any;private draftResource:TaskDraft['resource']='wood';private draftAmount=8;private vitality:any;
   private draftKind:'gather'|'craft'|'house'='gather';private draftRecipe='stone_axe';private draftSite='east';
   private historyPanel:any;private workshopPanel:any;private historyFilter:JournalCategory|'all'|'summary'='action';private historyPage=0;private historyAllRuns=true;private historyDetail:HistoryRow|null=null;
@@ -122,8 +124,9 @@ export class ObserverView {
     this.button('history','历史 / 档案',18,538,121,()=>this.openHistory(),true);
     this.button('senses','感官显示 开',151,538,121,()=>this.api.onToggleSenses());
     this.labels.person.mouseEnabled=true;this.labels.person.on(L.Event.CLICK,this,()=>this.openHistory());
-    this.text(this.root,'青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知',20,584,12,'#95b3a6',254);
-    this.labels.equipment=this.text(this.root,'',20,633,11,'#aac2b7',254);this.labels.equipment.height=36;this.labels.equipment.overflow='hidden';
+    this.button('memoryMap','地图记忆 · 个人探索',18,577,254,()=>{this.hideModals();this.memoryPanel.visible=true;},true);
+    this.text(this.root,'青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知',20,617,11,'#95b3a6',254);
+    this.labels.equipment=this.text(this.root,'',20,653,10,'#aac2b7',254);this.labels.equipment.height=36;this.labels.equipment.overflow='hidden';
     this.text(this.root,'摄影机可拖动；暂停时仍可观察。',20,685,11,'#95b3a6',254);
     this.sceneInput=new L.Sprite();this.sceneInput.pos(SIDE,TOP);this.sceneInput.size(WIDTH-SIDE,BOTTOM-TOP);this.sceneInput.mouseEnabled=true;
     this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-SIDE,BOTTOM-TOP);this.root.addChild(this.sceneInput);
@@ -152,10 +155,10 @@ export class ObserverView {
     this.timeline.on(L.Event.MOUSE_DOWN,this,()=>{this.scrubbing=true;this.seekAtPointer();});
     this.labels.timeline=this.text(this.root,'暂无回放',1210,675,12,'#60786d',67);
     this.text(this.root,'仅播放模拟时间；网络等待不会出现在回放中',320,699,10,'#82907f',650);
-    this.buildPlanner();this.buildWorkshop();this.buildHistory();
+    this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();
   }
 
-  private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel])if(panel)panel.visible=false;}
+  private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel])if(panel)panel.visible=false;}
   private modal(name:string,width=910):any{const p=new L.Sprite();p.name=name;this.root.addChild(p);const background=this.panel(p,320,145,width,450,palette.panel,12);background.mouseEnabled=true;background.hitArea=new L.Rectangle(0,0,width,450);p.visible=false;return p;}
   private modalButton(parent:any,id:string,label:string,x:number,y:number,w:number,fn:()=>void,bright=true):NativeButton{const b=this.button(id,label,x,y,w,fn,bright);parent.addChild(b.root);return b;}
   private buildPlanner():void{
@@ -187,6 +190,16 @@ export class ObserverView {
     this.text(this.workshopPanel,'制作、建造每获得3点熟练度升1级，每级缩短4%耗时，最高5级。',344,516,11,palette.muted,650);
     this.modalButton(this.workshopPanel,'workshopGoal','发布制作目标',344,545,175,()=>{this.hideModals();this.draftKind='craft';this.draftAmount=1;this.planner.visible=true;});
     this.modalButton(this.workshopPanel,'closeWorkshop','返回观察',881,545,147,()=>{this.workshopPanel.visible=false;});
+  }
+  private buildMemoryMap():void{
+    this.memoryPanel=this.modal('Personal map memory');
+    this.text(this.memoryPanel,'地图记忆 · 每个人记住的世界不同',344,166,22,'#f1f4dc',840);
+    this.text(this.memoryPanel,'记录本人走过与看见的地方；文字记忆另存对话、约定、行动结果和重要经历。',344,207,12,palette.muted,852);
+    this.memoryMap=new MemoryMapView(this.memoryPanel);
+    this.modalButton(this.memoryPanel,'memoryPerson0','阿林的地图',344,545,167,()=>this.selectIndex(0));
+    this.modalButton(this.memoryPanel,'memoryPerson1','小禾的地图',525,545,167,()=>this.selectIndex(1));
+    this.modalButton(this.memoryPanel,'memoryArchive','文字记忆 / 档案',707,545,198,()=>{this.historyFilter='memory';this.openHistory();});
+    this.modalButton(this.memoryPanel,'closeMemory','返回观察',1061,545,143,()=>{this.memoryPanel.visible=false;});
   }
   private refreshHistory():void{this.historySnapshot=null;this.historyPage=0;this.historyDetail=null;this.historyCache='';}
   private openHistory():void{this.hideModals();this.historyPanel.visible=true;this.refreshHistory();}
@@ -328,7 +341,8 @@ export class ObserverView {
     for(const known of o.lastKnown){this.ring(this.senseLines,known.position,.35,'#798caa',true);this.line(this.senseLines,{...known.position,y:.04},{...known.position,y:1},'#798caa');}
   }
   render(state:ViewState):void{
-    this.state=state;this.drawWorld(state.world);this.drawSenses(state);
+    this.state=state;if(this.memoryPanel?.visible){const remembered=state.world.residents.find(r=>r.id===state.selectedId);if(remembered)this.memoryMap.render(remembered);}
+    this.drawWorld(state.world);this.drawSenses(state);
     this.labels.gateway.visible=this.token.visible=this.buttons.connect.root.visible=!state.hosted;
     this.labels.hosted.visible=Boolean(state.hosted);
     const r=state.world.residents.find(x=>x.id===state.selectedId)||state.world.residents[0];

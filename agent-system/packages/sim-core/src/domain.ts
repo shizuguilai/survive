@@ -1,8 +1,10 @@
 import type {Action,Decision,Memory,Observation,Vec3} from '../../contracts/src/types.ts';
+import type {SpatialMemory} from './spatial-memory.ts';
 import type {CharacterState} from './character.ts';
-export type KnowledgeEntry = {ref:string;entityId:string;description:string;lastPosition:Vec3;lastSeenTick:number;visible:boolean;recognizedName:string|null};
+export type KnowledgeEntry = {ref:string;entityId:string;description:string;descriptionSeenTick?:number;visualLevel?:'detected'|'described'|'recognized';lastPosition:Vec3;lastSeenTick:number;visible:boolean;recognizedName:string|null};
 export type ActionProgress = {action:Action;elapsedTicks:number;startedTick:number|null;emittedChars:number;done:boolean;producedUnits?:number;targetPosition?:Vec3};
 export type Resident = {
+  spatialMemory?:SpatialMemory;
   heardUtteranceKeys?:string[];
   character?:CharacterState;
   skills?:{gathering:number;crafting:number;construction:number};

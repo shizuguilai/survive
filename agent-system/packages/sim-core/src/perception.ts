@@ -2,6 +2,7 @@ import defaults from '../defaults.json' with { type: 'json' };
 import type { CharacterContext, Observation, Vec3 } from '../../contracts/src/types.ts';
 import type { KnowledgeEntry, Resident, SensoryOverlay, SoundFragment, World, WorldObject } from './domain.ts';
 import { experiencedWhen, privateAction, privateMemory, privateObservation, rememberObservation } from './knowledge.ts';
+import {rememberFootstep,rememberMapCell,rememberLandmark,rememberedCellCenter,buildSpatialContext} from './spatial-memory.ts';
 import {skillLevel} from './recipes.ts';
 import { listOwnEquipment, publicCharacterSummary } from './character.ts';
 
@@ -47,7 +48,7 @@ function wallHits(world: World, start: Vec3, end: Vec3, exceptId?: string): Worl
   return world.objects.filter(object => object.kind === 'wall' && object.id !== exceptId && intersectsBox(start, end, object) !== null);
 }
 
-type VisualCandidate = { id: string; position: Vec3; height: number; appearance: string; resident: boolean };
+type VisualCandidate = { id: string; position: Vec3; height: number; appearance: string; kind: import('./spatial-memory.ts').MapKind; depleted:boolean; resident: boolean };
 
 function visibleFraction(world: World, observer: Resident, candidate: VisualCandidate): number {
   const distance = planarDistance(observer.position, candidate.position);
@@ -64,10 +65,10 @@ function visibleFraction(world: World, observer: Resident, candidate: VisualCand
   return visible / 3;
 }
 
-function appendObservation(world: World, resident: Resident, modality: Observation['modality'], detail: Observation['detail'], certainty: Observation['certainty']): void {
+function appendObservation(world: World, resident: Resident, modality: Observation['modality'], detail: Observation['detail'], certainty: Observation['certainty'], remember=true): void {
   const observation: Observation = { obsRef: `observation_${++resident.observationSequence}`, experiencedWhen: experiencedWhen(world.tick, DT), modality, detail, certainty };
   resident.observations.push(observation);
-  rememberObservation(resident, observation);
+  if(remember)rememberObservation(resident, observation);
 }
 
 function knownForEntity(resident: Resident, id: string): KnowledgeEntry | undefined {
@@ -78,10 +79,10 @@ function vision(world: World, resident: Resident): boolean {
   const wasVisible = Object.values(resident.known).filter(entry => entry.visible);
   for (const entry of wasVisible) entry.visible = false;
   const candidates: VisualCandidate[] = [
-    ...world.residents.filter(other => other.id !== resident.id).map(other => ({ id: other.id, position: other.position, height: 1.8, appearance: other.character ? publicCharacterSummary(other.character) : '一个人', resident: true })),
-    ...world.objects.map(object => ({ id: object.id, position: object.position, height: object.height, appearance: (object.appearance+(object.resourceKind&&object.resources<=0?'；已经采空':'')).slice(0, 120), resident: false })),
+    ...world.residents.filter(other => other.id !== resident.id).map(other => ({ id: other.id, position: other.position, height: 1.8, appearance: other.character ? publicCharacterSummary(other.character) : '一个人', kind:'person' as const,depleted:false,resident: true })),
+    ...world.objects.map(object => ({ id: object.id, position: object.position, height: object.height, appearance: (object.appearance+(object.resourceKind&&object.resources<=0?'；已经采空':'')).slice(0, 120), kind:object.kind,depleted:Boolean(object.resourceKind&&object.resources<=0),resident: false })),
   ];
-  const percepts: { entry: KnowledgeEntry; person: boolean; entered: boolean; detail: Record<string, any>; certainty: Observation['certainty'] }[] = [];
+  const percepts: { entry: KnowledgeEntry; person: boolean; entered: boolean; remember:boolean; detail: Record<string, any>; certainty: Observation['certainty'] }[] = [];
   for (const candidate of candidates) {
     const fraction = visibleFraction(world, resident, candidate);
     if (!fraction || world.daylight <= 0.03) continue;
@@ -92,18 +93,35 @@ function vision(world: World, resident: Resident): boolean {
     const level = recognizedName ? 'recognized' : described ? 'described' : 'detected';
     const appearance = recognizedName ? [`你认出了${recognizedName}`, candidate.appearance] : described ? [candidate.appearance] : ['一个不太清晰的轮廓'];
     let entry = knownForEntity(resident, candidate.id);
+    const remember=!entry||(level!=='detected'&&entry.description!==appearance.join('；'));
     const entered = !entry || (!wasVisible.includes(entry) && world.tick - entry.lastSeenTick >= ENCOUNTER_ABSENCE_TICKS);
     if (!entry) {
       const ref = `known_${++resident.knowledgeSequence}`;
       entry = { ref, entityId: candidate.id, description: appearance.join('；'), lastPosition: { ...candidate.position }, lastSeenTick: world.tick, visible: true, recognizedName };
       resident.known[ref] = entry;
     }
-    entry.description = appearance.join('；');
+    // A less clear current view does not erase a personally identified target.
+    if(level!=='detected'){entry.description=appearance.join('；');entry.descriptionSeenTick=world.tick;}
+    entry.visualLevel=level;
+    if(level!=='detected')rememberLandmark(resident,entry.ref,candidate.kind,candidate.position,world.tick,candidate.depleted);
     entry.lastPosition = { ...candidate.position };
     entry.lastSeenTick = world.tick;
     entry.visible = true;
     entry.recognizedName = recognizedName;
-    percepts.push({ entry, person: candidate.resident, entered, detail: { level, relativeDirection: direction(resident, candidate.position), distanceBand: distanceBand(distance), appearance, recognizedName, knownRef: entry.ref }, certainty: level === 'detected' ? 'uncertain' : 'clear' });
+    percepts.push({ entry, person: candidate.resident, entered, remember, detail: { level, relativeDirection: direction(resident, candidate.position), distanceBand: distanceBand(distance), appearance, recognizedName, knownRef: entry.ref }, certainty: level === 'detected' ? 'uncertain' : 'clear' });
+  }
+  // Empty ground is remembered only where this resident's current visual rays reach.
+  const m=resident.spatialMemory;
+  if(m&&world.daylight>.03){
+    const cx=Math.floor((resident.position.x-m.origin.x)/m.cellSize),cz=Math.floor((resident.position.z-m.origin.z)/m.cellSize);
+    for(let x=cx-6;x<=cx+6;x++)for(let z=cz-6;z<=cz+6;z++){
+      const p=rememberedCellCenter(resident,x,z)!;const d=planarDistance(resident.position,p);
+      if(d>VISION.rangeWorldUnits||d<1e-7)continue;
+      if(Math.abs(angleDifference(Math.atan2(p.z-resident.position.z,p.x-resident.position.x)-resident.heading))>VISION.horizontalFovDegrees*Math.PI/360)continue;
+      const eye=eyePosition(resident),ground={...p,y:p.y+.05};
+      if(Math.abs(Math.atan2(ground.y-eye.y,d))>VISION.verticalFovDegrees*Math.PI/360||wallHits(world,eye,ground).length)continue;
+      rememberMapCell(resident,p,world.tick);
+    }
   }
   const signature = JSON.stringify(percepts.map(percept => percept.detail));
   let changed = false;
@@ -114,7 +132,7 @@ function vision(world: World, resident: Resident): boolean {
     for (const percept of percepts) {
       const previous = oldDetails.find(detail => detail.knownRef === percept.entry.ref);
       if (JSON.stringify(previous) !== JSON.stringify(percept.detail)) {
-        appendObservation(world, resident, 'visual', percept.detail, percept.certainty);
+        appendObservation(world, resident, 'visual', percept.detail, percept.certainty,percept.remember);
         // Retinal changes still enter personal perception. They do not, by themselves,
         // require a new decision in the middle of a model-authored action.
         const person=percept.person;
@@ -129,7 +147,7 @@ function vision(world: World, resident: Resident): boolean {
         level: entry.recognizedName ? 'recognized' : 'detected', relativeDirection: direction(resident, entry.lastPosition),
         distanceBand: distanceBand(planarDistance(resident.position, entry.lastPosition)),
         appearance: [`先前看到的${entry.description}已离开视野；仅记得最后看到的位置。`.slice(0, 120)], recognizedName: entry.recognizedName, knownRef: entry.ref,
-      }, 'uncertain');
+      }, 'uncertain',false);
       if(!world.residents.some(r=>r.id===entry.entityId)&&(!executing||watched(entry.ref)))changed=true;
     }
     resident.visualSignature = signature;
@@ -212,6 +230,7 @@ function bodily(world: World, resident: Resident): boolean {
 export function samplePerception(world: World): string[] {
   const due: string[] = [];
   for (const resident of world.residents) {
+    rememberFootstep(resident,world.tick);
   for(const kind of ['wood','stone','food'] as const){if(!resident.supplies?.[kind])continue;const id=`supply-${kind}-${resident.id}`;let entry=Object.values(resident.known).find(k=>k.entityId===id);if(!entry){const ref=`known_${++resident.knowledgeSequence}`;entry={ref,entityId:id,description:'',lastPosition:{...resident.position},lastSeenTick:world.tick,visible:false,recognizedName:null};resident.known[ref]=entry;}entry.description=`自己携带的${kind==='wood'?'木材':kind==='stone'?'石料':'可食浆果'}${resident.supplies[kind]}份；可haul到公告板旁的公共仓储${kind==='food'?'，也可eat':''}`;entry.lastPosition={...resident.position};entry.lastSeenTick=world.tick;}
     const visual = world.tick % SCAN_TICKS === 0 || !resident.visualSignature ? vision(world, resident) : false;
     const auditory = hearing(world, resident);
@@ -238,13 +257,14 @@ export function buildContext(world: World, resident: Resident): CharacterContext
   }
   return {
     schemaVersion: '1.0.0',
+    ...(buildSpatialContext(resident)?{spatialMemory:buildSpatialContext(resident)}:{}),
     identity: { name: resident.name, background: resident.background, personality: resident.personality, personalGoal: resident.personalGoal },
     experiencedWhen: experiencedWhen(world.tick, DT),
     body: { hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain')+`；自身生命${Math.round(resident.health??100)}/100${(resident.health??100)<30?'，虚弱，行动缓慢':''}` },
     currentPlan: { goal: ((resident.plan.length&&!resident.plan.some(p=>!p.done)?'（计划已完成，需要考虑后续行动）':'')+resident.goal).slice(0,300), actions: resident.plan.filter(progress=>!progress.done).map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.supplies?`；自己携带：木材${resident.supplies.wood??0}、石料${resident.supplies.stone??0}、浆果${resident.supplies.food??0}，容量30。自身熟练度：采集${skillLevel(resident.skills?.gathering)}级，加工${skillLevel(resident.skills?.crafting)}级，建造${skillLevel(resident.skills?.construction)}级。`:'') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
     observations: observations.map(privateObservation), memories: selectedMemories.map(privateMemory),
     knownTargets: [
-      ...Object.values(resident.known).filter(entry=>!entry.entityId.startsWith('supply-')).map(entry => ({ ref: entry.ref, description: `${entry.description}；距其最后已知位置约${planarDistance(resident.position,entry.lastPosition).toFixed(1)}米；${entry.visible ? '目前可见' : '仅最后已知，当前位置未知'}`, lastObservedWhen: experiencedWhen(entry.lastSeenTick, DT) })),
+      ...Object.values(resident.known).filter(entry=>!entry.entityId.startsWith('supply-')).map(entry => ({ ref: entry.ref, atLastKnownPosition:planarDistance(resident.position,entry.lastPosition)<=0.80001, description: `${entry.descriptionSeenTick!==undefined?'曾亲眼辨认（'+experiencedWhen(entry.descriptionSeenTick,DT)+'）：':''}${entry.description}；距其最后已知位置约${planarDistance(resident.position,entry.lastPosition).toFixed(1)}米；${planarDistance(resident.position,entry.lastPosition)<=0.80001?'已到该最后已知位置附近，再walk不会移动；':''}${entry.visible ? entry.visualLevel==='detected'?'当前仅见模糊轮廓，沿用先前辨识，不能据此确认最新状态':'目前可见' : '仅最后已知，当前位置未知'}`, lastObservedWhen: experiencedWhen(entry.lastSeenTick, DT) })),
       ...Object.values(resident.known).filter(entry=>(['wood','stone','food'] as const).some(kind=>entry.entityId===`supply-${kind}-${resident.id}`&&resident.supplies?.[kind])).map(entry=>({ref:entry.ref,description:entry.description,lastObservedWhen:experiencedWhen(world.tick,DT)})),
       ...(resident.character ? listOwnEquipment(resident.character, resident.id).map(item => ({
         ref: item.itemRef,

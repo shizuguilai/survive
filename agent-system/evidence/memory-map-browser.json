@@ -1,0 +1,36 @@
+{
+  "status": "passed",
+  "mode": "EXPLICIT_MOCK_UI_FIXTURE",
+  "profiles": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "touch": false
+      },
+      "mapEntry": true,
+      "residentSwitch": true,
+      "unseenResourceNotShared": true,
+      "mapDoesNotMutateWorld": true,
+      "textArchiveEntry": true,
+      "modelCalls": 0,
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "touch": true
+      },
+      "mapEntry": true,
+      "residentSwitch": true,
+      "unseenResourceNotShared": true,
+      "mapDoesNotMutateWorld": true,
+      "textArchiveEntry": true,
+      "modelCalls": 0,
+      "errors": []
+    }
+  ],
+  "physicalDevice": "not_run",
+  "liveModelBrowser": "not_run"
+}

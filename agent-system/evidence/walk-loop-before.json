@@ -1,0 +1,8 @@
+{
+  "mode": "EXPLICIT_MOCK_REPRODUCTION_BEFORE_FIX",
+  "identifiedBefore": "枝叶茂盛的树",
+  "descriptionAfterApproaching": "一个不太清晰的轮廓",
+  "successfulZeroDistanceWalks": 3,
+  "inventory": 0,
+  "ticksConsumed": 3
+}

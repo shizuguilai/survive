@@ -1,0 +1,25 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-24T10:01:36.958877+00:00",
+  "tests": 120,
+  "passed": 119,
+  "skipped": 1,
+  "skippedReason": "optional long wall-clock soak",
+  "typecheck": "passed",
+  "webBuild": "passed",
+  "regressionMode": "explicit_mock_fixtures",
+  "checks": [
+    "retain previously seen identity without revealing new hidden appearance",
+    "do not identify never-seen outline",
+    "no-op walk is failure rather than success",
+    "reject initial already-arrived walk; allow genuine return journey",
+    "model repair chooses next action without automatic substitution",
+    "per-resident structured map and hidden changes isolated",
+    "small movements do not spam text memory or cognition",
+    "map and trail bounded; map/text snapshot serialization",
+    "global pause freezes map and no catchup",
+    "safe actionable schema error without private values"
+  ],
+  "browser": "passed_explicit_mock_ui_two_profiles",
+  "physicalDevice": "not_run"
+}

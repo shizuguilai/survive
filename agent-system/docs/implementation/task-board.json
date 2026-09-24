@@ -4,7 +4,7 @@
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "latestBindingDecision": "任何居民需要大模型认知时全世界模拟暂停；运行时网络和观察者UI继续；批次完整提交后恢复，不追真实等待帧。",
-  "statusNote": "用户追加需求：居民历史、简化工作台、工具和小屋项目已接入。T14、完整T15/T16与微信验收仍分别保留；Mock和真实模型证据分开。",
+  "statusNote": "新增地图与文字双记忆、原地walk循环修复；各轮状态单独保留，最新见MAPMEM01。T14完整验收、T15/T16完整协作与微信仍未完成。",
   "tasks": [
     {
       "id": "T00",
@@ -700,7 +700,33 @@
           "supersededBy": "evidence/real-model-verification.json"
         }
       ],
-      "publicationEvidence": "evidence/cloud-deployment.json"
+      "publicationEvidence": "evidence/cloud-deployment.json",
+      "mapMemoryRevision": {
+        "task": "MAPMEM01",
+        "verification": {
+          "static": "passed",
+          "code": "implemented_scoped",
+          "mock": "passed_120_tests_119_pass_1_optional_skip",
+          "realModel": "passed_local_glm_4_5_air_17_requests_task_progress_1",
+          "webBuild": "passed",
+          "layaBuild": "blocked_missing_ide",
+          "browser": "passed_desktop_touch_explicit_mock_ui",
+          "liveModelBrowser": "not_run",
+          "physicalDevice": "not_run",
+          "publication": "web_public_deployed_v12",
+          "wechatPublication": "not_run"
+        },
+        "evidence": [
+          "docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md",
+          "evidence/walk-loop-before.json",
+          "evidence/walk-loop-tests.json",
+          "evidence/walk-loop-real-before-map.json",
+          "evidence/memory-map-real-first-attempt.json",
+          "evidence/walk-loop-real.json",
+          "evidence/memory-map-browser.json",
+          "evidence/web-build.json"
+        ]
+      }
     },
     {
       "id": "T07",
@@ -1165,6 +1191,32 @@
           "evidence/camp-browser.json",
           "evidence/camp-deployment.json"
         ]
+      },
+      "mapMemoryRevision": {
+        "task": "MAPMEM01",
+        "verification": {
+          "static": "passed",
+          "code": "implemented_scoped",
+          "mock": "passed_120_tests_119_pass_1_optional_skip",
+          "realModel": "passed_local_glm_4_5_air_17_requests_task_progress_1",
+          "webBuild": "passed",
+          "layaBuild": "blocked_missing_ide",
+          "browser": "passed_desktop_touch_explicit_mock_ui",
+          "liveModelBrowser": "not_run",
+          "physicalDevice": "not_run",
+          "publication": "web_public_deployed_v12",
+          "wechatPublication": "not_run"
+        },
+        "evidence": [
+          "docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md",
+          "evidence/walk-loop-before.json",
+          "evidence/walk-loop-tests.json",
+          "evidence/walk-loop-real-before-map.json",
+          "evidence/memory-map-real-first-attempt.json",
+          "evidence/walk-loop-real.json",
+          "evidence/memory-map-browser.json",
+          "evidence/web-build.json"
+        ]
       }
     },
     {
@@ -1559,6 +1611,32 @@
           "evidence/camp-tests.txt",
           "evidence/camp-browser.json",
           "evidence/camp-deployment.json"
+        ]
+      },
+      "mapMemoryRevision": {
+        "task": "MAPMEM01",
+        "verification": {
+          "static": "passed",
+          "code": "implemented_scoped",
+          "mock": "passed_120_tests_119_pass_1_optional_skip",
+          "realModel": "passed_local_glm_4_5_air_17_requests_task_progress_1",
+          "webBuild": "passed",
+          "layaBuild": "blocked_missing_ide",
+          "browser": "passed_desktop_touch_explicit_mock_ui",
+          "liveModelBrowser": "not_run",
+          "physicalDevice": "not_run",
+          "publication": "web_public_deployed_v12",
+          "wechatPublication": "not_run"
+        },
+        "evidence": [
+          "docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md",
+          "evidence/walk-loop-before.json",
+          "evidence/walk-loop-tests.json",
+          "evidence/walk-loop-real-before-map.json",
+          "evidence/memory-map-real-first-attempt.json",
+          "evidence/walk-loop-real.json",
+          "evidence/memory-map-browser.json",
+          "evidence/web-build.json"
         ]
       }
     },
@@ -2287,7 +2365,33 @@
         "docs/implementation/ENCOUNTER_TRIGGERS.md",
         "evidence/encounter-real.json",
         "evidence/encounter-deployment.json"
-      ]
+      ],
+      "mapMemoryRevision": {
+        "task": "MAPMEM01",
+        "verification": {
+          "static": "passed",
+          "code": "implemented_scoped",
+          "mock": "passed_120_tests_119_pass_1_optional_skip",
+          "realModel": "passed_local_glm_4_5_air_17_requests_task_progress_1",
+          "webBuild": "passed",
+          "layaBuild": "blocked_missing_ide",
+          "browser": "passed_desktop_touch_explicit_mock_ui",
+          "liveModelBrowser": "not_run",
+          "physicalDevice": "not_run",
+          "publication": "web_public_deployed_v12",
+          "wechatPublication": "not_run"
+        },
+        "evidence": [
+          "docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md",
+          "evidence/walk-loop-before.json",
+          "evidence/walk-loop-tests.json",
+          "evidence/walk-loop-real-before-map.json",
+          "evidence/memory-map-real-first-attempt.json",
+          "evidence/walk-loop-real.json",
+          "evidence/memory-map-browser.json",
+          "evidence/web-build.json"
+        ]
+      }
     },
     {
       "id": "HISTORY01",
@@ -2423,6 +2527,47 @@
       "blockers": [
         "真机和微信平台未验收",
         "实时真实模型浏览器与公开站点端到端未运行"
+      ]
+    },
+    {
+      "id": "MAPMEM01",
+      "title": "私人地图与文字双记忆、原地移动循环修复",
+      "dependsOn": [
+        "T06",
+        "T10",
+        "T13",
+        "LOOP01"
+      ],
+      "status": "code_complete",
+      "codeStatus": "implemented_scoped",
+      "verification": {
+        "static": "passed",
+        "code": "implemented_scoped",
+        "mock": "passed_120_tests_119_pass_1_optional_skip",
+        "realModel": "passed_local_glm_4_5_air_17_requests_task_progress_1",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_desktop_touch_explicit_mock_ui",
+        "liveModelBrowser": "not_run",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_v12",
+        "wechatPublication": "not_run"
+      },
+      "evidence": [
+        "docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md",
+        "evidence/walk-loop-before.json",
+        "evidence/walk-loop-tests.json",
+        "evidence/walk-loop-real-before-map.json",
+        "evidence/memory-map-real-first-attempt.json",
+        "evidence/walk-loop-real.json",
+        "evidence/memory-map-browser.json",
+        "evidence/web-build.json",
+        "evidence/memory-map-deployment.json"
+      ],
+      "scopeNote": "本人2米格地图与文字记忆并存；地面/地标仅有限感官更新，小变化不深度唤醒；保留已辨认身份，原地walk不再伪报进展。模拟版本0.3.3。",
+      "blockers": [
+        "完整自由探索与绕障寻路、长期记忆衰减和现场存档恢复另行跟踪",
+        "实时模型浏览器、微信真机和微信发布尚未验收"
       ]
     }
   ],

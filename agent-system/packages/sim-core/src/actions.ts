@@ -4,6 +4,7 @@ import { FIXED_DT_MS } from './clock.ts';
 import {readWorkbench,finishRecipe,findRecipe,finishBuild,withdraw,skillDuration,gatherPeriod,addSkill} from './workshop.ts';
 import {HOUSE_STEPS,taskTitle} from './recipes.ts';
 import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS} from './camp.ts';
+import {rememberMapCell} from './spatial-memory.ts';
 import { applyEquipmentAction } from './character.ts';
 export const IMPLEMENTED_ACTIONS = ['craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
 const distance=(a:Vec3,b:Vec3)=>Math.hypot(a.x-b.x,a.z-b.z);
@@ -67,14 +68,14 @@ export function stepActions(world:World,nextTick:number):string[] {
       switch(progress.action.op){
         case 'walk':{
           const target=progress.targetPosition!;const remaining=distance(resident.position,target);
-          if(remaining<=0.8){progress.done=true;break;}
+          if(remaining<=0.80001){fail(world,resident,progress,nextTick,'我已在该目标最后已知位置附近，本次没有移动，不能算作新的移动进展。应根据已有感官决定下一步；目标当前状态不明时先观察。');due.add(resident.id);break;}
           const speed=(params.gait==='run'?2.6:1.4)*((resident.health??100)<30?.5:1);
           const step=Math.min(speed*FIXED_DT_MS/1000,remaining-0.8);
           const heading=Math.atan2(target.z-resident.position.z,target.x-resident.position.x);
           const next={...resident.position,x:resident.position.x+Math.cos(heading)*step,z:resident.position.z+Math.sin(heading)*step};
           const blocked=world.objects.some(o=>o.kind==='wall'&&Math.abs(next.x-o.position.x)<o.width/2+0.22&&Math.abs(next.z-o.position.z)<o.depth/2+0.22);
           resident.heading=heading;
-          if(blocked){resident.pain=Math.min(1,resident.pain+0.02);fail(world,resident,progress,nextTick,'前方受阻，身体感到轻微碰撞。');due.add(resident.id);break;}
+          if(blocked){rememberMapCell(resident,next,nextTick,true);resident.pain=Math.min(1,resident.pain+0.02);fail(world,resident,progress,nextTick,'前方受阻，身体感到轻微碰撞。');due.add(resident.id);break;}
           resident.position=next;resident.fatigue=Math.min(1,resident.fatigue+0.00003);
           if(distance(resident.position,target)<=0.80001)progress.done=true;
           break;

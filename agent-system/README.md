@@ -1,5 +1,7 @@
 # Survive Agent · 独立居民观察场
 
+v0.3.3新增每名居民独立的**地图记忆 + 文字记忆**。左侧「地图记忆 · 个人探索」查看走过的路线、曾见资源和障碍；暗色区域未知，旧记忆可能过时。文字继续保留对话、约定和行动结果。修复认出过的树被模糊视角覆盖、原地walk反复记成成功的问题。见[实现与分项验收](docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md)。
+
 新增「阶段总结」：真实glm-4.5-air归纳关键进展，点开可核对原始记录；档案翻页固定当前列表，支持旧轮次。见[本轮说明](docs/implementation/ARCHIVE_SUMMARY.md)。
 
 v0.3.2相遇与讲话去重，允许沉默继续做事；见[触发规则与验收](docs/implementation/ENCOUNTER_TRIGGERS.md)。

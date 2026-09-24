@@ -51,15 +51,20 @@ const ref:Schema={type:'string',minLength:1,maxLength:80,pattern:'^[A-Za-z0-9_-]
 const object = (properties:Record<string,Schema>):Schema=>({type:'object',additionalProperties:false,properties,required:Object.keys(properties)});
 const array = (items:Schema,maxItems:number):Schema=>({type:'array',items,minItems:0,maxItems});
 const actionSchema = decisionSchema.properties.actions.items;
+const mapCoordinate={type:'integer',minimum:-10000,maximum:10000};
+const mapPoint=object({x:mapCoordinate,z:mapCoordinate});
 const contextSchema = object({
+  spatialMemory:object({frame:{const:'personal_start_relative'},cellSize:{const:2},currentCell:mapPoint,cells:array(object({x:mapCoordinate,z:mapCoordinate,state:{enum:['seen','visited','blocked']}}),256),trail:array(mapPoint,64),landmarks:array(object({knownRef:ref,kind:{enum:['tree','wall','rock','berry','board','pond','workbench','plot','house','person']},x:mapCoordinate,z:mapCoordinate,state:{enum:['remembered','depleted']},lastObservedWhen:text(80)}),64)}),
   schemaVersion:{const:'1.0.0'}, identity:object({name:text(80),background:text(2000),personality:text(1000),personalGoal:text(1000)}),
   experiencedWhen:text(80), body:object({hunger:text(120),fatigue:text(120),pain:text(120)}),
   currentPlan:object({goal:{type:'string',maxLength:300},actions:array(actionSchema,16),progress:{type:'string',maxLength:2000}}),
   observations:array(observationSchema,128),
   memories:array(object({ref,kind:{enum:['direct','hearsay','belief','summary']},text:text(2000),evidenceRefs:array(ref,64),experiencedWhen:text(80)}),128),
-  knownTargets:array(object({ref,description:text(1000),lastObservedWhen:text(80)}),128),
+  knownTargets:array({...object({ref,description:text(1000),lastObservedWhen:text(80),atLastKnownPosition:{type:'boolean'}}),required:['ref','description','lastObservedWhen']},128),
   allowedActions:{type:'array',items:{enum:decisionSchema.properties.actions.items.oneOf.map(a=>a.properties.op.const)},minItems:1,maxItems:24}
 });
+// Additive personal-map field: older contexts remain readable.
+contextSchema.required=contextSchema.required.filter((key:string)=>key!=='spatialMemory');
 const metadataSchema=object({runId:ref,barrierId:ref,agentId:ref,requestId:ref,generation:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER},tick:{type:'integer',minimum:0,maximum:Number.MAX_SAFE_INTEGER},snapshotHash:text(100),contextHash:text(100),schemaVersion:{const:'1.0.0'}});
 export function validateObservation(value:unknown):Observation { validateSchema(value,observationSchema);return value as Observation; }
 export function validateCharacterContext(value: unknown): CharacterContext {
@@ -68,6 +73,7 @@ export function validateCharacterContext(value: unknown): CharacterContext {
   const unique = (refs:string[],path:string)=>{if(new Set(refs).size!==refs.length)fail(path,'duplicate reference');};
   unique(context.observations.map(o=>o.obsRef),'$.observations');unique(context.memories.map(m=>m.ref),'$.memories');unique(context.knownTargets.map(t=>t.ref),'$.knownTargets');
   const known = new Set(context.knownTargets.map(t=>t.ref));
+  for(const landmark of context.spatialMemory?.landmarks??[])if(!known.has(landmark.knownRef))fail('$.spatialMemory.landmarks','unknown personal reference');
   for (const observation of context.observations) for (const key of ['knownRef','speakerKnownRef']) {
     const target=observation.detail[key];if(target!==undefined && target!==null && !known.has(target))fail('$.observations','unknown personal reference');
   }
@@ -81,13 +87,20 @@ export function validateBrainRequest(value: unknown): BrainRequest {
 }
 const channels:Record<string,string[]>={craft:['hands','locomotion'],exchange:['hands','locomotion'],withdraw:['hands','locomotion'],walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
 export function validateDecision(value: unknown, context: CharacterContext): Decision {
+  // Give the model a safe, specific field error for a recognized operation.
+  // The generic oneOf error otherwise hides what its repair must change.
+  const proposed=(value as {actions?:unknown}|null)?.actions;
+  if(Array.isArray(proposed)&&proposed.length<=16)proposed.forEach((action,index)=>{
+    const variant=actionSchema.oneOf.find(v=>v.properties.op.const===action?.op);
+    if(variant)validateSchema(action,variant,`$.actions[${index}]`);
+  });
   validateSchema(value,decisionSchema);
   const decision=value as Decision;
   const known=new Set(context.knownTargets.map(t=>t.ref));
   const evidence=new Set([...context.observations.map(o=>o.obsRef),...context.memories.map(m=>m.ref)]);
   const validateEvidence=(refs:string[])=>{for(const id of refs)if(!evidence.has(id))fail('$.evidenceRefs','reference is not in personal evidence');};
   const occupied=new Set<string>();
-  let previousStage=-1;
+  let previousStage=-1;let earlierWalk=false;
   for(const action of decision.actions){
     if(!context.allowedActions.includes(action.op))fail('$.actions','action not available to this resident');
     if(action.stage<previousStage)fail('$.actions','stages must be ordered');previousStage=action.stage;
@@ -98,6 +111,10 @@ export function validateDecision(value: unknown, context: CharacterContext): Dec
     for(const channel of action.op==='wait'?[action.params.scope]:channels[action.op]??[]){
       const lock=`${action.stage}:${channel}`;
       if(occupied.has(lock))fail('$.actions','body channel conflict within stage');occupied.add(lock);
+    }
+    if(action.op==='walk'){
+      if(!earlierWalk&&context.knownTargets.find(t=>t.ref===action.params.targetRef)?.atLastKnownPosition===true)fail('$.actions','already at this last-known location: walk would not move. Choose another action or a different destination using only your own observations; no automatic substitute action is applied');
+      earlierWalk=true;
     }
     if(action.op==='continue' && (!context.currentPlan.actions.length || decision.actions.length!==1))fail('$.actions','continue requires an existing plan and must stand alone');
   }

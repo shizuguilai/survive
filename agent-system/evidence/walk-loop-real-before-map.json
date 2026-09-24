@@ -1,0 +1,97 @@
+{
+  "simVersion": "0.3.3",
+  "zeroDistanceWalkAccepted": 0,
+  "checkedAt": "2026-09-24T09:47:22.618Z",
+  "status": "passed_real_movement_then_gather",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "execution": "node-local-real-provider",
+  "requests": 4,
+  "freezeChecks": 1086,
+  "freezeViolation": false,
+  "tick": 139,
+  "taskProgress": 1,
+  "taskAcceptedBy": [
+    "resident-b"
+  ],
+  "completedOperations": [
+    "walk",
+    "read_notice",
+    "accept_task"
+  ],
+  "failedActions": [],
+  "inventories": [
+    {
+      "agentId": "resident-a",
+      "supplies": {
+        "food": 1
+      }
+    },
+    {
+      "agentId": "resident-b",
+      "supplies": {
+        "wood": 1
+      }
+    }
+  ],
+  "operations": [
+    "walk",
+    "gather",
+    "read_notice",
+    "continue",
+    "accept_task"
+  ],
+  "audit": [
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "gather",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "read_notice",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    }
+  ],
+  "browser": "not_run",
+  "physicalDevice": "not_run",
+  "scope": "Default unprepared camp, independent real residents: read notice / voluntary accept / actual gather; no accepted initial walk to already reached location. Not long-duration or physical-device acceptance"
+}

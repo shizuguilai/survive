@@ -36,7 +36,7 @@ test('MOCK_UPSTREAM: individual prompts exclude metadata and other resident, req
   const a=request(),b=request('小禾','r2');const pending=[gateway.decide(a),gateway.decide(a),gateway.decide(b)];
   await ready;
   for(const prompt of prompts){assert.equal(prompt.model,'glm-4.5-air');assert.deepEqual(prompt.thinking,{type:'disabled'});assert.equal(prompt.max_tokens,4096);}
-  assert.equal(prompts.length,2);assert.equal(JSON.stringify(prompts[0]).includes('requestId'),false);assert.equal(prompts[0].messages[1].content.includes('小禾'),false);assert.equal(prompts[1].messages[1].content.includes('阿林'),false);
+  assert.equal(prompts.length,2);assert.equal(JSON.stringify(prompts[0]).includes('requestId'),false);const promptA=prompts.find(p=>JSON.parse(p.messages[1].content).identity.name==='阿林'),promptB=prompts.find(p=>JSON.parse(p.messages[1].content).identity.name==='小禾');assert.ok(promptA&&promptB);assert.equal(promptA.messages[1].content.includes('小禾'),false);assert.equal(promptB.messages[1].content.includes('阿林'),false);
   await assert.rejects(gateway.decide({...a,metadata:{...a.metadata,requestId:'r3'}}),/已有独立模型请求/);
   const mismatch=structuredClone(a);mismatch.metadata.tick++;await assert.rejects(gateway.decide(mismatch),/绑定其他冻结上下文/);
   release();const results=await Promise.all(pending);assert.deepEqual(results[0],results[1]);assert.equal(results[0].source,'REAL_MODEL');
