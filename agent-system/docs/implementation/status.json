@@ -49,5 +49,8 @@
   ],
   "tasks": "task-board.json",
   "publication": "NOT_PUBLISHED",
-  "gitSynchronization": "pending"
+  "gitSynchronization": "SYNCED_TO_INDEPENDENT_BRANCH",
+  "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+  "repository": "shizuguilai/survive",
+  "branchUrl": "https://github.com/shizuguilai/survive/tree/work/agent-cognition-20260924"
 }

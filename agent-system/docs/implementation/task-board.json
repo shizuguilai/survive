@@ -73,7 +73,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
       "scopeNote": "main/HEAD/tree及文件逐一核对；旧工程未改。"
@@ -166,7 +166,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "Laya IDE 3.3.12不可用，未打开IDE/导出微信包"
       ],
@@ -245,7 +245,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
       "scopeNote": "50ms固定模拟步，恢复不补等待/离线时间。"
@@ -324,7 +324,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
       "scopeNote": "封闭schema、本人引用和来源校验；装备动作按用户补充扩展。"
@@ -407,7 +407,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "TM10玩家世界命令队列尚未实现"
       ],
@@ -486,7 +486,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "haul/build/eat等后续动作未实现，不向模型开放"
       ],
@@ -569,7 +569,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
       "scopeNote": "水平垂直FOV、多点AABB遮挡、本人lastKnown；导航为已知点直行碰撞，不宣称完整寻路器。"
@@ -649,7 +649,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "当前声音执行源为讲话，环境/脚步/工作声未完整实现"
       ],
@@ -730,7 +730,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "未完整实现模型watch条件选择性唤醒与全部迟滞策略"
       ],
@@ -816,7 +816,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "缺少SURVIVE_MODEL_API_KEY；真实请求0",
         "服务当前仅本机鉴权，尚未部署公网HTTPS网关"
@@ -902,7 +902,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "长期记忆衰减/大规模语义检索尚未实现"
       ],
@@ -987,7 +987,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "真实双向对话需模型凭据"
       ],
@@ -1075,7 +1075,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
       "scopeNote": "逐tick真实感官快照、来源计数、只读seek/倍速，不重调模型。"
@@ -1159,7 +1159,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "感官子开关/开发全体视图尚未完整提供",
         "真实模型等待态与动态回放浏览器验收未执行"
@@ -1245,7 +1245,7 @@
         "evidence/tm01-30s-freeze.txt",
         "evidence/unit-tests.txt"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "缺少本项目模型凭据；真实模型闭环未验收"
       ],
@@ -1602,7 +1602,7 @@
         "evidence/unit-tests.txt",
         "evidence/browser-smoke.json"
       ],
-      "commit": null,
+      "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
         "真实模型自主换衣案例尚未运行"
       ],
@@ -1612,5 +1612,6 @@
   "implementationDirectory": "agent-system",
   "recordedAt": "2026-09-24T02:12:53.225592+00:00",
   "referenceMainVerified": "60f5d7eb33860484065a3f98afc5693e9e69c337",
-  "workingBranch": "work/agent-cognition-20260924"
+  "workingBranch": "work/agent-cognition-20260924",
+  "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6"
 }
