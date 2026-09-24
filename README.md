@@ -45,7 +45,7 @@ Web 打包、浏览器交互、真实模型闭环、Laya IDE 构建、微信真�
 
 | 项目 | 记录 |
 |---|---|
-| Web 部署地址 | [https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（仅所属账号可访问；平台确认发布成功） |
+| Web 部署地址 | [https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问；无需登录即可启动真实自治） |
 | 本次修复版本 | 已发布；托管源码 `464eb67ab7717cf80ba8f82e3f7d3d2e4554d918`，运行时配置 revision 2 |
 | 本地真实核心闭环 | `glm-4.5-air` 独立请求10次、接受10个决定；2居民双方发声并听见后再决定，2023次冻结检查无变化且不追帧，无Mock |
 | 本地浏览器回放 | 播放真实记录、seek、选人和感官通过，0模型请求；不是实时模型或线上浏览器验收 |

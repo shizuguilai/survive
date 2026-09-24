@@ -31,7 +31,7 @@ function loadReplay():ReplayFile|null{
 }
 
 export async function boot():Promise<void>{
-  let view:ObserverView;let configured=false;let authenticated=false;let hosted=false;let diagnostic='';let started=false;
+  let view:ObserverView;let configured=false;let canStart=false;let hosted=false;let diagnostic='';let started=false;
   let recorder=new ReplayRecorder();let player:ReplayPlayer|null=null;
   let selectedId='resident-a',showSenses=true,speed=1;
   const provider=new GatewayProvider();
@@ -51,17 +51,17 @@ export async function boot():Promise<void>{
     try{
       const r=await gatewayRequest('/api/health');const h=await r.json();
       if(!r.ok)throw Error('网关状态读取失败');
-      configured=h.configured===true;authenticated=h.authenticated===true;hosted=h.accessMode==='hosted';
+      configured=h.configured===true;canStart=h.canStart===true||(h.canStart===undefined&&h.authenticated===true);hosted=h.accessMode==='hosted';
       if(!configured)diagnostic='服务端尚未配置真实模型。世界保持静止，感官与镜头可操作。';
-      else if(!authenticated)diagnostic=hosted?'请使用本站所属账号登录后启动。':'请使用网关启动时给出的本地登录链接。';
+      else if(!canStart)diagnostic=hosted?'请使用本站所属账号登录后启动。':'请使用网关启动时给出的本地登录链接。';
       else if(!started)diagnostic='真实模型已配置，点击「开始真实自治」启动两名居民。';
-    }catch{configured=false;authenticated=false;diagnostic='无法连接模型网关，请稍后重试。';}
+    }catch{configured=false;canStart=false;diagnostic='无法连接模型网关，请稍后重试。';}
   }
   function pause():void{if(player)player.pause();else sim.pause('USER_PAUSE');}
   function resume():void{if(player)player.play();else sim.resume('USER_PAUSE');}
   async function start():Promise<void>{
     if(player){diagnostic='请先返回现场再开始。';return;}
-    await health();if(!configured||!authenticated)return;
+    await health();if(!configured||!canStart)return;
     if(started&&sim.status!=='STOPPED'){diagnostic='本轮已启动；失败时可重试，暂停时可继续。';return;}
     if(started){recorder=new ReplayRecorder();sim=makeSimulation();}
     started=true;diagnostic='';sim.resume('NOT_STARTED');

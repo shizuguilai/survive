@@ -32,3 +32,18 @@ test('MOCK_UPSTREAM: provider 401 is not retried or exposed and freezes both res
   const errors=JSON.stringify(sim.barrier?.errors);assert.ok(errors.includes('HTTP 401'));assert.ok(!errors.includes('MOCK_TEST_SECRET'));assert.ok(!errors.includes('private provider details'));
   sim.stop();
 });
+
+
+test('PUBLIC_PLAY: anonymous visitors can start only with explicit server opt-in; origin and contract checks remain',async()=>{
+  const e={...env('MOCK_TEST_SECRET'),SURVIVE_PUBLIC_PLAY:'true'};
+  const health=await (await worker.fetch(new Request(origin+'/api/health'),e)).json();
+  assert.equal(health.authenticated,false);assert.equal(health.canStart,true);assert.equal(health.publicPlay,true);
+  assert.equal(JSON.stringify(health).includes('MOCK_TEST_SECRET'),false);
+  const anonymous=(source:string)=>new Request(origin+'/api/decide',{method:'POST',headers:{origin:source,'content-type':'application/json'},body:'{}'});
+  assert.equal((await worker.fetch(anonymous('https://other.example'),e)).status,403);
+  // Reaches strict contract validation rather than failing identity (no upstream call).
+  assert.equal((await worker.fetch(anonymous(origin),e)).status,400);
+  const closed={...e,SURVIVE_PUBLIC_PLAY:'false'};
+  assert.equal((await (await worker.fetch(new Request(origin+'/api/health'),closed)).json()).canStart,false);
+  assert.equal((await worker.fetch(anonymous(origin),closed)).status,401);
+});

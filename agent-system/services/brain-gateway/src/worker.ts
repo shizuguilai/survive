@@ -1,7 +1,7 @@
 import {GatewayError,loadConfig,RealModelGateway} from './gateway.ts';
 import {ContractError} from '../../../packages/contracts/src/validation.ts';
 
-export type WorkerEnv={SURVIVE_MODEL_API_KEY?:string;SURVIVE_MODEL_NAME?:string;SURVIVE_MODEL_BASE_URL?:string;ASSETS:{fetch(request:Request):Promise<Response>}};
+export type WorkerEnv={SURVIVE_PUBLIC_PLAY?:string;SURVIVE_MODEL_API_KEY?:string;SURVIVE_MODEL_NAME?:string;SURVIVE_MODEL_BASE_URL?:string;ASSETS:{fetch(request:Request):Promise<Response>}};
 const instances=new WeakMap<object,RealModelGateway>();
 function gatewayFor(env:WorkerEnv):RealModelGateway{
   let gateway=instances.get(env);
@@ -22,8 +22,8 @@ async function readJSON(request:Request):Promise<unknown>{
   finally{reader.releaseLock();}
   try{return JSON.parse(text);}catch{throw new GatewayError('INVALID_JSON','请求必须是完整 JSON',400);}
 }
-/** Private Sites dispatcher owns authentication and strips/replaces identity headers.
- * No browser API key, local gateway token, anonymous access, or fallback decisions.
+/** Sites dispatcher supplies identity for private access. Public play requires an explicit server setting.
+ * No browser API key, local gateway token, or fallback decisions.
  * Request caches are per isolate; the simulation owns the atomic decision barrier.
  */
 export default {
@@ -34,10 +34,11 @@ export default {
       return env.ASSETS.fetch(request);
     }
     const authenticated=Boolean(request.headers.get('oai-authenticated-user-id')&&request.headers.get('oai-authenticated-user-email'));
+    const canStart=env.SURVIVE_PUBLIC_PLAY==='true'||authenticated;
     try{
       const gateway=gatewayFor(env);
-      if(url.pathname==='/api/health'&&request.method==='GET')return json({configured:gateway.configured,authenticated,accessMode:'hosted',source:'REAL_MODEL',model:gateway.config.model,status:gateway.configured?'CONFIGURED':'UNCONFIGURED'});
-      if(!authenticated)return json({error:'AUTH_REQUIRED',message:'请用本站所属账号登录后再启动真实模型。'},401);
+      if(url.pathname==='/api/health'&&request.method==='GET')return json({configured:gateway.configured,authenticated,canStart,publicPlay:env.SURVIVE_PUBLIC_PLAY==='true',accessMode:'hosted',source:'REAL_MODEL',model:gateway.config.model,status:gateway.configured?'CONFIGURED':'UNCONFIGURED'});
+      if(!canStart)return json({error:'AUTH_REQUIRED',message:'请用本站所属账号登录后再启动真实模型。'},401);
       if(url.pathname!=='/api/decide')return json({error:'NOT_FOUND'},404);
       if(request.method!=='POST')return json({error:'METHOD_NOT_ALLOWED'},405);
       if(request.headers.get('origin')!==url.origin)return json({error:'ORIGIN_REJECTED',message:'模型请求必须来自本站。'},403);
