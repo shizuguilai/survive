@@ -1,14 +1,57 @@
 {
-  "checkedAt": "2026-09-24T02:10:51.455Z",
+  "checkedAt": "2026-09-24T02:39:09.646Z",
   "mode": "REAL_MODEL",
   "model": "glm-4.5-air",
   "providerVersion": "unknown",
-  "status": "BLOCKED",
+  "status": "FAILED",
   "mockUsed": false,
   "browser": "NOT_RUN",
   "device": "NOT_RUN",
   "published": "NOT_PUBLISHED",
-  "code": "MODEL_NOT_CONFIGURED",
-  "reason": "本项目未配置 SURVIVE_MODEL_API_KEY；真实模型相遇、问候和回放验收未执行。",
-  "realRequests": 0
+  "message": "真实模型事务错误暂停；查看 observerErrors。",
+  "realRequests": 2,
+  "freezeChecks": 856,
+  "freezeViolation": false,
+  "observerErrors": {
+    "resident-a": "真实模型服务请求失败（HTTP 401）；世界保持暂停。",
+    "resident-b": "真实模型服务请求失败（HTTP 401）；世界保持暂停。"
+  },
+  "audit": [
+    {
+      "requestId": "request-78c95b759d18a420",
+      "agentId": "resident-b",
+      "runId": "real-verification-1790217549647",
+      "barrierId": "cognition-1",
+      "contextHash": "fnv1a64:a079221c47420668",
+      "snapshotHash": "fnv1a64:0d3943a85085c5fa",
+      "tick": 0,
+      "source": "REAL_MODEL",
+      "model": "glm-4.5-air",
+      "providerVersion": "unknown",
+      "temperature": 0.4,
+      "attempts": 1,
+      "repairs": 0,
+      "durationMs": 17266,
+      "accepted": false,
+      "code": "MODEL_HTTP_ERROR"
+    },
+    {
+      "requestId": "request-8965c13737e30f3f",
+      "agentId": "resident-a",
+      "runId": "real-verification-1790217549647",
+      "barrierId": "cognition-1",
+      "contextHash": "fnv1a64:88f2e84e23f69e72",
+      "snapshotHash": "fnv1a64:0d3943a85085c5fa",
+      "tick": 0,
+      "source": "REAL_MODEL",
+      "model": "glm-4.5-air",
+      "providerVersion": "unknown",
+      "temperature": 0.4,
+      "attempts": 1,
+      "repairs": 0,
+      "durationMs": 17318,
+      "accepted": false,
+      "code": "MODEL_HTTP_ERROR"
+    }
+  ]
 }

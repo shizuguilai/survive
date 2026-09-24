@@ -30,8 +30,10 @@ test('T09 unconfigured real gateway fails closed without any network or syntheti
 });
 test('MOCK_UPSTREAM: individual prompts exclude metadata and other resident, request IDs deduplicate',async()=>{
   const prompts:any[]=[];let release!:()=>void;const gate=new Promise<void>(r=>release=r);
-  const gateway=new RealModelGateway(config(),{fetch:async(_url,init)=>{prompts.push(JSON.parse(String(init.body)));await gate;return response(decision());}});
+  let bothStarted!:()=>void;const ready=new Promise<void>(r=>bothStarted=r);
+  const gateway=new RealModelGateway(config(),{fetch:async(_url,init)=>{prompts.push(JSON.parse(String(init.body)));if(prompts.length===2)bothStarted();await gate;return response(decision());}});
   const a=request(),b=request('小禾','r2');const pending=[gateway.decide(a),gateway.decide(a),gateway.decide(b)];
+  await ready;
   assert.equal(prompts.length,2);assert.equal(JSON.stringify(prompts[0]).includes('requestId'),false);assert.equal(prompts[0].messages[1].content.includes('小禾'),false);assert.equal(prompts[1].messages[1].content.includes('阿林'),false);
   await assert.rejects(gateway.decide({...a,metadata:{...a.metadata,requestId:'r3'}}),/已有独立模型请求/);
   const mismatch=structuredClone(a);mismatch.metadata.tick++;await assert.rejects(gateway.decide(mismatch),/绑定其他冻结上下文/);

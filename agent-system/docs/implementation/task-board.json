@@ -4,7 +4,7 @@
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "latestBindingDecision": "任何居民需要大模型认知时全世界模拟暂停；运行时网络和观察者UI继续；批次完整提交后恢复，不追真实等待帧。",
-  "statusNote": "这是当前实施记录；code_complete不是整体accepted。真实模型、IDE、真机、正式发布均未通过。",
+  "statusNote": "当前实施记录；code_complete不等于accepted。密钥已配置，2次独立真实请求均HTTP401、0个决定被接受、856次冻结检查无世界变化；真实闭环仍blocked_provider_auth_401。IDE/真机/正式发布未通过；CLOUD01适配进行中。",
   "tasks": [
     {
       "id": "T00",
@@ -22,14 +22,14 @@
       "verification": {
         "static": "passed",
         "mock": "not_run",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "docs/implementation/baseline-evidence.json",
         "docs/implementation/baseline.md"
@@ -54,16 +54,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -76,7 +77,19 @@
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "main/HEAD/tree及文件逐一核对；旧工程未改。"
+      "scopeNote": "main/HEAD/tree及文件逐一核对；旧工程未改。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T01",
@@ -96,14 +109,14 @@
       "verification": {
         "static": "passed",
         "mock": "not_run",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "passed_static_observer_only",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "apps/laya-client/LayaProject.laya",
         "apps/laya-client/README.md",
@@ -147,16 +160,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -171,7 +185,19 @@
         "Laya IDE 3.3.12不可用，未打开IDE/导出微信包"
       ],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "真实Laya WebGL3D通过；IDE状态独立。"
+      "scopeNote": "真实Laya WebGL3D通过；IDE状态独立。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T02",
@@ -194,14 +220,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/clock.ts",
         "packages/sim-core/src/world.ts"
@@ -226,16 +252,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -248,7 +275,19 @@
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "50ms固定模拟步，恢复不补等待/离线时间。"
+      "scopeNote": "50ms固定模拟步，恢复不补等待/离线时间。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T03",
@@ -269,14 +308,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/contracts/schemas/agent-decision.schema.json",
         "packages/contracts/schemas/private-observation.schema.json",
@@ -305,16 +344,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -327,7 +367,19 @@
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "封闭schema、本人引用和来源校验；装备动作按用户补充扩展。"
+      "scopeNote": "封闭schema、本人引用和来源校验；装备动作按用户补充扩展。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T04",
@@ -356,14 +408,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/cognition.ts",
         "tests/barrier.test.ts"
@@ -388,16 +440,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -412,7 +465,19 @@
         "TM10玩家世界命令队列尚未实现"
       ],
       "codeStatus": "partial",
-      "scopeNote": "全局锁、原子批次、取消、错误冻结、重试、提交门槛已实现。"
+      "scopeNote": "全局锁、原子批次、取消、错误冻结、重试、提交门槛已实现。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T05",
@@ -435,14 +500,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/actions.ts",
         "tests/actions.test.ts"
@@ -467,16 +532,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -491,7 +557,19 @@
         "haul/build/eat等后续动作未实现，不向模型开放"
       ],
       "codeStatus": "partial",
-      "scopeNote": "实现continue/walk/look/listen/gather/rest/speak/wait及自主穿脱装备。"
+      "scopeNote": "实现continue/walk/look/listen/gather/rest/speak/wait及自主穿脱装备。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T06",
@@ -517,14 +595,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/knowledge.ts",
         "packages/sim-core/src/perception.ts",
@@ -550,16 +628,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -572,7 +651,19 @@
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "水平垂直FOV、多点AABB遮挡、本人lastKnown；导航为已知点直行碰撞，不宣称完整寻路器。"
+      "scopeNote": "水平垂直FOV、多点AABB遮挡、本人lastKnown；导航为已知点直行碰撞，不宣称完整寻路器。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T07",
@@ -598,14 +689,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/perception.ts",
         "tests/perception.test.ts"
@@ -630,16 +721,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -654,7 +746,19 @@
         "当前声音执行源为讲话，环境/脚步/工作声未完整实现"
       ],
       "codeStatus": "partial",
-      "scopeNote": "分片讲话/距离/墙透射/重叠掩蔽及身体分档已实现；游戏近似非真实声学。"
+      "scopeNote": "分片讲话/距离/墙透射/重叠掩蔽及身体分档已实现；游戏近似非真实声学。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T08",
@@ -679,14 +783,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/cognition.ts",
         "packages/sim-core/src/perception.ts"
@@ -711,16 +815,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -735,7 +840,19 @@
         "未完整实现模型watch条件选择性唤醒与全部迟滞策略"
       ],
       "codeStatus": "partial",
-      "scopeNote": "正模拟时刻感官变化/行动反馈/独立心跳触发。"
+      "scopeNote": "正模拟时刻感官变化/行动反馈/独立心跳触发。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T09",
@@ -760,14 +877,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "docs/implementation/model-config.md",
         "services/brain-gateway/src/gateway.ts",
@@ -797,16 +914,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -818,11 +936,38 @@
       ],
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
-        "缺少SURVIVE_MODEL_API_KEY；真实请求0",
-        "服务当前仅本机鉴权，尚未部署公网HTTPS网关"
+        "blocked_provider_auth_401：密钥已配置；2次独立真实请求均HTTP401，0个决定被接受",
+        "本地鉴权服务已存在；CLOUD01云端Worker适配进行中，公网HTTPS网关尚未发布成功"
       ],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "每人单独请求，严格校验、修复、限时重试、无规则降级。"
+      "scopeNote": "每人单独请求，严格校验、修复、限时重试、无规则降级。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "latestRealModelVerification": {
+        "status": "blocked_provider_auth_401",
+        "checkedAt": "2026-09-24T02:39:09.646Z",
+        "configured": true,
+        "providerAuthentication": "HTTP_401",
+        "realRequests": 2,
+        "acceptedDecisions": 0,
+        "independentResidents": 2,
+        "freezeChecks": 856,
+        "freezeViolation": false,
+        "mockUsed": false,
+        "auditErrorCode": "MODEL_HTTP_ERROR",
+        "evidence": "evidence/real-model-verification.json",
+        "scope": "真实本地网关请求已发出，提供方认证失败；未得到有效决定，不代表相遇/对话/回放或Worker真实调用通过。"
+      },
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T10",
@@ -851,14 +996,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/knowledge.ts",
         "packages/sim-core/src/perception.ts"
@@ -883,16 +1028,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -907,7 +1053,19 @@
         "长期记忆衰减/大规模语义检索尚未实现"
       ],
       "codeStatus": "partial",
-      "scopeNote": "本人记忆检索、来源链、白名单上下文和最终payload隔离测试通过。"
+      "scopeNote": "本人记忆检索、来源链、白名单上下文和最终payload隔离测试通过。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T11",
@@ -935,14 +1093,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "packages/sim-core/src/actions.ts",
         "tests/barrier.test.ts",
@@ -968,16 +1126,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -989,10 +1148,22 @@
       ],
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
-        "真实双向对话需模型凭据"
+        "blocked_provider_auth_401：模型凭据已配置但认证未通过，尚无有效真实决定支撑双向对话"
       ],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "Mock双向问候声学链通过；未把测试台词用于正式场景。"
+      "scopeNote": "Mock双向问候声学链通过；未把测试台词用于正式场景。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T12",
@@ -1022,14 +1193,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "apps/laya-client/src/controller.ts",
         "packages/sim-core/src/replay.ts",
@@ -1056,16 +1227,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -1078,7 +1250,19 @@
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [],
       "codeStatus": "implemented_milestone",
-      "scopeNote": "逐tick真实感官快照、来源计数、只读seek/倍速，不重调模型。"
+      "scopeNote": "逐tick真实感官快照、来源计数、只读seek/倍速，不重调模型。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T13",
@@ -1107,14 +1291,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed_scoped",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "passed_static_observer_only",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "apps/laya-client/src/controller.ts",
         "apps/laya-client/src/view.ts",
@@ -1140,16 +1324,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -1165,7 +1350,19 @@
         "真实模型等待态与动态回放浏览器验收未执行"
       ],
       "codeStatus": "partial",
-      "scopeNote": "单人扇形/参考环/已听方向/lastKnown，静态未配置浏览器交互通过。"
+      "scopeNote": "单人扇形/参考环/已听方向/lastKnown，静态未配置浏览器交互通过。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
     },
     {
       "id": "T14",
@@ -1194,14 +1391,14 @@
       "verification": {
         "static": "passed",
         "mock": "not_run",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "not_run",
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [
         "evidence/real-model-verification.json",
         "tools/verify-real.ts"
@@ -1226,16 +1423,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -1247,10 +1445,37 @@
       ],
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
-        "缺少本项目模型凭据；真实模型闭环未验收"
+        "blocked_provider_auth_401：密钥已配置但智谱认证失败；真实相遇、问候和回放闭环尚未通过"
       ],
       "codeStatus": "verification_script_ready",
-      "scopeNote": "不使用规则、Mock或生成文字伪造真实模型完成。"
+      "scopeNote": "不使用规则、Mock或生成文字伪造真实模型完成。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "latestRealModelVerification": {
+        "status": "blocked_provider_auth_401",
+        "checkedAt": "2026-09-24T02:39:09.646Z",
+        "configured": true,
+        "providerAuthentication": "HTTP_401",
+        "realRequests": 2,
+        "acceptedDecisions": 0,
+        "independentResidents": 2,
+        "freezeChecks": 856,
+        "freezeViolation": false,
+        "mockUsed": false,
+        "auditErrorCode": "MODEL_HTTP_ERROR",
+        "evidence": "evidence/real-model-verification.json",
+        "scope": "真实本地网关请求已发出，提供方认证失败；未得到有效决定，不代表相遇/对话/回放或Worker真实调用通过。"
+      },
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T15",
@@ -1285,16 +1510,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T16",
@@ -1325,16 +1551,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T17",
@@ -1366,16 +1593,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T18",
@@ -1408,16 +1636,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T19",
@@ -1453,16 +1682,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T20",
@@ -1492,16 +1722,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "T21",
@@ -1529,16 +1760,17 @@
         "physicalDevice": "not_run",
         "publication": "not_published"
       },
-      "configurationStatus": "BLOCKED_MODEL_KEY_AND_IDE; wx_appid_empty; https_gateway_not_deployed",
+      "configurationStatus": "MODEL_KEY_CONFIGURED; blocked_provider_auth_401; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
       "changedFiles": [],
       "commandsRun": [],
       "evidence": [],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口"
+        "按用户顺序等待T14真实双居民闭环；不提前扩展区域协作/人口；当前T14因blocked_provider_auth_401仍未通过"
       ],
       "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。"
+      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
+      "blockerCode": "blocked_provider_auth_401"
     },
     {
       "id": "CHAR01",
@@ -1558,14 +1790,14 @@
       "verification": {
         "static": "passed",
         "mock": "passed",
-        "realModel": "blocked_missing_key",
+        "realModel": "blocked_provider_auth_401",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
         "browser": "passed_initial_dressed_appearance",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "web_private_deployed_not_acceptance"
       },
-      "configurationStatus": "initial wardrobe configured; autonomous equipment available to real model when key is set",
+      "configurationStatus": "initial wardrobe configured; model key configured; autonomous equipment real verification blocked_provider_auth_401",
       "commandsRun": [
         {
           "command": "node --test tests/*.test.ts",
@@ -1586,16 +1818,17 @@
           "evidence": "evidence/final-build.txt"
         },
         {
-          "command": "node tools/verify-real.ts",
-          "exitCode": 2,
-          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-          "evidence": "evidence/real-model-verification.json"
-        },
-        {
           "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
           "exitCode": 0,
           "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
           "evidence": "evidence/browser-smoke.json"
+        },
+        {
+          "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+          "exitCode": 1,
+          "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+          "checkedAt": "2026-09-24T02:39:09.646Z",
+          "evidence": "evidence/real-model-verification.json"
         }
       ],
       "evidence": [
@@ -1604,14 +1837,111 @@
       ],
       "commit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
       "blockers": [
-        "真实模型自主换衣案例尚未运行"
+        "真实模型自主换衣案例尚未通过；当前blocked_provider_auth_401，2次请求未产生有效决定"
       ],
-      "scopeNote": "生成即穿衣；此后只能通过本人模型装备动作正时间完成；无玩家换装入口；武器尚无战斗系统。"
+      "scopeNote": "生成即穿衣；此后只能通过本人模型装备动作正时间完成；无玩家换装入口；武器尚无战斗系统。",
+      "historicalCommands": [
+        {
+          "command": "node tools/verify-real.ts",
+          "exitCode": 2,
+          "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+          "evidence": "evidence/real-model-verification.json",
+          "recordType": "historical_superseded",
+          "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+          "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+        }
+      ],
+      "publicationEvidence": "evidence/cloud-deployment.json"
+    },
+    {
+      "id": "CLOUD01",
+      "title": "云端Worker适配与站点部署验收",
+      "dependsOn": [
+        "T03",
+        "T09"
+      ],
+      "status": "code_complete",
+      "codeStatus": "complete",
+      "proposedFiles": [
+        "services/brain-gateway/src/worker.ts",
+        "tools/build-site.mjs"
+      ],
+      "changedFiles": [
+        "services/brain-gateway/src/worker.ts",
+        "services/brain-gateway/src/gateway.ts",
+        "apps/laya-client/src/controller.ts",
+        "apps/laya-client/src/view.ts",
+        "tools/build-auto.mjs",
+        "tools/build-site.mjs",
+        "tests/worker.test.ts"
+      ],
+      "definitionOfDone": "完成Worker服务端模型适配及站点构建；单独记录Mock、真实模型、构建、浏览器与发布，密钥仅保留服务端。",
+      "verification": {
+        "static": "passed",
+        "mock": "passed_8_gateway_tests",
+        "realModel": "blocked_provider_auth_401",
+        "webBuild": "passed",
+        "layaBuild": "not_run",
+        "browser": "not_run_for_cloud",
+        "physicalDevice": "not_run",
+        "publication": "web_private_deployed"
+      },
+      "configurationStatus": "MODEL_KEY_CONFIGURED_SERVER_SECRET; blocked_provider_auth_401; web_https_gateway_deployed_private; wechat_auth_not_configured",
+      "commandsRun": [
+        {
+          "command": "node --test tests/gateway.test.ts tests/worker.test.ts",
+          "exitCode": 0,
+          "result": "8 passed; upstream fault injection is Mock, not real-model acceptance",
+          "evidence": "evidence/cloud-gateway-tests.txt"
+        },
+        {
+          "command": "npm run build (registered cloud checkout)",
+          "exitCode": 0,
+          "result": "TypeScript + native Laya client + Worker ESM passed",
+          "evidence": "evidence/cloud-build.json"
+        }
+      ],
+      "evidence": [
+        "evidence/cloud-gateway-tests.txt",
+        "evidence/cloud-build.json",
+        "evidence/cloud-deployment.json",
+        "evidence/real-model-verification.json"
+      ],
+      "commit": null,
+      "blockers": [
+        "blocked_provider_auth_401：本地2次真实请求均智谱HTTP401；Worker真实模型调用尚未验收",
+        "云端浏览器尚未验收；微信鉴权、真机和发布未执行"
+      ],
+      "scopeNote": "Worker鉴权、同源与大小限制、WebCrypto、脱敏审计、云端UI和构建已完成；8项针对性测试通过，平台确认私有Web发布成功。请求缓存与并发仅限单实例。真实模型HTTP401记录来自本地实际请求，未冒称线上闭环通过。",
+      "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2"
     }
   ],
   "implementationDirectory": "agent-system",
-  "recordedAt": "2026-09-24T02:12:53.225592+00:00",
+  "recordedAt": "2026-09-24T02:48:30.784807+00:00",
   "referenceMainVerified": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "workingBranch": "work/agent-cognition-20260924",
-  "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6"
+  "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+  "realModelVerification": {
+    "status": "blocked_provider_auth_401",
+    "checkedAt": "2026-09-24T02:39:09.646Z",
+    "configured": true,
+    "providerAuthentication": "HTTP_401",
+    "realRequests": 2,
+    "acceptedDecisions": 0,
+    "independentResidents": 2,
+    "freezeChecks": 856,
+    "freezeViolation": false,
+    "mockUsed": false,
+    "auditErrorCode": "MODEL_HTTP_ERROR",
+    "evidence": "evidence/real-model-verification.json",
+    "scope": "真实本地网关请求已发出，提供方认证失败；未得到有效决定，不代表相遇/对话/回放或Worker真实调用通过。"
+  },
+  "deployment": {
+    "status": "succeeded",
+    "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+    "audience": "owner_private",
+    "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+    "evidence": "evidence/cloud-deployment.json",
+    "note": "Web私有部署不等于真实模型闭环或微信发布。"
+  }
 }

@@ -4,7 +4,7 @@ LayaAir 3.3.12 + TypeScript 原生 3D。先实现两名居民相遇、真实模�
 
 **任何居民需要模型思考，全世界模拟暂停。** 网络与观察者界面继续；完整决策批次提交后恢复，不补跑 API 等待时间。每名居民独立请求模型，只获得自己的感官、已知目标和私人记忆。模型缺失或失败时保持暂停，不用规则或 Mock 代替居民决策。
 
-本目录将在原 `shizuguilai/survive` 仓库中作为 `agent-system/` 存在。旧 `assets/`、旧工程配置及旧存档保留。工作分支、提交号和实际同步结果由交付记录列出，不直接改远端 `main`。
+本目录位于 `shizuguilai/survive` 仓库的 `agent-system/`。旧 `assets/`、旧工程配置及旧存档保留。工作分支、提交号和实际同步结果由交付记录列出，不直接改远端 `main`。
 
 ## 本地启动
 
@@ -19,7 +19,7 @@ npm start
 
 `engine:install` 校验 `apps/laya-client/engine-lock.json` 中的四个运行时脚本。已存在且哈希正确时直接复用。缺少文件时，可通过拥有参考仓库读取权限的 `GITHUB_TOKEN` 获取，或将 `LAYA_REFERENCE_ROOT` 设置为本地参考工程根目录（其中应包含 `vendor/`）；安装前校验文件大小和 SHA-256。
 
-`build` 执行 TypeScript 检查并产生 Web 包。`npm start` 启动本地网关并输出一次性登录链接；用该链接打开页面建立会话，默认地址为 `http://127.0.0.1:8787/`。当前服务仅绑定本机，并不是已经部署的公网网关。
+`build` 执行 TypeScript 检查并产生 Web 包。`npm start` 启动本地网关并输出一次性登录链接；用该链接打开页面建立会话，默认地址为 `http://127.0.0.1:8787/`。该命令运行本机网关；线上采用独立的 Worker 入口和服务端密钥。
 
 没有模型凭据也能打开观察界面、选择居民和查看感官，但世界保持静止；此时不能验收真实相遇或对话。
 
@@ -29,7 +29,7 @@ npm start
 
 | 环境变量 | 用途 / 默认值 |
 |---|---|
-| `SURVIVE_MODEL_API_KEY` | 真实模型调用必需；当前交付环境缺少此项 |
+| `SURVIVE_MODEL_API_KEY` | 真实模型调用必需；仅在服务端配置；本轮提供的凭据实测 HTTP 401 |
 | `SURVIVE_MODEL_BASE_URL` | `https://open.bigmodel.cn/api/paas/v4` |
 | `SURVIVE_MODEL_NAME` | `glm-4.5-air` |
 | `SURVIVE_PORT` | 本地端口，默认 `8787` |
@@ -57,7 +57,7 @@ node --env-file=.env services/brain-gateway/src/server.ts
 | `apps/laya-client/` | LayaAir 工程、原生 3D 场景与观察界面 |
 | `packages/sim-core/` | 模拟时钟、认知屏障、动作、有限感官、角色装备与回放 |
 | `packages/contracts/` | 私人输入、模型动作与决策格式校验 |
-| `services/brain-gateway/` | 真实模型适配、本机会话与请求处理 |
+| `services/brain-gateway/` | 真实模型适配、本机会话、云端鉴权与请求处理 |
 | `tests/` | 工程测试；Mock 明确用于测试 |
 | `docs/implementation/` | 基线、范围、阻塞与实施记录 |
 
@@ -65,7 +65,7 @@ node --env-file=.env services/brain-gateway/src/server.ts
 
 使用 **LayaAir IDE 3.3.12** 打开 `apps/laya-client/LayaProject.laya`。运行时版本、参考提交与文件哈希见 `apps/laya-client/engine-lock.json`。
 
-微信版还需要本项目自己的 AppID、微信开发者工具、可访问的 HTTPS 网关及合法域名配置。`src/platform-config.ts` 中的微信网关地址尚待配置。当前本地网关的本机会话限制需要另行完成适用于部署环境的服务配置与验收。
+微信版还需要本项目自己的 AppID、微信开发者工具、可访问的 HTTPS 网关及合法域名配置。`src/platform-config.ts` 中的微信网关地址尚待配置。Web 云端网关使用账号身份保护接口；微信鉴权和合法域名仍需另行配置，不能直接复用 Web 账号入口。
 
 本环境缺少 LayaAir IDE 和微信真机。Web 打包、浏览器交互、IDE 构建、微信真机和正式发布分别记录，不能互相代替。
 
@@ -76,7 +76,7 @@ npm test
 npm run typecheck
 ```
 
-测试通过不能代替真实模型验收。当前 T14 缺少真实 API key；按用户要求，T15–T21 区域规划、营地合作及人口扩展先等待两居民真实闭环通过。
+测试通过不能代替真实模型验收。当前 T14 已发出 2 次独立真实请求，但智谱均返回 HTTP 401，密钥认证失败；按用户要求，T15–T21 区域规划、营地合作及人口扩展先等待两居民真实闭环通过。
 
 T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是已完成的启动读档、断电恢复或旧存档迁移；回放读取也不等于恢复现场模拟。`haul`、`build`、`eat` 等设计动作尚未接入时不能被当作可运行功能。
 
@@ -85,3 +85,11 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 ### 本机填写模型配置
 
 复制 `.env.example` 为 `.env`，仅填写本项目的 `SURVIVE_MODEL_API_KEY`。随后运行 `npm run start:env`；真实模型验收运行 `npm run verify:real:env`。`.env` 已排除在 Git 外，不能放进微信客户端。
+
+## 云端发布
+
+已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（仅所属账号可访问）。服务端密钥已配置，但本轮两次独立真实请求均被智谱以 HTTP 401 拒绝；真实相遇、问候及回放尚未通过。部署记录见 [cloud-deployment.json](evidence/cloud-deployment.json)。
+
+`services/brain-gateway/src/worker.ts` 使用托管平台认证后的账号标头，API 拒绝匿名和跨域调用。`/api/health` 只返回配置状态，不返回密钥，也不表示上游认证已成功。云端请求缓存和并发限制仅在单个实例内有效；完整批次和重复响应保护仍由模拟屏障负责。
+
+带有 `.openai/hosting.json` 的托管检出目录运行 `npm run build` 会生成 `dist/client` 与 `dist/server/index.js`；普通本地目录仍生成原有 Web 包。密钥通过发布平台的运行时 secret 配置，不能打包进产物。

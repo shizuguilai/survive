@@ -31,7 +31,7 @@ function loadReplay():ReplayFile|null{
 }
 
 export async function boot():Promise<void>{
-  let view:ObserverView;let configured=false;let authenticated=false;let diagnostic='';let started=false;
+  let view:ObserverView;let configured=false;let authenticated=false;let hosted=false;let diagnostic='';let started=false;
   let recorder=new ReplayRecorder();let player:ReplayPlayer|null=null;
   let selectedId='resident-a',showSenses=true,speed=1;
   const provider=new GatewayProvider();
@@ -50,11 +50,12 @@ export async function boot():Promise<void>{
   async function health():Promise<void>{
     try{
       const r=await gatewayRequest('/api/health');const h=await r.json();
-      configured=h.configured===true;authenticated=h.authenticated===true;
+      if(!r.ok)throw Error('网关状态读取失败');
+      configured=h.configured===true;authenticated=h.authenticated===true;hosted=h.accessMode==='hosted';
       if(!configured)diagnostic='服务端尚未配置真实模型。世界保持静止，感官与镜头可操作。';
-      else if(!authenticated)diagnostic='请使用网关启动时给出的本地登录链接。';
+      else if(!authenticated)diagnostic=hosted?'请使用本站所属账号登录后启动。':'请使用网关启动时给出的本地登录链接。';
       else if(!started)diagnostic='真实模型已配置，点击「开始真实自治」启动两名居民。';
-    }catch{configured=false;diagnostic='无法连接模型网关。请通过本地服务打开本页面。';}
+    }catch{configured=false;authenticated=false;diagnostic='无法连接模型网关，请稍后重试。';}
   }
   function pause():void{if(player)player.pause();else sim.pause('USER_PAUSE');}
   function resume():void{if(player)player.play();else sim.resume('USER_PAUSE');}
@@ -92,7 +93,7 @@ export async function boot():Promise<void>{
       else{sim.frame(now);world=sim.world;cover=overlays(world);}
       const liveStatus=sim.pauseTokens.has('USER_PAUSE')&&!['ERROR_PAUSED','STOPPED'].includes(sim.status)?'PAUSED':sim.status;
       const modelErrors=Object.values(sim.barrier?.errors??{}).join('；');
-      const s:ViewState={world,overlays:cover,selectedId,showSenses,speed,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
+      const s:ViewState={world,overlays:cover,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
         mode:player?'REPLAY':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
         error:diagnostic||sim.observerError||modelErrors||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);

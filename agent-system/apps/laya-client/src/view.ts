@@ -11,7 +11,7 @@ export type ViewCallbacks = {
 export type ViewState = {
   world:World; overlays:Record<string,SensoryOverlay>; status:string; error?:string;
   mode:'UNCONFIGURED'|'REAL_MODEL'|'REPLAY'; selectedId:string; showSenses:boolean;
-  playbackTick:number; maxTick:number; speed:number;
+  playbackTick:number; maxTick:number; speed:number; hosted?:boolean;
 };
 
 // All visible controls and graphics use Laya. Only its engine-owned Input bridge
@@ -117,7 +117,8 @@ export class ObserverView {
     this.button('stop','停止',619,628,72,()=>this.api.onStop());
     this.button('replay','查看回放',705,628,104,()=>this.state?.mode==='REPLAY'?this.api.onLive():this.api.onReplay());
     this.button('speed','1× 播放',819,628,94,()=>{const current=this.state?.speed||1;this.api.onSpeed(current>=4?.5:current*2);});
-    this.text(this.root,'网关令牌',929,636,12,'#60786d',84);
+    this.labels.gateway=this.text(this.root,'网关令牌',929,636,12,'#60786d',84);
+    this.labels.hosted=this.text(this.root,'云端模型 · 密钥由服务端保管',936,639,12,'#60786d',315);this.labels.hosted.visible=false;
     this.token=new L.Input();this.token.pos(1007,629);this.token.size(152,33);this.token.fontSize=14;this.token.color=palette.ink;this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
     this.button('connect','连接',1170,628,86,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
     this.timeline=this.panel(this.root,320,681,880,8,'#c8d4c2',4);this.timeline.mouseEnabled=true;this.timeline.hitArea=new L.Rectangle(0,-12,880,34);
@@ -182,6 +183,8 @@ export class ObserverView {
   }
   render(state:ViewState):void{
     this.state=state;this.drawWorld(state.world);this.drawSenses(state);
+    this.labels.gateway.visible=this.token.visible=this.buttons.connect.root.visible=!state.hosted;
+    this.labels.hosted.visible=Boolean(state.hosted);
     const r=state.world.residents.find(x=>x.id===state.selectedId)||state.world.residents[0];
     const mode=state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':'真实模型 · 独立居民';
     this.labels.mode.text=mode;this.labels.status.text=this.humanStatus(state.status);

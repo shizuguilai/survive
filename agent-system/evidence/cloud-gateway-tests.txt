@@ -1,0 +1,16 @@
+✔ T03 strict schemas reject world DTO leaks, unknown refs, fabricated evidence and conflicts (8.728447ms)
+✔ T09 unconfigured real gateway fails closed without any network or synthetic decision (7.236084ms)
+✔ MOCK_UPSTREAM: individual prompts exclude metadata and other resident, request IDs deduplicate (23.339216ms)
+✔ MOCK_UPSTREAM: bounded format repair, sanitized errors and same-snapshot retry (310.7722ms)
+✔ MOCK_UPSTREAM: deadline cancels pending I/O and never emits accepted intent (22.52266ms)
+✔ T09 HTTP local one-time session, hostile origin and unauthenticated decide rejected (107.035656ms)
+✔ Worker rejects missing identity and cross-origin requests before upstream (14.79557ms)
+✔ MOCK_UPSTREAM: provider 401 is not retried or exposed and freezes both residents (31.48832ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 904.968628

@@ -1,0 +1,17 @@
+{
+  "status": "passed",
+  "kind": "cloud-worker-and-laya-web",
+  "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+  "typecheck": "passed",
+  "gatewayTests": {
+    "passed": 8,
+    "mockUpstream": true,
+    "realModelAcceptance": false
+  },
+  "artifactSha256": "f5706aad94bbf552ed21fb7114976ad4c9c09853423a68cdd4c00a9c8989477c",
+  "appSha256": "412a749d6470d28f9d24d9f8f6d1b852f163bd10a358a851ef86f6e33a82bbdd",
+  "workerSha256": "08010a1ede91650a6f31c1bbe6fb262b1c2f9e2866775f9c0a0a6391cca77c04",
+  "browser": "not_run_for_cloud",
+  "physicalDevice": "not_run",
+  "secretScan": "passed_no_key_in_source_or_artifact"
+}

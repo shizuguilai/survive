@@ -1,4 +1,3 @@
-import {createHash} from 'node:crypto';
 import type {BrainRequest, BrainResponse, Decision} from '../../../packages/contracts/src/types.ts';
 import {canonicalStringify} from '../../../packages/contracts/src/canonical.ts';
 import {ContractError, validateBrainRequest, validateDecision} from '../../../packages/contracts/src/validation.ts';
@@ -31,10 +30,11 @@ export class RealModelGateway {
     this.config=config;this.#fetch=options.fetch??fetch;this.#audit=options.audit??(()=>{});
   }
   get configured(){return Boolean(this.config.apiKey.trim());}
-  decide(raw:unknown,signal?:AbortSignal):Promise<BrainResponse>{
+  async decide(raw:unknown,signal?:AbortSignal):Promise<BrainResponse>{
     const request=structuredClone(validateBrainRequest(raw));
     if(!this.configured)return Promise.reject(new GatewayError('MODEL_NOT_CONFIGURED','本项目尚未配置真实模型密钥；世界保持暂停。',503));
-    const binding=createHash('sha256').update(canonicalStringify(request)).digest('hex');
+    const digest=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(canonicalStringify(request)));
+    const binding=Array.from(new Uint8Array(digest),byte=>byte.toString(16).padStart(2,'0')).join('');
     const bound=this.#bindings.get(request.metadata.requestId);
     if(bound&&bound!==binding)return Promise.reject(new GatewayError('REQUEST_ID_CONFLICT','请求标识已绑定其他冻结上下文',409));
     const cached=this.#cache.get(request.metadata.requestId);
@@ -46,9 +46,9 @@ export class RealModelGateway {
     const promise=this.#execute(request,signal).finally(()=>this.#active.delete(agentKey));
     this.#cache.set(request.metadata.requestId,{binding,promise});
     this.#bindings.set(request.metadata.requestId,binding);
-    // Successful IDs remain bound for this bounded local run; failed IDs are retryable
-    // only with the exact same snapshot. New snapshots must use new request IDs.
-    if(this.#cache.size>4096){const oldest=this.#cache.keys().next().value!;this.#cache.delete(oldest);}
+    // These are bounded, per-instance optimizations, not a cross-Worker global lock.
+    // The authoritative client barrier rejects stale or duplicated responses.
+    if(this.#bindings.size>256){const oldest=this.#bindings.keys().next().value!;this.#bindings.delete(oldest);this.#cache.delete(oldest);}
     promise.catch(()=>{if(this.#cache.get(request.metadata.requestId)?.promise===promise)this.#cache.delete(request.metadata.requestId);});
     return promise.then(value=>structuredClone(value));
   }
@@ -73,6 +73,7 @@ export class RealModelGateway {
           try{
             response=await this.#fetch(`${this.config.baseUrl}/chat/completions`,{method:'POST',redirect:'error',headers:{'content-type':'application/json','authorization':`Bearer ${this.config.apiKey}`},body:JSON.stringify({model:this.config.model,messages,temperature:0.4,max_tokens:1800,stream:false,response_format:{type:'json_object'}}),signal:combined});
             if(response.ok)break;
+            if(response.status===401){await response.body?.cancel();throw new GatewayError('MODEL_AUTH_FAILED','智谱密钥认证失败（HTTP 401）。请在服务端更新完整有效的 API Key；世界保持暂停。',502);}
             if(!(response.status===429||response.status>=500)||retry===this.config.retries)throw new GatewayError('MODEL_HTTP_ERROR',`真实模型服务请求失败（HTTP ${response.status}）；世界保持暂停。`);
             await response.body?.cancel();
           }catch(error){

@@ -1,13 +1,18 @@
 {
-  "overall": "BLOCKED_BEFORE_REAL_MODEL_MILESTONE",
-  "originalSourceUntouched": true,
+  "overall": "BLOCKED_PROVIDER_AUTH_401",
+  "originalSourceUntouched": false,
   "main": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "branch": "work/agent-cognition-20260924",
   "tests": {
     "regularPassed": 71,
     "regularSkipped": 1,
     "separate30SecondFreeze": "passed",
-    "realRequests": 0
+    "realRequests": 2,
+    "acceptedRealDecisions": 0,
+    "realFreezeChecks": 856,
+    "realFreezeViolation": false,
+    "priorAutomatedEvidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+    "scopeNote": "71项常规通过、独立30秒冻结及既有Web/browser结果为历史验收；不代表当前云端Worker适配已通过。"
   },
   "commands": [
     {
@@ -29,28 +34,75 @@
       "evidence": "evidence/final-build.txt"
     },
     {
-      "command": "node tools/verify-real.ts",
-      "exitCode": 2,
-      "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
-      "evidence": "evidence/real-model-verification.json"
-    },
-    {
       "command": "BROWSER_START_SERVER=1 BROWSER_EXECUTABLE_PATH=<installed Chromium> node tools/browser-smoke.mjs",
       "exitCode": 0,
       "result": "Production unconfigured static observer, desktop and touch mobile emulation; not physical device",
       "evidence": "evidence/browser-smoke.json"
+    },
+    {
+      "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+      "exitCode": 1,
+      "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+      "checkedAt": "2026-09-24T02:39:09.646Z",
+      "evidence": "evidence/real-model-verification.json"
     }
   ],
   "blockingPrerequisites": [
-    "SURVIVE_MODEL_API_KEY",
+    "blocked_provider_auth_401: 服务端密钥已配置，但智谱拒绝两名居民的独立真实请求；须解决认证后重验T14",
     "Laya IDE 3.3.12",
-    "independent WeChat AppID and HTTPS gateway",
+    "independent WeChat AppID, WeChat authentication and legal-domain configuration",
     "physical WeChat device verification"
   ],
   "tasks": "task-board.json",
-  "publication": "NOT_PUBLISHED",
-  "gitSynchronization": "SYNCED_TO_INDEPENDENT_BRANCH",
+  "publication": "WEB_PRIVATE_DEPLOYED",
+  "gitSynchronization": "SEE_CURRENT_BRANCH_HEAD",
   "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
   "repository": "shizuguilai/survive",
-  "branchUrl": "https://github.com/shizuguilai/survive/tree/work/agent-cognition-20260924"
+  "branchUrl": "https://github.com/shizuguilai/survive/tree/work/agent-cognition-20260924",
+  "recordedAt": "2026-09-24T02:48:30.784807+00:00",
+  "historicalCommands": [
+    {
+      "command": "node tools/verify-real.ts",
+      "exitCode": 2,
+      "result": "BLOCKED_MODEL_NOT_CONFIGURED; realRequests=0",
+      "evidence": "evidence/real-model-verification.json",
+      "recordType": "historical_superseded",
+      "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
+      "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+    }
+  ],
+  "realModelVerification": {
+    "status": "blocked_provider_auth_401",
+    "checkedAt": "2026-09-24T02:39:09.646Z",
+    "configured": true,
+    "providerAuthentication": "HTTP_401",
+    "realRequests": 2,
+    "acceptedDecisions": 0,
+    "independentResidents": 2,
+    "freezeChecks": 856,
+    "freezeViolation": false,
+    "mockUsed": false,
+    "auditErrorCode": "MODEL_HTTP_ERROR",
+    "evidence": "evidence/real-model-verification.json",
+    "scope": "真实本地网关请求已发出，提供方认证失败；未得到有效决定，不代表相遇/对话/回放或Worker真实调用通过。"
+  },
+  "cloudAdapter": {
+    "task": "CLOUD01",
+    "status": "code_complete",
+    "mock": "passed_8_gateway_tests",
+    "realModel": "blocked_provider_auth_401",
+    "realModelEvidenceScope": "提供方认证阻塞来自本地实测，云端Worker真实调用尚未验证",
+    "build": "passed",
+    "browser": "not_run_for_cloud",
+    "physicalDevice": "not_run",
+    "publication": "web_private_deployed"
+  },
+  "gitSynchronizationNote": "历史实施提交保留；本次源码、README、401证据与云端发布记录作为独立变更同步到原工作分支，main不变。",
+  "deployment": {
+    "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+    "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+    "evidence": "evidence/cloud-deployment.json"
+  },
+  "legacySourcePreserved": true,
+  "rootReadmeUpdated": true
 }
