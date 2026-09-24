@@ -177,7 +177,7 @@ test('current plan whitelist retains real contract target, duration, nullable re
   assert.deepEqual(privateAction({ op: 'equip_item', stage: 0, params: { itemRef: 'item_1', slot: 'torso', internalId: 'secret' } }).params, { itemRef: 'item_1', slot: 'torso' });
 });
 
-test('self equipment is private; visible outfit changes wake observers without revealing bag contents', () => {
+test('self equipment is private; visible outfit changes update senses without reawakening observers without revealing bag contents', () => {
   const world = scene(), observer = world.residents[0], target = world.residents[1];
   observer.character = createCharacterState(observer.id); target.character = createCharacterState(target.id);
   samplePerception(world);
@@ -189,7 +189,7 @@ test('self equipment is private; visible outfit changes wake observers without r
   const changed = applyEquipmentAction(target, { type: 'equip_item', itemRef: 'item_5' });
   assert.ok(changed.ok); if (!changed.ok) return;
   target.character = changed.resident.character;
-  world.tick = 4; assert.ok(samplePerception(world).includes(observer.id));
+  world.tick = 4; assert.ok(!samplePerception(world).includes(observer.id));
   assert.ok(observer.observations.at(-1)!.detail.appearance.join('').includes('长矛'));
   const bytes = JSON.stringify(buildContext(world, observer));
   assert.ok(!bytes.includes(':starter')); assert.ok(!bytes.includes(target.id));

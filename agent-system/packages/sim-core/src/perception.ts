@@ -9,6 +9,8 @@ const DT = defaults.simulation.fixedDtMs;
 const VISION = defaults.vision;
 const HEARING = defaults.hearing;
 const SCAN_TICKS = Math.max(1, Math.round(VISION.scanEverySimMs / DT));
+// Only observed absence counts; brief turns/occlusion stay in the same encounter.
+const ENCOUNTER_ABSENCE_TICKS = Math.ceil(2000 / DT);
 const DIRECTIONS = ['front', 'front_right', 'right', 'back_right', 'back', 'back_left', 'left', 'front_left'];
 const ALLOWED = ['continue', 'walk', 'look', 'listen', 'gather', 'rest', 'speak', 'wait', 'equip_item', 'unequip_item'];
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
@@ -79,7 +81,7 @@ function vision(world: World, resident: Resident): boolean {
     ...world.residents.filter(other => other.id !== resident.id).map(other => ({ id: other.id, position: other.position, height: 1.8, appearance: other.character ? publicCharacterSummary(other.character) : '一个人', resident: true })),
     ...world.objects.map(object => ({ id: object.id, position: object.position, height: object.height, appearance: (object.appearance+(object.resourceKind&&object.resources<=0?'；已经采空':'')).slice(0, 120), resident: false })),
   ];
-  const percepts: { entry: KnowledgeEntry; detail: Record<string, any>; certainty: Observation['certainty'] }[] = [];
+  const percepts: { entry: KnowledgeEntry; person: boolean; entered: boolean; detail: Record<string, any>; certainty: Observation['certainty'] }[] = [];
   for (const candidate of candidates) {
     const fraction = visibleFraction(world, resident, candidate);
     if (!fraction || world.daylight <= 0.03) continue;
@@ -90,6 +92,7 @@ function vision(world: World, resident: Resident): boolean {
     const level = recognizedName ? 'recognized' : described ? 'described' : 'detected';
     const appearance = recognizedName ? [`你认出了${recognizedName}`, candidate.appearance] : described ? [candidate.appearance] : ['一个不太清晰的轮廓'];
     let entry = knownForEntity(resident, candidate.id);
+    const entered = !entry || (!wasVisible.includes(entry) && world.tick - entry.lastSeenTick >= ENCOUNTER_ABSENCE_TICKS);
     if (!entry) {
       const ref = `known_${++resident.knowledgeSequence}`;
       entry = { ref, entityId: candidate.id, description: appearance.join('；'), lastPosition: { ...candidate.position }, lastSeenTick: world.tick, visible: true, recognizedName };
@@ -100,7 +103,7 @@ function vision(world: World, resident: Resident): boolean {
     entry.lastSeenTick = world.tick;
     entry.visible = true;
     entry.recognizedName = recognizedName;
-    percepts.push({ entry, detail: { level, relativeDirection: direction(resident, candidate.position), distanceBand: distanceBand(distance), appearance, recognizedName, knownRef: entry.ref }, certainty: level === 'detected' ? 'uncertain' : 'clear' });
+    percepts.push({ entry, person: candidate.resident, entered, detail: { level, relativeDirection: direction(resident, candidate.position), distanceBand: distanceBand(distance), appearance, recognizedName, knownRef: entry.ref }, certainty: level === 'detected' ? 'uncertain' : 'clear' });
   }
   const signature = JSON.stringify(percepts.map(percept => percept.detail));
   let changed = false;
@@ -114,11 +117,11 @@ function vision(world: World, resident: Resident): boolean {
         appendObservation(world, resident, 'visual', percept.detail, percept.certainty);
         // Retinal changes still enter personal perception. They do not, by themselves,
         // require a new decision in the middle of a model-authored action.
-        const person=world.residents.some(r=>r.id===percept.entry.entityId);
+        const person=percept.person;
         const meaningChanged=!previous||previous.level!==percept.detail.level||previous.recognizedName!==percept.detail.recognizedName||JSON.stringify(previous.appearance)!==JSON.stringify(percept.detail.appearance);
         const activeTarget=resident.plan.some(p=>!p.done&&Object.entries(p.action.params).some(([key,value])=>key.endsWith('Ref')&&value===percept.entry.ref));
         const targetContentChanged=activeTarget&&previous&&percept.detail.level!=='detected'&&JSON.stringify(previous.appearance)!==JSON.stringify(percept.detail.appearance);
-        if(!executing||meaningChanged&&(person||targetContentChanged||watched(percept.entry.ref)))changed=true;
+        if(person ? percept.entered : !executing||meaningChanged&&(targetContentChanged||watched(percept.entry.ref)))changed=true;
       }
     }
     for (const entry of wasVisible.filter(entry => !entry.visible)) {
@@ -127,7 +130,7 @@ function vision(world: World, resident: Resident): boolean {
         distanceBand: distanceBand(planarDistance(resident.position, entry.lastPosition)),
         appearance: [`先前看到的${entry.description}已离开视野；仅记得最后看到的位置。`.slice(0, 120)], recognizedName: entry.recognizedName, knownRef: entry.ref,
       }, 'uncertain');
-      if(!executing||world.residents.some(r=>r.id===entry.entityId)||watched(entry.ref))changed=true;
+      if(!world.residents.some(r=>r.id===entry.entityId)&&(!executing||watched(entry.ref)))changed=true;
     }
     resident.visualSignature = signature;
   }
@@ -171,13 +174,17 @@ function hearing(world: World, resident: Resident): boolean {
       soundKind: 'speech', relativeDirection: direction(resident, sound.position), distanceBand: distanceBand(distance),
       heardText, recognizedSpeakerName: name, speakerKnownRef: known?.ref ?? null,
     }, heardText ? 'clear' : 'uncertain');
-    // Speech is still physically delivered fragment by fragment. Repeated chunks
-    // of one ongoing utterance update hearing without forcing another model turn.
-    const key=sound.utteranceId?`${sound.utteranceId}:${heardText?'clear':'detected'}`:null;
-    const first=!key||!resident.heardUtteranceKeys?.includes(key);
-    if(key&&first)resident.heardUtteranceKeys=[...(resident.heardUtteranceKeys??[]),key].slice(-64);
-    const nameWatch=resident.lastDecision?.watch.some(w=>w.kind==='heard_name')&&heardText?.includes(resident.name);
-    if(first||sound.final||nameWatch||!resident.plan.some(p=>!p.done))changed=true;
+    // One wake per actually heard utterance, even if a later chunk becomes clear,
+    // mentions our name, or ends the sentence. No unheard future text is exposed.
+    const key=sound.utteranceId??sound.id;
+    const first=!resident.heardUtteranceKeys?.includes(key);
+    if(first){resident.heardUtteranceKeys=[...(resident.heardUtteranceKeys??[]),key];changed=true;}
+  }
+  // Retain keys while any fragment of that utterance is still physically active.
+  // A bounded tail covers the normal gaps between emitted fragments.
+  if((resident.heardUtteranceKeys?.length??0)>64){
+    const active=new Set(world.sounds.map(sound=>sound.utteranceId??sound.id));
+    resident.heardUtteranceKeys=resident.heardUtteranceKeys!.filter((key,i,keys)=>i>=keys.length-64||active.has(key));
   }
   return changed;
 }

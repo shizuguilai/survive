@@ -1,0 +1,15 @@
+{
+  "status": "succeeded",
+  "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+  "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+  "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_b13b57db5e24819190fd71f9d1b409a8",
+  "deploymentId": "appgdep_6ab4ce5b0be4819197b8a75a87b3f7f7",
+  "sourceCommit": "9832370a32377682f9a659e4e2f31927bd19fb4f",
+  "envSetRevision": 3,
+  "publishedAt": "2026-09-24T07:16:50.571449+00:00",
+  "access": "public",
+  "realModel": "passed_local_v032_default_camp_movement",
+  "browser": "not_run_this_revision",
+  "liveModelBrowser": "not_run",
+  "physicalDevice": "not_run"
+}

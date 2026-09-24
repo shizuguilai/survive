@@ -1,0 +1,155 @@
+{
+  "simVersion": "0.3.2",
+  "checkedAt": "2026-09-24T07:14:40.344Z",
+  "status": "passed_real_movement",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "execution": "node-local-real-provider",
+  "requests": 10,
+  "freezeChecks": 2354,
+  "freezeViolation": false,
+  "tick": 120,
+  "movement": 8.150638627377313,
+  "taskProgress": 0,
+  "taskAcceptedBy": [
+    "resident-b",
+    "resident-a"
+  ],
+  "completedOperations": [
+    "walk",
+    "read_notice",
+    "accept_task",
+    "speak"
+  ],
+  "failedActions": [
+    "我距离这个采集目标太远，需要先实际走到它附近。"
+  ],
+  "inventories": [
+    {
+      "agentId": "resident-a",
+      "supplies": {}
+    },
+    {
+      "agentId": "resident-b",
+      "supplies": {}
+    }
+  ],
+  "operations": [
+    "speak",
+    "walk",
+    "read_notice",
+    "continue",
+    "accept_task",
+    "gather"
+  ],
+  "audit": [
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "speak",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task",
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 2,
+      "ops": [
+        "gather"
+      ],
+      "validationIssues": [
+        "$.actions.params: reference is not in personal known targets"
+      ]
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    }
+  ],
+  "browser": "not_run",
+  "physicalDevice": "not_run",
+  "scope": "Default unprepared camp; actual real-model movement and cadence; not full camp cooperation or online real-browser validation"
+}

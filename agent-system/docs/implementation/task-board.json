@@ -2265,15 +2265,15 @@
       ],
       "status": "partial",
       "codeStatus": "implemented_scoped",
-      "scopeNote": "修复普通视觉变化与句内语音片段造成的频繁认知；默认营地真实移动通过。仍不保证永不重复或长期协作完成。",
+      "scopeNote": "按相遇和讲话去重，允许真实模型沉默继续动作；不保证模型永不重复或长期协作完成。",
       "verification": {
         "static": "passed",
-        "mock": "passed_11_to_1_walk_cadence",
-        "realModel": "passed_default_camp_real_movement",
+        "mock": "passed_encounter_speech_and_silent_continue",
+        "realModel": "passed_local_v032_movement_and_continue",
         "webBuild": "passed",
-        "browser": "passed_delayed_transport_diagnostics",
+        "browser": "not_run_this_revision",
         "physicalDevice": "not_run",
-        "publication": "web_public_deployed_v031"
+        "publication": "web_public_deployed_v032"
       },
       "evidence": [
         "evidence/camp-real.json",
@@ -2283,7 +2283,10 @@
         "evidence/thinking-cadence.json",
         "evidence/thinking-real.json",
         "evidence/thinking-browser.json",
-        "evidence/thinking-deployment.json"
+        "evidence/thinking-deployment.json",
+        "docs/implementation/ENCOUNTER_TRIGGERS.md",
+        "evidence/encounter-real.json",
+        "evidence/encounter-deployment.json"
       ]
     },
     {
@@ -2608,6 +2611,45 @@
       "access": "public",
       "realModel": "passed_local_default_camp_movement",
       "browser": "passed_explicit_delayed_transport_fixture",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run"
+    }
+  },
+  "encounterTriggers": {
+    "simCoreVersion": "0.3.2",
+    "baselineHead": "03c8bfe681584dd7ea4d64005baa3d27a9618308",
+    "rules": [
+      "one_wake_per_visual_encounter",
+      "two_sim_second_absence_debounce",
+      "one_wake_per_actually_heard_utterance",
+      "model_may_continue_silently"
+    ],
+    "code": "implemented",
+    "mock": "passed_101_skipped_1",
+    "realModel": "passed_local_default_camp_movement",
+    "webBuild": "passed",
+    "browser": "not_run_this_revision",
+    "physicalDevice": "not_run",
+    "publication": "web_public_deployed_v032",
+    "wechatPublication": "not_run",
+    "evidence": [
+      "docs/implementation/ENCOUNTER_TRIGGERS.md",
+      "evidence/encounter-real.json",
+      "evidence/encounter-deployment.json"
+    ],
+    "realSummary": "默认营地2居民独立调用glm-4.5-air，10次决策请求（含1次格式修复），推进6.00秒模拟时间，累计位移8.15米；实际包含continue、行走、读公告、接任务和采集决定；2354次冻结检查无违规。任务进度仍为0，不算完整采集验收",
+    "deployment": {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_b13b57db5e24819190fd71f9d1b409a8",
+      "deploymentId": "appgdep_6ab4ce5b0be4819197b8a75a87b3f7f7",
+      "sourceCommit": "9832370a32377682f9a659e4e2f31927bd19fb4f",
+      "envSetRevision": 3,
+      "publishedAt": "2026-09-24T07:16:50.571449+00:00",
+      "access": "public",
+      "realModel": "passed_local_v032_default_camp_movement",
+      "browser": "not_run_this_revision",
       "liveModelBrowser": "not_run",
       "physicalDevice": "not_run"
     }
