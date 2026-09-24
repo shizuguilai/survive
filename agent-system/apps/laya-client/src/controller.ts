@@ -71,7 +71,7 @@ export async function boot():Promise<void>{
     try{
       const recording=recorder.commits.length?recorder.export(sim.status==='STOPPED'):loadReplay();
       if(!recording)throw Error('尚无回放，请先完成一次真实模型决策。');
-      player=new ReplayPlayer(recording);sim.pause('REPLAY_VIEW');player.play();
+      player=new ReplayPlayer(recording);sim.pause('REPLAY_VIEW');player.play();diagnostic='';
       // Save only on explicit replay action; never disguise storage failure as success.
       try{persist('survive_agent_replay_v1',recording);}catch{diagnostic='回放已在本次会话打开；本机存储空间不足，未能持久保存。';}
       if(recording.manifest.decisionMode!=='real')diagnostic='当前回放明确包含 Mock 测试决策，不是已验证真实模型运行。';

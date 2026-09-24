@@ -1,6 +1,7 @@
 /** Opt-in REAL upstream verification. Missing credentials produce BLOCKED, never PASS. */
 import {mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
+import {gzipSync} from 'node:zlib';
 import {loadConfig,RealModelGateway,type AuditRecord} from '../services/brain-gateway/src/gateway.ts';
 import {Simulation} from '../packages/sim-core/src/cognition.ts';
 import {ReplayPlayer,ReplayRecorder} from '../packages/sim-core/src/replay.ts';
@@ -10,13 +11,13 @@ import type {BrainRequest,BrainProvider} from '../packages/contracts/src/types.t
 
 const evidence=resolve('evidence');await mkdir(evidence,{recursive:true});
 const config=loadConfig();
-const report:Record<string,unknown>={checkedAt:new Date().toISOString(),mode:'REAL_MODEL',model:config.model,providerVersion:'unknown',status:'RUNNING',mockUsed:false,browser:'NOT_RUN',device:'NOT_RUN',published:'NOT_PUBLISHED'};
+const report:Record<string,unknown>={checkedAt:new Date().toISOString(),mode:'REAL_MODEL',model:config.model,providerVersion:'unknown',status:'RUNNING',execution:'node-local-gateway',mockUsed:false,browser:'NOT_RUN',device:'NOT_RUN',published:'RECORDED_SEPARATELY'};
 const save=()=>writeFile(resolve(evidence,'real-model-verification.json'),JSON.stringify(report,null,2)+'\n');
 if(!config.apiKey.trim()){
   Object.assign(report,{status:'BLOCKED',code:'MODEL_NOT_CONFIGURED',reason:'本项目未配置 SURVIVE_MODEL_API_KEY；真实模型相遇、问候和回放验收未执行。',realRequests:0});
   await save();console.error('BLOCKED: 本项目未配置真实模型密钥。未使用 Mock、规则问候或伪造真实结果。');process.exitCode=2;
 }else{
-  const audits:AuditRecord[]=[];const requests:BrainRequest[]=[];const gateway=new RealModelGateway(config,{audit:r=>audits.push(r)});
+  const audits:AuditRecord[]=[];const requests:BrainRequest[]=[];const gateway=new RealModelGateway(config,{audit:r=>{audits.push(r);console.log(JSON.stringify({source:'REAL_MODEL',agent:r.agentId,tick:r.tick,accepted:r.accepted,code:r.code,attempts:r.attempts,validationIssues:r.validationIssues}));}});
   const recorder=new ReplayRecorder();const maxRequests=24;
   const provider:BrainProvider={async decide(request,signal){
     if(requests.length>=maxRequests)throw new Error('真实验收达到 24 次独立请求预算；未获得闭环时不算通过。');
@@ -55,12 +56,18 @@ if(!config.apiKey.trim()){
     // Resume frame establishes a fresh wall anchor, never consumes request wait time.
     sim.pause('VERIFY_NO_CATCHUP');const before=sim.world.tick;sim.frame(observerWall+100_000);sim.resume('VERIFY_NO_CATCHUP');sim.frame(observerWall+200_000);
     if(sim.world.tick!==before)throw new Error('恢复时补跑了网络等待时间');
-    await writeFile(resolve(evidence,'real-meeting-replay.json'),JSON.stringify(replay,null,2)+'\n');
-    Object.assign(report,{status:'PASS',realRequests:requests.length,independentResidents:new Set(requests.map(r=>r.metadata.agentId)).size,freezeChecks,freezeViolation:false,noCatchup:true,simTick:sim.world.tick,decisionCounts:replay.manifest.decisionCounts,bothSpoke:both(spoke),bothHeardAndDecided:both(heardAndDecided),replay:'real-meeting-replay.json'});
+    const recording=JSON.stringify(replay,null,2)+'\n';
+    await writeFile(resolve(evidence,'real-meeting-replay.json'),recording);
+    await writeFile(resolve(evidence,'real-meeting-replay.json.gz'),gzipSync(recording));
+    Object.assign(report,{status:'PASS',realRequests:requests.length,independentResidents:new Set(requests.map(r=>r.metadata.agentId)).size,freezeChecks,freezeViolation:false,noCatchup:true,simTick:sim.world.tick,decisionCounts:replay.manifest.decisionCounts,bothSpoke:both(spoke),bothHeardAndDecided:both(heardAndDecided),replay:'real-meeting-replay.json.gz'});
     console.log('PASS: 两名居民真实独立模型、发言/听觉反馈、冻结/无补跑及确定快照回放通过。浏览器与真机仍独立验收。');
   }catch(error){
     Object.assign(report,{status:'FAILED',message:error instanceof Error?error.message:'真实验收失败',realRequests:requests.length,freezeChecks,freezeViolation,observerErrors:sim.barrier?.errors??{}});process.exitCode=1;console.error(String(report.message));
   }finally{
-    clearInterval(timer);sim.stop();report.audit=audits;await save();
+    clearInterval(timer);sim.stop();
+    // Published evidence contains counts, protocol errors and fingerprints only.
+    // Full resident decisions and private memories stay in the local recording.
+    report.audit=audits.map(({decision,...audit})=>({...audit,...(decision?{decisionHash:hashCanonical(decision)}:{})}));
+    report.recordingPublication='LOCAL_ONLY_PRIVATE_CONTEXT';await save();
   }
 }

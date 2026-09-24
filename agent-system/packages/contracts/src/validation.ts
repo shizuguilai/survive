@@ -101,7 +101,7 @@ export function validateDecision(value: unknown, context: CharacterContext): Dec
     }
     if(action.op==='continue' && (!context.currentPlan.actions.length || decision.actions.length!==1))fail('$.actions','continue requires an existing plan and must stand alone');
   }
-  if(decision.decisionKind==='continue' && (decision.actions.length!==1||decision.actions[0].op!=='continue'))fail('$.decisionKind','continue must retain the existing plan');
+  if(decision.decisionKind==='continue' && (decision.actions.length!==1||decision.actions[0].op!=='continue'))fail('$.decisionKind','continue must retain the existing plan using exactly one action {"op":"continue","stage":0,"params":{}}; do not repeat the original walk/speak actions');
   for(const watch of decision.watch)if(watch.knownRef!==null&&!known.has(watch.knownRef))fail('$.watch','unknown personal reference');
   for(const memory of decision.memorySuggestions)validateEvidence(memory.evidenceRefs);
   return decision;

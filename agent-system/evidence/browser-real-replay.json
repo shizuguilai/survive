@@ -1,0 +1,29 @@
+{
+  "status": "passed",
+  "kind": "real-recording-browser-playback",
+  "source": "REAL_MODEL_RECORDING",
+  "liveModelBrowser": "NOT_TESTED",
+  "cloudBrowser": "NOT_TESTED",
+  "physicalDevice": "NOT_TESTED",
+  "mockDecisions": 0,
+  "browserVersion": "153.0.8010.0",
+  "appSha256": "f9e62e068b76086a2101ad2df3ce8c6174c47cac08f64f595dfa8c765896fc8c",
+  "endTick": 39,
+  "decisionCounts": {
+    "real": 10,
+    "mock": 0
+  },
+  "checks": {
+    "laya3D": true,
+    "realRecordingLoaded": true,
+    "endPositionsMatch": true,
+    "seekStartAndEnd": true,
+    "residentSelection": true,
+    "sensesToggle": true,
+    "zeroModelRequests": true
+  },
+  "errors": [],
+  "decisionRequests": 0,
+  "screenshot": "browser-real-replay.png",
+  "screenshotPublication": "LOCAL_ONLY_PRIVATE_CONTEXT"
+}

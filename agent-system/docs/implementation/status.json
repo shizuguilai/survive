@@ -1,5 +1,5 @@
 {
-  "overall": "BLOCKED_PROVIDER_AUTH_401",
+  "overall": "LOCAL_REAL_CORE_PASSED_T14_PARTIAL",
   "originalSourceUntouched": false,
   "main": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "branch": "work/agent-cognition-20260924",
@@ -7,12 +7,16 @@
     "regularPassed": 71,
     "regularSkipped": 1,
     "separate30SecondFreeze": "passed",
-    "realRequests": 2,
-    "acceptedRealDecisions": 0,
-    "realFreezeChecks": 856,
+    "realRequests": 10,
+    "acceptedRealDecisions": 10,
+    "realFreezeChecks": 2023,
     "realFreezeViolation": false,
     "priorAutomatedEvidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
-    "scopeNote": "71项常规通过、独立30秒冻结及既有Web/browser结果为历史验收；不代表当前云端Worker适配已通过。"
+    "scopeNote": "71项常规测试和独立30秒测试保留原历史证据；本次新增9项网关测试、本地真实核心闭环及本地真实记录浏览器播放；未推导线上实时验收。",
+    "noCatchup": true,
+    "independentResidents": 2,
+    "realGatewayTests": 9,
+    "realRecordingBrowser": "passed_local_playback_only"
   },
   "commands": [
     {
@@ -41,25 +45,33 @@
     },
     {
       "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
-      "exitCode": 1,
-      "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
-      "checkedAt": "2026-09-24T02:39:09.646Z",
+      "exitCode": 0,
+      "result": "PASS local real core; glm-4.5-air; realRequests=10; acceptedDecisions=10; independentResidents=2; freezeChecks=2023; freezeViolation=false; noCatchup=true; bothSpoke=true; bothHeardAndDecided=true; simTick=39; mockUsed=false",
+      "checkedAt": "2026-09-24T03:09:36.826Z",
       "evidence": "evidence/real-model-verification.json"
+    },
+    {
+      "command": "node --test tests/gateway.test.ts tests/worker.test.ts",
+      "exitCode": 0,
+      "result": "9 passed; upstream fault injection is Mock, not real-model acceptance",
+      "evidence": "evidence/cloud-gateway-tests.txt"
     }
   ],
   "blockingPrerequisites": [
-    "blocked_provider_auth_401: 服务端密钥已配置，但智谱拒绝两名居民的独立真实请求；须解决认证后重验T14",
+    "T14剩余验收：实时模型浏览器与完整L01–L04等尚未完成",
+    "CHAR01真实自主换装案例尚未验收",
+    "cloud browser live-model verification",
     "Laya IDE 3.3.12",
     "independent WeChat AppID, WeChat authentication and legal-domain configuration",
     "physical WeChat device verification"
   ],
   "tasks": "task-board.json",
-  "publication": "WEB_PRIVATE_DEPLOYED",
+  "publication": "WEB_PRIVATE_DEPLOYED_LATEST_CODE_UPDATE_PENDING",
   "gitSynchronization": "SEE_CURRENT_BRANCH_HEAD",
   "implementationCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
   "repository": "shizuguilai/survive",
   "branchUrl": "https://github.com/shizuguilai/survive/tree/work/agent-cognition-20260924",
-  "recordedAt": "2026-09-24T02:48:30.784807+00:00",
+  "recordedAt": "2026-09-24T03:20:22.731818+00:00",
   "historicalCommands": [
     {
       "command": "node tools/verify-real.ts",
@@ -68,41 +80,163 @@
       "evidence": "evidence/real-model-verification.json",
       "recordType": "historical_superseded",
       "evidenceCommit": "3f34492c01b2739023ff1160c99c9ffcbec843b6",
-      "evidenceNote": "此旧运行结果保留为历史；同名工作区证据文件已由最新HTTP401实测覆盖，应读取该历史提交内的证据。"
+      "evidenceNote": "历史运行保留；同名工作区文件已被后续实测覆盖，应读取记录所列历史提交内的证据。"
+    },
+    {
+      "command": "node tools/verify-real.ts（通过进程环境提供服务端密钥）",
+      "exitCode": 1,
+      "result": "blocked_provider_auth_401; configured=true; realRequests=2; acceptedDecisions=0; independentResidents=2; freezeChecks=856; freezeViolation=false; mockUsed=false",
+      "checkedAt": "2026-09-24T02:39:09.646Z",
+      "evidence": "evidence/real-model-verification.json",
+      "recordType": "historical_resolved",
+      "evidenceCommit": "ce98929cc2d3b303bb64a283be301962fb1b973a",
+      "supersededBy": "evidence/real-model-verification.json"
     }
   ],
   "realModelVerification": {
-    "status": "blocked_provider_auth_401",
-    "checkedAt": "2026-09-24T02:39:09.646Z",
+    "status": "passed_local_real_core",
+    "checkedAt": "2026-09-24T03:09:36.826Z",
+    "execution": "node-local-gateway",
+    "model": "glm-4.5-air",
     "configured": true,
-    "providerAuthentication": "HTTP_401",
-    "realRequests": 2,
-    "acceptedDecisions": 0,
+    "providerAuthentication": "HTTP_200",
+    "realRequests": 10,
+    "acceptedDecisions": 10,
     "independentResidents": 2,
-    "freezeChecks": 856,
+    "freezeChecks": 2023,
     "freezeViolation": false,
+    "noCatchup": true,
+    "bothSpoke": true,
+    "bothHeardAndDecided": true,
+    "simTick": 39,
     "mockUsed": false,
-    "auditErrorCode": "MODEL_HTTP_ERROR",
+    "fallbackUsed": false,
     "evidence": "evidence/real-model-verification.json",
-    "scope": "真实本地网关请求已发出，提供方认证失败；未得到有效决定，不代表相遇/对话/回放或Worker真实调用通过。"
+    "replay": "evidence/real-meeting-replay.json.gz",
+    "scope": "本地两居民真实核心闭环通过；不代表实时模型浏览器、线上浏览器、真机或T14完整L01–L04均已通过。",
+    "replayPublication": "LOCAL_ONLY_PRIVATE_CONTEXT"
   },
   "cloudAdapter": {
     "task": "CLOUD01",
     "status": "code_complete",
-    "mock": "passed_8_gateway_tests",
-    "realModel": "blocked_provider_auth_401",
-    "realModelEvidenceScope": "提供方认证阻塞来自本地实测，云端Worker真实调用尚未验证",
+    "mock": "passed_9_gateway_tests",
+    "realModel": "not_run_cloud_loop_local_provider_passed",
+    "realModelEvidenceScope": "认证恢复；本地10次真实决定与核心闭环通过，不等于云端实时浏览器通过",
     "build": "passed",
     "browser": "not_run_for_cloud",
     "physicalDevice": "not_run",
-    "publication": "web_private_deployed"
+    "publication": "web_private_deployed",
+    "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918"
   },
-  "gitSynchronizationNote": "历史实施提交保留；本次源码、README、401证据与云端发布记录作为独立变更同步到原工作分支，main不变。",
+  "gitSynchronizationNote": "历史实施提交保留；本次模型协议/时延配置修复、真实PASS和浏览器回放证据须以新的最终提交与发布记录确认。main不变。",
   "deployment": {
+    "status": "succeeded",
     "url": "https://survive-agent.drtdengruiting.chatgpt.site",
-    "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
-    "evidence": "evidence/cloud-deployment.json"
+    "audience": "owner_private",
+    "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
+    "deploymentId": "appgdep_6ab496e52014819193aa2daf12f72da9",
+    "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e5797742b6c081919f2432e1515dd6f5",
+    "runtimeSecretRevision": 2,
+    "evidence": "evidence/cloud-deployment.json",
+    "note": "本次代码修复版本已私有发布；本地真实核心PASS和回放PASS，线上实时浏览器和微信仍待独立验收。"
   },
   "legacySourcePreserved": true,
-  "rootReadmeUpdated": true
+  "rootReadmeUpdated": true,
+  "historicalRealModelVerifications": [
+    {
+      "status": "blocked_provider_auth_401",
+      "checkedAt": "2026-09-24T02:39:09.646Z",
+      "configured": true,
+      "providerAuthentication": "HTTP_401",
+      "realRequests": 2,
+      "acceptedDecisions": 0,
+      "independentResidents": 2,
+      "freezeChecks": 856,
+      "freezeViolation": false,
+      "mockUsed": false,
+      "auditErrorCode": "MODEL_HTTP_ERROR",
+      "evidence": "evidence/real-model-verification.json",
+      "scope": "真实本地网关请求已发出，提供方认证失败；未得到有效决定，不代表相遇/对话/回放或Worker真实调用通过。",
+      "recordType": "historical_resolved",
+      "resolved": true,
+      "evidenceCommit": "ce98929cc2d3b303bb64a283be301962fb1b973a",
+      "evidenceNote": "旧401运行保留在该历史提交；当前同名证据已经替换为PASS。"
+    },
+    {
+      "recordType": "historical_resolved",
+      "checkedAt": "2026-09-24T02:56:36.331Z",
+      "status": "FAILED",
+      "realRequests": 5,
+      "freezeChecks": 3132,
+      "freezeViolation": false,
+      "evidence": "evidence/real-model-invalid-decision.json",
+      "supersededBy": "evidence/real-model-verification.json"
+    },
+    {
+      "recordType": "historical_resolved",
+      "checkedAt": "2026-09-24T02:59:56.606Z",
+      "status": "FAILED",
+      "realRequests": 3,
+      "freezeChecks": 3181,
+      "freezeViolation": false,
+      "evidence": "evidence/real-model-continue-contract-failure.json",
+      "supersededBy": "evidence/real-model-verification.json"
+    },
+    {
+      "recordType": "historical_resolved",
+      "checkedAt": "2026-09-24T03:02:48.382Z",
+      "status": "FAILED",
+      "realRequests": 11,
+      "freezeChecks": 12410,
+      "freezeViolation": false,
+      "evidence": "evidence/real-model-timeout-before-tuning.json",
+      "supersededBy": "evidence/real-model-verification.json"
+    }
+  ],
+  "historicalDeployments": [
+    {
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+      "evidence": "evidence/cloud-deployment.json"
+    }
+  ],
+  "realRecordingBrowser": {
+    "status": "passed_local_real_recording_playback",
+    "source": "REAL_MODEL_RECORDING",
+    "decisionCounts": {
+      "real": 10,
+      "mock": 0
+    },
+    "decisionRequests": 0,
+    "checks": {
+      "laya3D": true,
+      "realRecordingLoaded": true,
+      "endPositionsMatch": true,
+      "seekStartAndEnd": true,
+      "residentSelection": true,
+      "sensesToggle": true,
+      "zeroModelRequests": true
+    },
+    "evidence": "evidence/browser-real-replay.json",
+    "liveModelBrowser": "NOT_TESTED",
+    "cloudBrowser": "NOT_TESTED",
+    "physicalDevice": "NOT_TESTED",
+    "screenshotPublication": "LOCAL_ONLY_PRIVATE_CONTEXT"
+  },
+  "modelConfiguration": {
+    "model": "glm-4.5-air",
+    "fallbackUsed": false,
+    "thinking": "disabled",
+    "maxTokens": 4096,
+    "schemaScope": "filtered_by_each_context_allowedActions",
+    "formatGuidance": "明确continue和私人记忆evidence格式；无效决定仍拒绝，不改写模型动作",
+    "authEvidence": "evidence/model-auth-check.json"
+  },
+  "evidencePublication": {
+    "github": "reproducible verification scripts and sanitized statistics only",
+    "decisionAudit": "decisionHash replaces raw private decision; keep counts/error codes/validation issues",
+    "rawReplay": "LOCAL_ONLY_PRIVATE_CONTEXT",
+    "screenshots": "LOCAL_ONLY_PRIVATE_CONTEXT",
+    "note": "原始回放/截图不在GitHub；文档中的本地路径不代表已上传。"
+  }
 }

@@ -1,17 +1,20 @@
 {
   "status": "passed",
   "kind": "cloud-worker-and-laya-web",
-  "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+  "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
   "typecheck": "passed",
   "gatewayTests": {
-    "passed": 8,
+    "passed": 9,
     "mockUpstream": true,
     "realModelAcceptance": false
   },
-  "artifactSha256": "f5706aad94bbf552ed21fb7114976ad4c9c09853423a68cdd4c00a9c8989477c",
-  "appSha256": "412a749d6470d28f9d24d9f8f6d1b852f163bd10a358a851ef86f6e33a82bbdd",
-  "workerSha256": "08010a1ede91650a6f31c1bbe6fb262b1c2f9e2866775f9c0a0a6391cca77c04",
-  "browser": "not_run_for_cloud",
+  "artifactSha256": "5e0875548f070bc916c29be968680ae81b714bd03645d1d16c3dda398c922d7a",
+  "appSha256": "f9e62e068b76086a2101ad2df3ce8c6174c47cac08f64f595dfa8c765896fc8c",
+  "workerSha256": "41d71c0ab73a65d2191354c1a37c526bf0bc6a9e99c7917eea51e10cc7344b05",
+  "browser": "passed_local_real_recording_playback",
+  "cloudLiveBrowser": "not_run",
   "physicalDevice": "not_run",
-  "secretScan": "passed_no_key_in_source_or_artifact"
+  "secretScan": "passed_no_key_in_tracked_or_candidate_source",
+  "realVerification": "evidence/real-model-verification.json",
+  "privateReplayPublication": "not_uploaded_auto_review_rejected"
 }

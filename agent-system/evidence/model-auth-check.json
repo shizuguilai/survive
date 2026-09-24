@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-09-24T02:55:59.098Z",
+  "endpoint": "https://open.bigmodel.cn/api/paas/v4/chat/completions",
+  "model": "glm-4.5-air",
+  "authorizationFormat": "Bearer <API_KEY>",
+  "httpStatus": 200,
+  "success": true,
+  "secretStoredServerSideOnly": true,
+  "scope": "Authentication-only minimal request, not resident/replay acceptance",
+  "documentation": "https://docs.bigmodel.cn/cn/guide/develop/http/introduction",
+  "previousAuthenticationFailure": "HTTP 401 with the earlier supplied credential; historical evidence is retained in commit ce98929"
+}

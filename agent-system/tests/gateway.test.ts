@@ -27,6 +27,7 @@ test('T09 unconfigured real gateway fails closed without any network or syntheti
   let calls=0;const gateway=new RealModelGateway(loadConfig({}),{fetch:async()=>{calls++;return response(decision());}});
   await assert.rejects(gateway.decide(request()),/尚未配置真实模型密钥/);assert.equal(calls,0);
   assert.throws(()=>loadConfig({SURVIVE_MODEL_BASE_URL:'http://127.0.0.1:9999'}),/允许清单/);
+  assert.throws(()=>loadConfig({SURVIVE_MODEL_NAME:'glm-4.5'}),/允许清单/);
 });
 test('MOCK_UPSTREAM: individual prompts exclude metadata and other resident, request IDs deduplicate',async()=>{
   const prompts:any[]=[];let release!:()=>void;const gate=new Promise<void>(r=>release=r);
@@ -34,6 +35,7 @@ test('MOCK_UPSTREAM: individual prompts exclude metadata and other resident, req
   const gateway=new RealModelGateway(config(),{fetch:async(_url,init)=>{prompts.push(JSON.parse(String(init.body)));if(prompts.length===2)bothStarted();await gate;return response(decision());}});
   const a=request(),b=request('小禾','r2');const pending=[gateway.decide(a),gateway.decide(a),gateway.decide(b)];
   await ready;
+  for(const prompt of prompts){assert.equal(prompt.model,'glm-4.5-air');assert.deepEqual(prompt.thinking,{type:'disabled'});assert.equal(prompt.max_tokens,4096);}
   assert.equal(prompts.length,2);assert.equal(JSON.stringify(prompts[0]).includes('requestId'),false);assert.equal(prompts[0].messages[1].content.includes('小禾'),false);assert.equal(prompts[1].messages[1].content.includes('阿林'),false);
   await assert.rejects(gateway.decide({...a,metadata:{...a.metadata,requestId:'r3'}}),/已有独立模型请求/);
   const mismatch=structuredClone(a);mismatch.metadata.tick++;await assert.rejects(gateway.decide(mismatch),/绑定其他冻结上下文/);
@@ -53,6 +55,17 @@ test('MOCK_UPSTREAM: deadline cancels pending I/O and never emits accepted inten
   const gateway=new RealModelGateway({...config(),timeoutMs:20},{fetch:async(_url,init)=>new Promise((_resolve,reject)=>{init.signal?.addEventListener('abort',()=>reject(new Error('cancelled')),{once:true});})});
   // Keep event loop alive: AbortSignal.timeout intentionally uses an unref timer.
   const keep=setTimeout(()=>{},1000);try{await assert.rejects(gateway.decide(request()),/超时/);}finally{clearTimeout(keep);}
+});
+test('MOCK_UPSTREAM: continue repair explains the protocol and never rewrites model output',async()=>{
+  const ctx=request();ctx.context.currentPlan.actions=[{op:'walk',stage:0,params:{targetRef:'known_1',gait:'walk'}}];ctx.metadata.contextHash=hashCanonical(ctx.context);
+  const invalid=decision();invalid.decisionKind='continue';
+  const corrected=decision();corrected.decisionKind='continue';corrected.actions=[{op:'continue',stage:0,params:{}}];
+  const prompts:any[]=[];const audits:any[]=[];
+  const gateway=new RealModelGateway(config(),{fetch:async(_url,init)=>{prompts.push(JSON.parse(String(init.body)));return response(prompts.length===1?invalid:corrected);},audit:r=>audits.push(r)});
+  const result=await gateway.decide(ctx);
+  assert.equal(prompts.length,2);assert.deepEqual(result.decision,corrected);
+  assert.ok(prompts[1].messages.at(-1).content.includes('exactly one action'));
+  assert.equal(audits[0].validationIssues.length,1);assert.equal(audits[0].repairs,1);
 });
 test('T09 HTTP local one-time session, hostile origin and unauthenticated decide rejected',async()=>{
   const gateway=new RealModelGateway(loadConfig({}));const {server}=createGatewayServer({gateway,loginToken:'test-session-token'});

@@ -1,0 +1,89 @@
+{
+  "checkedAt": "2026-09-24T02:59:56.606Z",
+  "mode": "REAL_MODEL",
+  "model": "glm-4.5-air",
+  "providerVersion": "unknown",
+  "status": "FAILED",
+  "mockUsed": false,
+  "browser": "NOT_RUN",
+  "device": "NOT_RUN",
+  "published": "NOT_PUBLISHED",
+  "message": "真实模型事务错误暂停；查看 observerErrors。",
+  "realRequests": 3,
+  "freezeChecks": 3181,
+  "freezeViolation": false,
+  "observerErrors": {
+    "resident-b": "真实模型决策未通过校验，修复次数已耗尽；世界保持暂停。"
+  },
+  "audit": [
+    {
+      "requestId": "request-dc27fc4b74b35713",
+      "agentId": "resident-a",
+      "runId": "real-verification-1790218796606",
+      "barrierId": "cognition-1",
+      "contextHash": "fnv1a64:88f2e84e23f69e72",
+      "snapshotHash": "fnv1a64:bf22b89272673f42",
+      "tick": 0,
+      "source": "REAL_MODEL",
+      "model": "glm-4.5-air",
+      "providerVersion": "unknown",
+      "temperature": 0.4,
+      "attempts": 2,
+      "repairs": 1,
+      "durationMs": 27106,
+      "accepted": true,
+      "code": "ACCEPTED",
+      "validationIssues": [
+        "$.evidenceRefs: reference is not in personal evidence"
+      ],
+      "decisionHash": "fnv1a64:02b523061dbd066b"
+    },
+    {
+      "requestId": "request-856087aff0875a38",
+      "agentId": "resident-b",
+      "runId": "real-verification-1790218796606",
+      "barrierId": "cognition-1",
+      "contextHash": "fnv1a64:a079221c47420668",
+      "snapshotHash": "fnv1a64:bf22b89272673f42",
+      "tick": 0,
+      "source": "REAL_MODEL",
+      "model": "glm-4.5-air",
+      "providerVersion": "unknown",
+      "temperature": 0.4,
+      "attempts": 3,
+      "repairs": 2,
+      "durationMs": 42950,
+      "accepted": true,
+      "code": "ACCEPTED",
+      "validationIssues": [
+        "$.memorySuggestions[0].evidenceRefs: array length outside range",
+        "$.decisionKind: continue must retain the existing plan"
+      ],
+      "decisionHash": "fnv1a64:255482192c0aed34"
+    },
+    {
+      "requestId": "request-073b0d6bb3dd116b",
+      "agentId": "resident-b",
+      "runId": "real-verification-1790218796606",
+      "barrierId": "cognition-2",
+      "contextHash": "fnv1a64:1525121d4a3bd99d",
+      "snapshotHash": "fnv1a64:a064a922f12f1dec",
+      "tick": 4,
+      "source": "REAL_MODEL",
+      "model": "glm-4.5-air",
+      "providerVersion": "unknown",
+      "temperature": 0.4,
+      "attempts": 3,
+      "repairs": 2,
+      "durationMs": 21326,
+      "accepted": false,
+      "code": "MODEL_INVALID_DECISION",
+      "validationIssues": [
+        "$.decisionKind: continue must retain the existing plan",
+        "$.decisionKind: continue must retain the existing plan",
+        "$.decisionKind: continue must retain the existing plan"
+      ]
+    }
+  ],
+  "recordingPublication": "LOCAL_ONLY_PRIVATE_CONTEXT"
+}

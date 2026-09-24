@@ -1,0 +1,28 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survive-agent@0.1.0 build
+> node tools/build-auto.mjs
+
+▲ [WARNING] "game" is not a valid value for the "type" field [package.json]
+
+    ../package.json:5:10:
+      5 │   "type": "game",
+        ╵           ~~~~~~
+
+  The "type" field must be set to either "commonjs" or "module".
+
+▲ [WARNING] Cannot find base config file "./temp/tsconfig.cocos.json" [tsconfig.json]
+
+    ../tsconfig.json:2:13:
+      2 │   "extends": "./temp/tsconfig.cocos.json",
+        ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+{
+  "status": "passed",
+  "kind": "web-bundle",
+  "engineVersion": "3.3.12",
+  "node": "v24.19.0",
+  "layaIdeBuild": "blocked_missing_ide",
+  "wechatBuild": "not_run",
+  "appSha256": "f9e62e068b76086a2101ad2df3ce8c6174c47cac08f64f595dfa8c765896fc8c"
+}

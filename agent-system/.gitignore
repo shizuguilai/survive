@@ -9,3 +9,7 @@ Temp/
 build/
 local-evidence/
 apps/laya-client/vendor/*.js
+evidence/real-meeting-replay.json
+evidence/real-meeting-replay.json.gz
+evidence/browser-real-replay.png
+evidence/gateway-audit.jsonl

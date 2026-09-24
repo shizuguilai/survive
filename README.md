@@ -39,15 +39,16 @@ npm run start:env
 
 使用 **LayaAir IDE 3.3.12** 打开 [`agent-system/apps/laya-client/LayaProject.laya`](agent-system/apps/laya-client/LayaProject.laya)。本项目的微信 AppID、HTTPS 网关和合法域名需要单独配置，不沿用参考推币机工程的业务配置。
 
-Web 打包、浏览器交互、真实模型闭环、Laya IDE 构建、微信真机和正式发布分别验收。当前文档不将真实模型闭环或微信发布标记为通过；详细结果见 [实施任务记录](agent-system/docs/implementation/task-board.json) 与 [范围和阻塞](agent-system/docs/implementation/SCOPE_AND_BLOCKERS.md)。完整存档恢复、区域规划和营地协作仍需按任务依赖继续实施。
+Web 打包、浏览器交互、真实模型闭环、Laya IDE 构建、微信真机和正式发布分别验收。本地真实核心闭环与真实记录浏览器播放已通过；T14仍为partial，实时模型浏览器、线上浏览器及完整验收尚待完成，微信未发布；详细结果见 [实施任务记录](agent-system/docs/implementation/task-board.json) 与 [范围和阻塞](agent-system/docs/implementation/SCOPE_AND_BLOCKERS.md)。完整存档恢复、区域规划和营地协作仍需按任务依赖继续实施。可复现实测脚本与脱敏统计随代码同步；包含私人上下文的原始回放和截图只留在本地，不在GitHub。
 
 ## 部署状态
 
 | 项目 | 记录 |
 |---|---|
 | Web 部署地址 | [https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（仅所属账号可访问；平台确认发布成功） |
-| 部署源码提交 | `a3b58c66f16597eb2b285170196b79256ba251c2`（托管源码仓库） |
-| 真实模型闭环 | 已发起 2 次独立真实请求，智谱均返回 HTTP 401；认证阻塞，未通过 |
+| 本次修复版本 | 已发布；托管源码 `464eb67ab7717cf80ba8f82e3f7d3d2e4554d918`，运行时配置 revision 2 |
+| 本地真实核心闭环 | `glm-4.5-air` 独立请求10次、接受10个决定；2居民双方发声并听见后再决定，2023次冻结检查无变化且不追帧，无Mock |
+| 本地浏览器回放 | 播放真实记录、seek、选人和感官通过，0模型请求；不是实时模型或线上浏览器验收 |
 | 微信真机与正式发布 | 待平台独立验收 |
 
 ## 目录与历史实现

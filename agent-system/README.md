@@ -29,12 +29,12 @@ npm start
 
 | 环境变量 | 用途 / 默认值 |
 |---|---|
-| `SURVIVE_MODEL_API_KEY` | 真实模型调用必需；仅在服务端配置；本轮提供的凭据实测 HTTP 401 |
+| `SURVIVE_MODEL_API_KEY` | 真实模型调用必需；仅在服务端配置；已更换凭据并通过认证及本地真实核心验收 |
 | `SURVIVE_MODEL_BASE_URL` | `https://open.bigmodel.cn/api/paas/v4` |
 | `SURVIVE_MODEL_NAME` | `glm-4.5-air` |
 | `SURVIVE_PORT` | 本地端口，默认 `8787` |
 
-当前服务端只允许上表中的提供方地址与模型组合。共享提供方连接不共享居民上下文。
+当前服务端只允许上表中的提供方地址与 `glm-4.5-air` 组合，没有fallback模型。共享提供方连接不共享居民上下文。网关明确continue及私人记忆证据格式，并按每名居民allowedActions裁剪schema；使用该模型支持的thinking disabled与max_tokens 4096降低响应时延。无效决定仍拒绝，工程不改写模型决定，全世界仍在真实请求期间冻结。
 
 `npm start` **不会自动读取 `.env`**。若采用本地 `.env` 文件，使用 Node.js 自带加载方式启动：
 
@@ -76,7 +76,9 @@ npm test
 npm run typecheck
 ```
 
-测试通过不能代替真实模型验收。当前 T14 已发出 2 次独立真实请求，但智谱均返回 HTTP 401，密钥认证失败；按用户要求，T15–T21 区域规划、营地合作及人口扩展先等待两居民真实闭环通过。
+本地真实核心闭环已通过：2名居民独立发起10次 `glm-4.5-air` 请求，接受10个真实决定；双方发声并听见后再次决定，2023次冻结检查无世界变化、无补跑，0个Mock决定。真实记录无损保存在本地 `evidence/real-meeting-replay.json.gz`，包含居民私人上下文，不上传GitHub。本地浏览器播放该记录、seek、选人和感官检查通过，期间0次模型请求。
+
+**T14仍为partial**：上述浏览器结果是播放已有真实记录，不是实时模型浏览器、线上浏览器或真机验收；完整L01–L04等仍待核对。真实自主换装案例未验收。按用户要求，T15–T21区域规划、营地合作及扩展继续等待T14剩余验收。9项网关测试通过；旧HTTP401及后续协议/超时失败保留为已解决的历史记录。可复现实测脚本和脱敏统计随代码同步；原始回放与截图仅保留本地。发布的模型审计记录保留decisionHash等校验信息，不包含原始私人决定。
 
 T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是已完成的启动读档、断电恢复或旧存档迁移；回放读取也不等于恢复现场模拟。`haul`、`build`、`eat` 等设计动作尚未接入时不能被当作可运行功能。
 
@@ -88,7 +90,7 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 
 ## 云端发布
 
-已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（仅所属账号可访问）。服务端密钥已配置，但本轮两次独立真实请求均被智谱以 HTTP 401 拒绝；真实相遇、问候及回放尚未通过。部署记录见 [cloud-deployment.json](evidence/cloud-deployment.json)。
+已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（仅所属账号可访问）。服务端凭据已更新且旧HTTP401已解除；本地真实核心闭环通过，线上实时浏览器尚未验收。本次协议修复版本已发布，托管源码提交 `464eb67ab7717cf80ba8f82e3f7d3d2e4554d918`，运行时配置 revision 2。部署记录见 [cloud-deployment.json](evidence/cloud-deployment.json)。
 
 `services/brain-gateway/src/worker.ts` 使用托管平台认证后的账号标头，API 拒绝匿名和跨域调用。`/api/health` 只返回配置状态，不返回密钥，也不表示上游认证已成功。云端请求缓存和并发限制仅在单个实例内有效；完整批次和重复响应保护仍由模拟屏障负责。
 

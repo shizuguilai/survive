@@ -1,22 +1,33 @@
 {
-  "id": "appgdep_6ab48f697b608191add57367f6377223",
+  "id": "appgdep_6ab496e52014819193aa2daf12f72da9",
   "project_id": "appgprj_6ab48dc223e081918869ba05be1b88ed",
   "title": "Survive · 独立居民观察场",
-  "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_0d8a3cb1477c8191aba4dc2403da9fde",
+  "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_e5797742b6c081919f2432e1515dd6f5",
   "type": "publish",
   "status": "succeeded",
   "url": "https://survive-agent.drtdengruiting.chatgpt.site",
   "screenshot_asset_pointer": null,
   "provider_deployment_id": "site---6ab48dc223e081918869ba05be1b88ed",
   "failure_message": null,
-  "env_set_revision": 1,
-  "updated_at": "2026-09-24T02:48:30.784807+00:00",
-  "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+  "env_set_revision": 2,
+  "updated_at": "2026-09-24T03:20:22.731818+00:00",
+  "siteSourceCommit": "464eb67ab7717cf80ba8f82e3f7d3d2e4554d918",
   "audience": "owner_private",
   "secretStoredServerSide": true,
   "secretIncludedInSource": false,
-  "realModel": "blocked_provider_auth_401",
+  "realModel": "PASS_LOCAL_CORE_10_DECISIONS",
   "cloudBrowser": "not_run",
+  "localBrowser": "PASS_REAL_RECORDING_PLAYBACK",
   "physicalDevice": "not_run",
-  "wechatPublication": "not_run"
+  "wechatPublication": "not_run",
+  "historicalDeployments": [
+    {
+      "id": "appgdep_6ab48f697b608191add57367f6377223",
+      "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_0d8a3cb1477c8191aba4dc2403da9fde",
+      "siteSourceCommit": "a3b58c66f16597eb2b285170196b79256ba251c2",
+      "env_set_revision": 1,
+      "updated_at": "2026-09-24T02:48:30.784807+00:00"
+    }
+  ],
+  "privateRecordingPublication": "blocked_by_auto_review_not_uploaded"
 }
