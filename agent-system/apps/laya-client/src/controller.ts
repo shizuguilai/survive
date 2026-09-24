@@ -8,6 +8,8 @@ import type {BrainProvider,BrainRequest,BrainResponse} from '../../../packages/c
 import {initialize} from './view.ts';
 import type {ObserverView,ViewState} from './view.ts';
 import {gatewayRequest} from './transport.ts';
+import {restoreSummaries} from './journal-summary.ts';
+import {validateSummaryResponse,type SummaryRequest,type SavedSummary} from '../../../packages/contracts/src/journal-summary.ts';
 import {ResidentJournal} from './journal.ts';
 
 class GatewayProvider implements BrainProvider{
@@ -40,6 +42,19 @@ export async function boot():Promise<void>{
   let journal:ResidentJournal;let savedJournalVersion=-1;let lastJournalSave=0;let historyWarning='';
   try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_resident_history_v1'):globalThis.localStorage.getItem('survive_resident_history_v1');journal=new ResidentJournal(raw?JSON.parse(raw):undefined);}catch{journal=new ResidentJournal();historyWarning='历史存储读取失败，本次记录仍可在会话内查看。';}
   function saveJournal():void{if(savedJournalVersion===journal.version)return;try{persist('survive_resident_history_v1',journal.rows);savedJournalVersion=journal.version;historyWarning='';}catch{historyWarning='本机历史存储失败；本次会话内仍可查看，刷新可能丢失。';}}
+  let summaries:SavedSummary[]=[];let summaryBusy=false;let summaryError='';let summaryVersion=0;
+  try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_archive_summaries_v1'):globalThis.localStorage.getItem('survive_archive_summaries_v1');summaries=restoreSummaries(raw?JSON.parse(raw):undefined);}catch{summaryError='已保存总结读取失败，原始档案仍可查看。';}
+  async function summarize(request:SummaryRequest):Promise<void>{
+    if(summaryBusy)return;if(player){summaryError='回放只查看已生成总结；生成新总结请返回现场。';summaryVersion++;return;}
+    summaryBusy=true;summaryError='';summaryVersion++;
+    try{
+      const response=await gatewayRequest('/api/summarize',{method:'POST',body:request,signal:AbortSignal.timeout(125000)});const raw=await response.json();
+      if(!response.ok)throw Error(raw.message??'总结生成失败，请重试');
+      const result=validateSummaryResponse(raw,request);summaries=[...summaries.filter(s=>s.response.runId!==result.runId||s.response.residentId!==result.residentId),{response:result,entries:request.entries,createdAt:new Date().toISOString()}].slice(-40);
+      try{persist('survive_archive_summaries_v1',summaries);}catch{summaryError='总结已生成，但本机存储失败；刷新后可能丢失。';}
+    }catch(e){summaryError=(e as Error).name==='TimeoutError'?'总结超时，可重试；原始档案仍保留。':(e as Error).message;}
+    finally{summaryBusy=false;summaryVersion++;}
+  }
   const provider=new GatewayProvider();
   function makeSimulation():Simulation{
     return new Simulation(provider,{world:createCampWorld(),allowMock:false,
@@ -85,6 +100,7 @@ export async function boot():Promise<void>{
     }catch(e){diagnostic=(e as Error).message;}
   }
   view=await initialize({
+    onSummarize:request=>{void summarize(request);},
     onPause:pause,onResume:resume,onRetry:()=>{if(!player)void health().then(()=>sim.retry());},
     onTask:draft=>{if(player){diagnostic='回放中不能发布目标，请先返回现场。';return;}try{sim.queueTask(draft);diagnostic='目标已排队，将在下一模拟步写入公告板。';}catch(e){diagnostic=(e as Error).message;}},
     onStop:()=>{if(player)player.pause();else sim.stop();saveJournal();},
@@ -113,7 +129,7 @@ export async function boot():Promise<void>{
       }else if(started)cognitionDetail=`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
       if(!sim.pendingTaskCount&&diagnostic.startsWith('目标已排队'))diagnostic='';
       if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
-      const s:ViewState={world,overlays:cover,cognitionDetail:player?'':cognitionDetail,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
+      const s:ViewState={summaries,summaryBusy,summaryError,summaryVersion,world,overlays:cover,cognitionDetail:player?'':cognitionDetail,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
         mode:player?'REPLAY':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
         error:diagnostic||sim.observerError||modelErrors||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);

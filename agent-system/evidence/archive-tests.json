@@ -1,0 +1,22 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-24T09:20:36.594258+00:00",
+  "tests": 109,
+  "passed": 108,
+  "skipped": 1,
+  "skipReason": "optional long wall-clock freeze soak not run",
+  "typecheck": "passed",
+  "webBuild": "passed",
+  "mock": "explicit_mock_upstream_and_archive_fixtures",
+  "coverage": [
+    "single-resident single-run input",
+    "bounded input with real-action priority",
+    "evidence references and plan-only progress rejection",
+    "real-only response validation",
+    "failure and repair limits",
+    "world and resident context isolation",
+    "restored archive evidence IDs unique",
+    "hosted authentication and origin gates"
+  ],
+  "physicalDevice": "not_run"
+}

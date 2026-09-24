@@ -1,0 +1,15 @@
+{
+  "status": "succeeded",
+  "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+  "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+  "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_4d6de082225481918c9268d1c1fe23b2",
+  "deploymentId": "appgdep_6ab4ec50de68819192bab1a4780a8b83",
+  "sourceCommit": "0d355a63689ae55521ac4646991116a4eaf4c4f9",
+  "envSetRevision": 3,
+  "publishedAt": "2026-09-24T09:24:40.900277+00:00",
+  "access": "public",
+  "realModel": "passed_official_glm45air_summaries_of_two_residents_real_recording",
+  "browser": "passed_desktop_and_touch_explicit_mock_transport",
+  "liveModelBrowser": "not_run",
+  "physicalDevice": "not_run"
+}

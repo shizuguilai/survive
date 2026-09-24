@@ -4,14 +4,16 @@ import {readFile,stat,mkdir,appendFile} from 'node:fs/promises';
 import {resolve,extname,sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {RealModelGateway,loadConfig,GatewayError} from './gateway.ts';
+import {JournalSummaryGateway} from './summary.ts';
 import {ContractError} from '../../../packages/contracts/src/validation.ts';
 
 const projectRoot=resolve(fileURLToPath(new URL('../../../',import.meta.url)));
 const safeEqual=(a:string,b:string)=>{const x=Buffer.from(a),y=Buffer.from(b);return x.length===y.length&&timingSafeEqual(x,y);};
 const json=(response:ServerResponse,status:number,value:unknown)=>{response.writeHead(status,{'content-type':'application/json; charset=utf-8','cache-control':'no-store'});response.end(JSON.stringify(value));};
 async function body(request:IncomingMessage){let size=0;const chunks:Buffer[]=[];for await(const chunk of request){size+=chunk.length;if(size>256_000)throw new GatewayError('BODY_TOO_LARGE','请求过大',413);chunks.push(chunk);}try{return JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw new GatewayError('INVALID_JSON','请求必须为 JSON',400);}}
-export function createGatewayServer(options:{gateway?:RealModelGateway;staticRoot?:string;loginToken?:string}={}){
+export function createGatewayServer(options:{gateway?:RealModelGateway;summaryGateway?:JournalSummaryGateway;staticRoot?:string;loginToken?:string}={}){
   const gateway=options.gateway??new RealModelGateway(loadConfig());
+  const summaryGateway=options.summaryGateway??new JournalSummaryGateway(gateway.config);
   let loginToken=options.loginToken??randomBytes(24).toString('base64url');
   const sessions=new Map<string,number>();const staticRoot=resolve(options.staticRoot??resolve(projectRoot,'dist'));
   const authenticated=(request:IncomingMessage)=>{const token=(request.headers.cookie??'').split(';').map(s=>s.trim()).find(s=>s.startsWith('survive_session='))?.slice(16);const until=token?sessions.get(token):undefined;if(until&&until>Date.now())return true;if(token)sessions.delete(token);return false;};
@@ -27,10 +29,10 @@ export function createGatewayServer(options:{gateway?:RealModelGateway;staticRoo
       if(request.method==='GET'&&url.searchParams.has('login')){session(response,url.searchParams.get('login')??'');response.writeHead(303,{location:'/'});response.end();return;}
       if(request.method==='GET'&&url.pathname==='/api/health'){json(response,200,{configured:gateway.configured,authenticated:authenticated(request),source:'REAL_MODEL',model:gateway.config.model,status:gateway.configured?'READY':'BLOCKED_MODEL_NOT_CONFIGURED'});return;}
       if(request.method==='POST'&&url.pathname==='/api/session'){const input=await body(request);if(!input||typeof input.token!=='string'||Object.keys(input).some(k=>k!=='token'))throw new GatewayError('AUTH_INVALID','需要一次性本机会话令牌',400);session(response,input.token);json(response,200,{authenticated:true});return;}
-      if(request.method==='POST'&&url.pathname==='/api/decide'){
+      if(request.method==='POST'&&['/api/decide','/api/summarize'].includes(url.pathname)){
         if(!authenticated(request))throw new GatewayError('AUTH_REQUIRED','请使用启动日志中的一次性登录链接建立本机会话',401);
         const requestBody=await body(request);const controller=new AbortController();response.on('close',()=>{if(!response.writableEnded)controller.abort();});
-        const result=await gateway.decide(requestBody,controller.signal);json(response,200,result);return;
+        const result=url.pathname==='/api/summarize'?await summaryGateway.summarize(requestBody,controller.signal):await gateway.decide(requestBody,controller.signal);json(response,200,result);return;
       }
       if(url.pathname.startsWith('/api/'))throw new GatewayError('NOT_FOUND','接口不存在',404);
       if(request.method!=='GET'&&request.method!=='HEAD')throw new GatewayError('METHOD_NOT_ALLOWED','方法不支持',405);

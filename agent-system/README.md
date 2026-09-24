@@ -1,5 +1,7 @@
 # Survive Agent · 独立居民观察场
 
+新增「阶段总结」：真实glm-4.5-air归纳关键进展，点开可核对原始记录；档案翻页固定当前列表，支持旧轮次。见[本轮说明](docs/implementation/ARCHIVE_SUMMARY.md)。
+
 v0.3.2相遇与讲话去重，允许沉默继续做事；见[触发规则与验收](docs/implementation/ENCOUNTER_TRIGGERS.md)。
 
 LayaAir 3.3.12 + TypeScript 原生 3D。先实现两名居民相遇、真实模型决策、打招呼、有限感官可视化和回放，再推进区域规划与营地协作。

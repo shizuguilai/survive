@@ -2298,28 +2298,34 @@
         "T13"
       ],
       "status": "partial",
-      "codeStatus": "implemented_local_2000_rows",
+      "codeStatus": "implemented_stable_pagination_and_cross_run_archive",
       "verification": {
         "static": "passed",
-        "mock": "passed",
-        "realModel": "not_run_live_real_browser",
+        "mock": "passed_summary_contracts_scope_no_rule_fallback",
+        "realModel": "passed_local_official_provider_on_prior_real_replay",
         "webBuild": "passed",
         "layaBuild": "blocked_missing_ide",
-        "browser": "passed_native_Laya_desktop_mobile_emulation",
+        "browser": "passed_desktop_and_touch_mock_transport_dynamic_pagination",
+        "liveModelBrowser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "web_public_deployed_scoped"
+        "publication": "web_public_deployed_v11",
+        "wechatPublication": "not_run"
       },
       "evidence": [
         "evidence/workshop-tests.json",
         "evidence/workshop-real.json",
         "evidence/workshop-browser.json",
-        "evidence/workshop-deployment.json"
+        "evidence/workshop-deployment.json",
+        "docs/implementation/ARCHIVE_SUMMARY.md",
+        "evidence/archive-browser.json",
+        "evidence/archive-tests.json",
+        "evidence/archive-deployment.json"
       ],
       "blockers": [
         "微信AppID、鉴权、合法域名和真机未具备；微信未发布",
         "线上实时模型浏览器与完整从零备料协作不在本轮通过范围"
       ],
-      "scopeNote": "观察者档案最近2000条，本机自动保存；计划与实际结果分开，不进入模型上下文。不是完整现场存档恢复。"
+      "scopeNote": "观察者档案最近2000条，本机留存；固定翻阅快照并显式载入新记录；不进入居民上下文。可单独交给观察者总结模型。"
     },
     {
       "id": "WORKSHOP01",
@@ -2384,6 +2390,40 @@
         "线上实时模型浏览器与完整从零备料协作不在本轮通过范围"
       ],
       "scopeNote": "三预设地块，木石小屋12木材8石料，地基/墙体/屋顶。原子库存无预留；未实现任意布局和多人协作承诺。"
+    },
+    {
+      "id": "SUMMARY01",
+      "title": "观察者阶段总结、关键进展与原始证据",
+      "dependsOn": [
+        "HISTORY01",
+        "T05"
+      ],
+      "status": "partial",
+      "codeStatus": "implemented_real_model_observer_summary",
+      "verification": {
+        "static": "passed",
+        "mock": "passed_summary_contracts_scope_no_rule_fallback",
+        "realModel": "passed_local_official_provider_on_prior_real_replay",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_desktop_and_touch_mock_transport_dynamic_pagination",
+        "liveModelBrowser": "not_run",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_v11",
+        "wechatPublication": "not_run"
+      },
+      "scopeNote": "仅glm-4.5-air；每次单居民单轮最多120条输入，优先实际行动和计划；40份居民/轮次最新总结本机保存。不写居民记忆、不代替居民决策。",
+      "evidence": [
+        "docs/implementation/ARCHIVE_SUMMARY.md",
+        "evidence/archive-real.json",
+        "evidence/archive-browser.json",
+        "evidence/archive-tests.json",
+        "evidence/archive-deployment.json"
+      ],
+      "blockers": [
+        "真机和微信平台未验收",
+        "实时真实模型浏览器与公开站点端到端未运行"
+      ]
     }
   ],
   "implementationDirectory": "agent-system",
@@ -2650,6 +2690,38 @@
       "access": "public",
       "realModel": "passed_local_v032_default_camp_movement",
       "browser": "not_run_this_revision",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run"
+    }
+  },
+  "archiveSummary": {
+    "baselineHead": "753b071a6d4e56a006377436948493d2db8e8576",
+    "publication": "web_public_deployed_v11",
+    "verification": {
+      "static": "passed",
+      "mock": "passed_summary_contracts_scope_no_rule_fallback",
+      "realModel": "passed_local_official_provider_on_prior_real_replay",
+      "webBuild": "passed",
+      "layaBuild": "blocked_missing_ide",
+      "browser": "passed_desktop_and_touch_mock_transport_dynamic_pagination",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "publication": "web_public_deployed_v11",
+      "wechatPublication": "not_run"
+    },
+    "documentation": "docs/implementation/ARCHIVE_SUMMARY.md",
+    "deployment": {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_4d6de082225481918c9268d1c1fe23b2",
+      "deploymentId": "appgdep_6ab4ec50de68819192bab1a4780a8b83",
+      "sourceCommit": "0d355a63689ae55521ac4646991116a4eaf4c4f9",
+      "envSetRevision": 3,
+      "publishedAt": "2026-09-24T09:24:40.900277+00:00",
+      "access": "public",
+      "realModel": "passed_official_glm45air_summaries_of_two_residents_real_recording",
+      "browser": "passed_desktop_and_touch_explicit_mock_transport",
       "liveModelBrowser": "not_run",
       "physicalDevice": "not_run"
     }

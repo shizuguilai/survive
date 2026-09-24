@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "checkedAt": "2026-09-24T09:16:40.945Z",
+  "execution": "node_local_official_provider_on_authentic_prior_real_replay",
+  "source": "REAL_MODEL",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "residents": [
+    {
+      "residentId": "resident-a",
+      "inputEntries": 10,
+      "fromTick": 0,
+      "throughTick": 39,
+      "highlights": 4,
+      "kinds": [
+        "observation",
+        "observation",
+        "social",
+        "observation"
+      ],
+      "citedEvidenceValidated": true,
+      "durationMs": 20642
+    },
+    {
+      "residentId": "resident-b",
+      "inputEntries": 11,
+      "fromTick": 0,
+      "throughTick": 39,
+      "highlights": 4,
+      "kinds": [
+        "observation",
+        "social",
+        "social",
+        "observation"
+      ],
+      "citedEvidenceValidated": true,
+      "durationMs": 6933
+    }
+  ],
+  "worldAndResidentContextsUnchanged": true,
+  "scope": "Historical two-resident encounter only; not a new autonomous construction run or live browser model test",
+  "liveModelBrowser": "not_run",
+  "physicalDevice": "not_run"
+}

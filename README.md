@@ -1,5 +1,7 @@
 # Survive · 独立居民观察场
 
+档案更新：修复翻页受新记录干扰，默认可看旧轮次；新增真实模型「阶段总结」、★关键进展及原始依据。见[档案与总结说明](agent-system/docs/implementation/ARCHIVE_SUMMARY.md)。
+
 v0.3.2按相遇与讲话去重：同一居民进入视野只唤醒一次，持续可见、辨识变化和离开不重复唤醒；同一句讲话只在首次实际听见时唤醒。居民可以沉默并继续当前动作。见[触发规则与验收](agent-system/docs/implementation/ENCOUNTER_TRIGGERS.md)。
 
 当前试玩已加入**居民历史、工作台配方、石斧/石锄、资源置换和分阶段建房**，保留饥饿、生命与疲劳系统。左侧「历史 / 档案」可翻页、筛选、点开详情；右上「工作台配方」查看材料表，「规划 / 建房」发布采集、制作或小屋项目。居民亲自阅读后自主决定参与，材料和工程进度按实际动作结算。详见[本轮实现与验收](agent-system/docs/implementation/WORKSHOP_PROGRESS.md)。
@@ -50,7 +52,7 @@ Web 打包、浏览器交互、真实模型闭环、Laya IDE 构建、微信真�
 | 项目 | 记录 |
 |---|---|
 | Web 部署地址 | [https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问；无需登录即可启动真实自治） |
-| 当前发布版本 | v0.3.2已公开发布；见 [触发规则与验收](agent-system/docs/implementation/ENCOUNTER_TRIGGERS.md) |
+| 当前发布版本 | 档案与阶段总结已公开发布（v11）；见 [本轮说明](agent-system/docs/implementation/ARCHIVE_SUMMARY.md) |
 | 前一轮营地真实模型 | 45次独立请求；亲读公告、自主接受、实际采集令目标进度+1；8821次冻结检查无违规，非完整长期营地验收 |
 | 本轮工作台与建房 | [真实模型分场景统计](agent-system/evidence/workshop-real.json)；明确区分准备材料夹具、实际动作和未测的完整自主备料协作 |
 | 本地真实核心闭环 | `glm-4.5-air` 独立请求10次、接受10个决定；2居民双方发声并听见后再决定，2023次冻结检查无变化且不追帧，无Mock |

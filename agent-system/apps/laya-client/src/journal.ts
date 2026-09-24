@@ -1,6 +1,6 @@
 import type {World} from '../../../packages/sim-core/src/domain.ts';
-export type JournalCategory='decision'|'action'|'speech'|'memory'|'world';
-export type JournalEntry={id:string;runId:string;tick:number;residentId:string;category:JournalCategory;text:string;source?:string};
+import type {JournalCategory,JournalEntry} from '../../../packages/contracts/src/journal-summary.ts';
+export type {JournalCategory,JournalEntry} from '../../../packages/contracts/src/journal-summary.ts';
 export const JOURNAL_LIMIT=2000;
 const categories:JournalCategory[]=['decision','action','speech','memory','world'];
 /** Observer-only archive. It is never read by perception or sent to the brain. */
@@ -13,7 +13,8 @@ export class ResidentJournal{
  collect(world:World):void{
   if(this.runId!==world.runId){this.runId=world.runId;this.eventCursor=0;this.seen.clear();}
   let changed=false;
-  const add=(row:Omit<JournalEntry,'id'|'runId'>)=>{this.rows.push({...row,id:`${world.runId}:${++this.sequence}`,runId:world.runId});changed=true;};
+  const existingIds=new Set(this.rows.map(row=>row.id));
+  const add=(row:Omit<JournalEntry,'id'|'runId'>)=>{let id:string;do{id=`${world.runId}:${++this.sequence}`;}while(existingIds.has(id));existingIds.add(id);this.rows.push({...row,id,runId:world.runId});changed=true;};
   for(let i=this.eventCursor;i<world.events.length;i++){
    const e=world.events[i];
    // Action receipts below contain the actual target/result, unlike the legacy op-only event.

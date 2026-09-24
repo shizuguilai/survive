@@ -17,3 +17,7 @@ test('Journal ignores malformed storage and bounds retained rows',()=>{
  assert.equal(new ResidentJournal([{id:'malformed'},null,'wrong']).rows.length,0);
  const j=new ResidentJournal(),w=createCampWorld();for(let i=0;i<JOURNAL_LIMIT+40;i++)w.events.push({tick:i,agentId:'resident-a',kind:'decision',text:'bounded'});j.collect(w);assert.equal(j.rows.length,JOURNAL_LIMIT);
 });
+
+test('Restoring and collecting the same run never creates duplicate evidence identifiers',()=>{
+ const w=createCampWorld(),j=new ResidentJournal();j.collect(w);const restored=new ResidentJournal(structuredClone(j.rows));restored.collect(w);assert.equal(new Set(restored.rows.map(e=>e.id)).size,restored.rows.length);
+});

@@ -4,16 +4,20 @@ import {CharacterMesh} from './character-mesh.ts';
 import {WorldMesh} from './world-mesh.ts';
 import {RECIPES,BUILD_SITES,HOUSE_STEPS,materialText,taskTitle,skillLevel} from '../../../packages/sim-core/src/recipes.ts';
 import {selectJournal,journalTime,JOURNAL_LABELS,readableAction,type JournalEntry,type JournalCategory} from './journal.ts';
+import {summaryInput,latestSummary} from './journal-summary.ts';
+import type {SummaryRequest,SavedSummary} from '../../../packages/contracts/src/journal-summary.ts';
 import {publicCharacterSummary} from '../../../packages/sim-core/src/character.ts';
 import defaults from '../../../packages/sim-core/defaults.json' with {type:'json'};
 
 export type ViewCallbacks = {
+  onSummarize?(request:SummaryRequest):void;
   onTask(draft:TaskDraft):void;
   onPause():void; onResume():void; onRetry():void; onStop():void;
   onSelect(id:string):void; onToggleSenses():void; onReplay():void; onLive():void;
   onSeek(tick:number):void; onSpeed(value:number):void; onStart():void; onConnect(token:string):void;
 };
 export type ViewState = {
+  summaries?:SavedSummary[];summaryBusy?:boolean;summaryError?:string;summaryVersion?:number;
   cognitionDetail?:string;
   history?:JournalEntry[];historyVersion?:number;historyWarning?:string;
   pendingTasks?:number;world:World; overlays:Record<string,SensoryOverlay>; status:string; error?:string;
@@ -26,6 +30,7 @@ export type ViewState = {
 const L:any=(globalThis as any).Laya;
 const WIDTH=1280,HEIGHT=720,SIDE=292,TOP=84,BOTTOM=614;
 const palette={ink:'#172b2d',muted:'#8da19c',paper:'#f4f2e9',panel:'#142f31',line:'#325153',mint:'#9ee3be',amber:'#f3c87c'};
+type HistoryRow=JournalEntry&{title:string;evidence?:JournalEntry[]};
 type NativeButton={root:any;label:any;set(text:string):void};
 
 export async function initialize(api:ViewCallbacks):Promise<ObserverView>{
@@ -47,8 +52,8 @@ export class ObserverView {
   private nameLabels=new Map<string,any>();private speechLabels=new Map<string,any>();private senseLines:any;private selection:any;
   private planner:any;private taskNote:any;private draftResource:TaskDraft['resource']='wood';private draftAmount=8;private vitality:any;
   private draftKind:'gather'|'craft'|'house'='gather';private draftRecipe='stone_axe';private draftSite='east';
-  private historyPanel:any;private workshopPanel:any;private historyFilter:JournalCategory|'all'='all';private historyPage=0;private historyAllRuns=false;private historyDetail:JournalEntry|null=null;
-  private historyRows:any[]=[];private displayedHistory:JournalEntry[]=[];private historyCache='';
+  private historyPanel:any;private workshopPanel:any;private historyFilter:JournalCategory|'all'|'summary'='action';private historyPage=0;private historyAllRuns=true;private historyDetail:HistoryRow|null=null;
+  private historyRows:any[]=[];private displayedHistory:HistoryRow[]=[];private historySnapshot:JournalEntry[]|null=null;private historySnapshotScope='';private historySummaryRunId='';private historyCache='';
   private state:ViewState|null=null;private token:any;private timeline:any;
   private offset={x:0,z:0};private drag:{x:number;y:number;ox:number;oz:number;moved:boolean}|null=null;
   private markers:any;private sceneInput:any;private zoom=26;private scrubbing=false;
@@ -81,7 +86,7 @@ export class ObserverView {
 
   private color(hex:string,alpha=1):any{const h=parseInt(hex.slice(1),16);return new L.Color((h>>16&255)/255,(h>>8&255)/255,(h&255)/255,alpha);}
   private text(parent:any,text:string,x:number,y:number,size=16,color=palette.ink,width=250):any{
-    const t=new L.Text();t.text=text;t.pos(x,y);t.font='Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;parent.addChild(t);return t;
+    const t=new L.Text();t.text=text;t.pos(x,y);t.font='Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;t.mouseEnabled=false;parent.addChild(t);return t;
   }
   private panel(parent:any,x:number,y:number,w:number,h:number,color:string,r=0):any{
     const s=new L.Sprite();s.pos(x,y);s.size(w,h);
@@ -89,7 +94,7 @@ export class ObserverView {
     parent.addChild(s);return s;
   }
   private button(id:string,text:string,x:number,y:number,w:number,click:()=>void,bright=false):NativeButton{
-    const r=this.panel(this.root,x,y,w,35,bright?palette.mint:palette.line,7);r.mouseEnabled=true;
+    const r=this.panel(this.root,x,y,w,35,bright?palette.mint:palette.line,7);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,35);
     const t=this.text(r,text,0,10,14,bright?palette.ink:'#eff9ef',w);t.align='center';t.mouseEnabled=false;
     r.on(L.Event.CLICK,this,click);const b={root:r,label:t,set:(s:string)=>t.text=s};this.buttons[id]=b;return b;
   }
@@ -183,36 +188,91 @@ export class ObserverView {
     this.modalButton(this.workshopPanel,'workshopGoal','发布制作目标',344,545,175,()=>{this.hideModals();this.draftKind='craft';this.draftAmount=1;this.planner.visible=true;});
     this.modalButton(this.workshopPanel,'closeWorkshop','返回观察',881,545,147,()=>{this.workshopPanel.visible=false;});
   }
-  private openHistory():void{this.hideModals();this.historyPanel.visible=true;this.historyPage=0;this.historyDetail=null;this.historyCache='';}
+  private refreshHistory():void{this.historySnapshot=null;this.historyPage=0;this.historyDetail=null;this.historyCache='';}
+  private openHistory():void{this.hideModals();this.historyPanel.visible=true;this.refreshHistory();}
   private buildHistory():void{
     this.historyPanel=this.modal('Resident history');
     this.labels.historyTitle=this.text(this.historyPanel,'居民档案',344,166,22,'#f1f4dc',840);
-    this.labels.historyMeta=this.text(this.historyPanel,'',344,203,12,palette.muted,852);
-    for(const [i,filter]of (['all','action','decision','speech','memory'] as const).entries())this.modalButton(this.historyPanel,'history-'+filter,['全部','实际行动','模型计划','已说出口','私人记忆'][i],344+i*126,231,115,()=>{this.historyFilter=filter;this.historyPage=0;this.historyDetail=null;});
-    this.modalButton(this.historyPanel,'historyScope','本轮记录',1004,231,199,()=>{this.historyAllRuns=!this.historyAllRuns;this.historyPage=0;this.historyDetail=null;});
-    for(let i=0;i<5;i++){const row=this.panel(this.historyPanel,344,280+i*45,860,39,'#234144',6);row.mouseEnabled=true;row.hitArea=new L.Rectangle(0,0,860,39);const heading=this.text(row,'',10,4,10,palette.mint,820),body=this.text(row,'',10,19,12,'#e5f1df',822);body.height=16;body.overflow='hidden';row.on(L.Event.CLICK,this,()=>{this.historyDetail=this.displayedHistory[this.historyPage*5+i]??null;});this.historyRows.push({root:row,heading,body});}
-    this.labels.historyDetail=this.text(this.historyPanel,'',350,287,15,'#e5f1df',842);this.labels.historyDetail.height=203;this.labels.historyDetail.overflow='scroll';
-    this.labels.historyCount=this.text(this.historyPanel,'',344,515,11,palette.muted,850);
-    this.modalButton(this.historyPanel,'historyNewer','较新记录',344,545,126,()=>{this.historyDetail=null;this.historyPage=Math.max(0,this.historyPage-1);});
-    this.modalButton(this.historyPanel,'historyOlder','较早记录',484,545,126,()=>{this.historyDetail=null;this.historyPage=Math.min(Math.max(0,Math.ceil(this.displayedHistory.length/5)-1),this.historyPage+1);});
-    this.modalButton(this.historyPanel,'historyBack','返回列表',624,545,126,()=>{this.historyDetail=null;});
-    this.modalButton(this.historyPanel,'closeHistory','返回观察',1061,545,143,()=>{this.historyPanel.visible=false;});
+    this.labels.historyMeta=this.text(this.historyPanel,'',344,202,11,palette.muted,852);this.labels.historyMeta.height=25;this.labels.historyMeta.overflow='hidden';
+    for(const [i,filter]of (['summary','action','decision','speech','memory','all'] as const).entries())this.modalButton(this.historyPanel,'history-'+filter,['阶段总结','实际行动','模型计划','已说出口','私人记忆','全部流水'][i],344+i*110,231,100,()=>{this.historyFilter=filter;this.historyPage=0;this.historyDetail=null;this.historyCache='';});
+    this.modalButton(this.historyPanel,'historyScope','全部轮次',1004,231,199,()=>{if(this.historyFilter==='summary'){const runs=this.historyRuns();const i=runs.indexOf(this.historySummaryRunId);this.historySummaryRunId=runs[(i+1)%runs.length]??'';this.historyPage=0;this.historyDetail=null;this.historyCache='';}else{this.historyAllRuns=!this.historyAllRuns;this.refreshHistory();}});
+    for(let i=0;i<5;i++){
+      const row=this.panel(this.historyPanel,344,280+i*45,860,39,'#234144',6);row.mouseEnabled=true;row.hitArea=new L.Rectangle(0,0,860,39);
+      const heading=this.text(row,'',10,4,10,palette.mint,820),body=this.text(row,'',10,19,12,'#e5f1df',822);heading.height=14;heading.overflow='hidden';body.height=16;body.overflow='hidden';
+      row.on(L.Event.CLICK,this,()=>{this.historyDetail=this.displayedHistory[this.historyPage*5+i]??null;this.labels.historyDetail.scrollY=0;this.historyCache='';});this.historyRows.push({root:row,heading,body});
+    }
+    this.labels.historyDetail=this.text(this.historyPanel,'',350,282,14,'#e5f1df',842);this.labels.historyDetail.height=222;this.labels.historyDetail.overflow='scroll';
+    this.labels.historyEmpty=this.text(this.historyPanel,'',355,310,16,'#e5f1df',820);this.labels.historyEmpty.height=170;this.labels.historyEmpty.overflow='hidden';
+    this.labels.historyCount=this.text(this.historyPanel,'',344,514,11,palette.muted,850);this.labels.historyCount.height=23;this.labels.historyCount.overflow='hidden';
+    this.modalButton(this.historyPanel,'historyNewer','上一页',344,545,116,()=>this.turnHistory(-1));
+    this.modalButton(this.historyPanel,'historyOlder','下一页',472,545,116,()=>this.turnHistory(1));
+    this.modalButton(this.historyPanel,'historyBack','返回列表',600,545,116,()=>{this.historyDetail=null;this.historyCache='';});
+    this.modalButton(this.historyPanel,'summaryGenerate','生成 / 更新总结',730,545,175,()=>{
+      const s=this.state;if(!s||s.summaryBusy||s.mode==='REPLAY')return;const r=s.world.residents.find(r=>r.id===s.selectedId)!;
+      const request=summaryInput(this.historySnapshot??[],r.id,r.name,this.historySummaryRunId||s.world.runId,false);
+      if(request)this.api.onSummarize?.(request);
+    });
+    this.modalButton(this.historyPanel,'historyRefresh','载入新记录',918,545,132,()=>this.refreshHistory());
+    this.modalButton(this.historyPanel,'closeHistory','返回观察',1062,545,142,()=>{this.historyPanel.visible=false;});
+    this.historyPanel.on(L.Event.MOUSE_WHEEL,this,(e:any)=>{this.turnHistory(e.delta<0?1:-1);e.stopPropagation();});
+  }
+  private historyRuns():string[]{
+    const s=this.state;if(!s)return [];
+    const saved=(s.summaries??[]).filter(e=>e.response.residentId===s.selectedId&&(s.mode!=='REPLAY'||e.response.runId===s.world.runId&&e.response.throughTick<=s.world.tick)).map(e=>e.response.runId);
+    return [...new Set([...saved,...(this.historySnapshot??[]).filter(e=>e.residentId===s.selectedId&&(s.mode!=='REPLAY'||e.runId===s.world.runId)).map(e=>e.runId)])].reverse();
+  }
+  private turnHistory(direction:number):void{
+    if(this.historyDetail){const t=this.labels.historyDetail;t.scrollY=Math.max(0,Math.min(Math.max(0,t.textHeight-t.height),t.scrollY+direction*180));return;}
+    this.historyPage=Math.max(0,Math.min(Math.max(0,Math.ceil(this.displayedHistory.length/5)-1),this.historyPage+direction));this.historyCache='';
   }
   private renderHistory(state:ViewState):void{
     if(!this.historyPanel.visible)return;
-    const key=[state.historyVersion,state.world.runId,state.world.tick,state.selectedId,this.historyFilter,this.historyPage,this.historyAllRuns,this.historyDetail?.id,state.mode,state.historyWarning].join('|');if(this.historyCache===key)return;this.historyCache=key;
+    const replay=state.mode==='REPLAY',scopeKey=[state.selectedId,state.mode,replay?state.world.tick:'live',this.historyAllRuns].join('|');
+    if(!this.historySnapshot||this.historySnapshotScope!==scopeKey){
+      this.historySnapshot=(state.history??[]).filter(e=>(!replay||e.tick<=state.world.tick&&e.runId===state.world.runId)).slice();
+      this.historySnapshotScope=scopeKey;this.historyPage=0;this.historyDetail=null;this.historyCache='';
+    }
+    const key=[state.summaryVersion,state.summaryBusy,state.summaryError,state.historyVersion,state.selectedId,this.historyFilter,this.historyPage,this.historyAllRuns,this.historyDetail?.id,state.mode,state.historyWarning,this.historySnapshotScope].join('|');if(this.historyCache===key)return;this.historyCache=key;
     const r=state.world.residents.find(r=>r.id===state.selectedId)!;
-    const replay=state.mode==='REPLAY';this.displayedHistory=selectJournal(state.history??[],r.id,this.historyFilter,replay||!this.historyAllRuns?state.world.runId:undefined,replay?state.world.tick:Infinity);
+    const rows=selectJournal(this.historySnapshot,r.id,this.historyFilter==='summary'?'all':this.historyFilter,replay||!this.historyAllRuns?state.world.runId:undefined,replay?state.world.tick:Infinity);
+    this.displayedHistory=rows.map(e=>({...e,title:`${journalTime(e.tick)}  ${JOURNAL_LABELS[e.category]}${e.source?' · '+(e.source==='REAL_MODEL'?'真实模型':'Mock 测试'):''}${e.runId!==state.world.runId?' · 之前轮次':''}`}));
+    const own=this.historySnapshot.filter(e=>e.residentId===r.id);
+    const runs=this.historyRuns();
+    if(!runs.includes(this.historySummaryRunId)){
+      const saved=(state.summaries??[]).filter(s=>s.response.residentId===r.id&&runs.includes(s.response.runId)).at(-1);
+      this.historySummaryRunId=saved?.response.runId??runs[0]??state.world.runId;
+    }
+    const runId=replay?state.world.runId:this.historySummaryRunId;
+    const report=latestSummary(state.summaries??[],r.id,runId,replay?state.world.tick:Infinity);
+    let hint='实际行动与未执行计划分开查看；列表固定，点击「载入新记录」更新。';
+    if(this.historyFilter==='summary'){
+      this.displayedHistory=[];
+      if(report){
+        const labels={progress:'★ 关键进展',setback:'! 问题 / 阻碍',plan:'○ 待执行计划',social:'交流',observation:'观察'};
+        const add=(id:string,title:string,text:string,ids:string[])=>{const evidence=ids.map(id=>report.entries.find(e=>e.id===id)).filter(Boolean) as JournalEntry[];this.displayedHistory.push({id,runId:report.response.runId,tick:report.response.throughTick,residentId:r.id,category:'world',title,text,evidence});};
+        add('overview:'+report.response.requestId,'阶段总览 · '+report.response.summary.headline,report.response.summary.overview,[]);
+        report.response.summary.highlights.forEach((p,i)=>add(report.response.requestId+':h'+i,labels[p.kind]+' · '+p.title,p.detail,p.evidenceIds));
+        report.response.summary.nextFocus.forEach((p,i)=>add(report.response.requestId+':n'+i,'→ 后续关注 · 尚未完成',p.text,p.evidenceIds));
+        hint=`glm-4.5-air · ${report.entries.length}条记录 · ${journalTime(report.response.fromTick)}—${journalTime(report.response.throughTick)} · ${runId===state.world.runId?'本轮':'之前轮次'}；点击关键点查看原始依据`;
+      }else hint='总结按单个居民、单轮最多120条记录生成，优先实际行动和计划；原始记录可翻阅。';
+    }
     const pages=Math.max(1,Math.ceil(this.displayedHistory.length/5));this.historyPage=Math.min(this.historyPage,pages-1);
-    this.labels.historyTitle.text=r.name+'的档案 · 点击记录查看详情';
-    this.labels.historyMeta.text=`采集熟练 ${skillLevel(r.skills?.gathering)}级 · 加工 ${skillLevel(r.skills?.crafting)}级 · 建造 ${skillLevel(r.skills?.construction)}级   |   计划不代表已完成，实际行动以结果为准`;
-    this.buttons.historyScope.set(replay?'回放此刻以前':this.historyAllRuns?'含之前的轮次':'本轮记录');
-    for(const filter of ['all','action','decision','speech','memory'])this.buttons['history-'+filter].label.color=filter===this.historyFilter?'#1c5335':'#5a7067';
-    this.historyRows.forEach((row,i)=>{const item=this.displayedHistory[this.historyPage*5+i];row.root.visible=!this.historyDetail&&!!item;if(!item)return;row.heading.text=`${journalTime(item.tick)}  ${JOURNAL_LABELS[item.category]}${item.source?' · '+(item.source==='REAL_MODEL'?'真实模型':'Mock 测试'):''}${item.runId!==state.world.runId?' · 之前轮次':''}`;row.body.text=readableAction(item.text);});
+    this.labels.historyTitle.text=r.name+'的档案 · '+(this.historyFilter==='summary'?'阶段总结与关键进展':'点击记录查看详情');
+    this.labels.historyMeta.text=hint;
+    this.buttons.historyScope.set(replay?'回放此刻以前':this.historyFilter==='summary'?(runId===state.world.runId?'本轮':'之前轮次')+` · 切换 ${runs.indexOf(runId)+1}/${runs.length||1}`:this.historyAllRuns?'全部轮次（含旧档）':'仅本轮记录');
+    for(const filter of ['summary','all','action','decision','speech','memory'])this.buttons['history-'+filter].label.color=filter===this.historyFilter?'#1c5335':'#5a7067';
+    this.historyRows.forEach((row,i)=>{const item=this.displayedHistory[this.historyPage*5+i];row.root.visible=!this.historyDetail&&!!item;if(!item)return;row.heading.text=item.title;row.body.text=readableAction(item.text);row.heading.color=item.title.startsWith('★')?palette.amber:palette.mint;});
     this.labels.historyDetail.visible=!!this.historyDetail;
-    if(this.historyDetail){const d=this.historyDetail;this.labels.historyDetail.text=`${journalTime(d.tick)} · ${JOURNAL_LABELS[d.category]}\n\n${readableAction(d.text)}`;}
-    this.labels.historyCount.text=state.historyWarning||`${this.displayedHistory.length}条 · 第${this.historyPage+1}/${pages}页 · 本机最多保留2000条；刷新仍可查看。${replay?'回放只显示此刻以前记录。':''}${this.displayedHistory.length?'':'开始真实自治后，记录会出现在这里。'}`;
+    if(this.historyDetail){const d=this.historyDetail;this.labels.historyDetail.text=d.title+'\n\n'+readableAction(d.text)+(d.evidence?.length?'\n\n原始记录依据（仅所选居民 / 公告）：\n'+d.evidence.map(e=>`${journalTime(e.tick)} · ${JOURNAL_LABELS[e.category]}\n${readableAction(e.text)}`).join('\n\n'):'');}
+    this.labels.historyEmpty.visible=!this.historyDetail&&!this.displayedHistory.length;
+    this.labels.historyEmpty.text=this.historyFilter==='summary'?'还没有这一轮的模型总结。\n\n点击下方「生成 / 更新总结」，提取关键进展、问题与待办。\n这是给玩家看的归纳，不写入居民的记忆或行动。':'此筛选下没有记录。\n可切换「全部流水」或「全部轮次（含旧档）」查看。';
+    const snapshotIds=new Set(this.historySnapshot.map(e=>e.id));const fresh=(state.history??[]).filter(e=>!snapshotIds.has(e.id)&&(e.residentId===r.id||e.residentId==='planner')).length;
+    this.labels.historyCount.text=state.summaryBusy?'真实模型正在整理档案… 可继续翻阅记录。':state.summaryError||state.historyWarning||(this.historyDetail?'详情 · 上一页 / 下一页滚动长文；返回列表继续翻页':`${this.displayedHistory.length}项 · 第${this.historyPage+1}/${pages}页${fresh?` · 有${fresh}条新记录，点击载入`:''} · 本机保留档案2000条、总结40份`);
     this.buttons.historyBack.root.visible=!!this.historyDetail;
+    this.buttons.summaryGenerate.root.visible=this.historyFilter==='summary';
+    this.buttons.summaryGenerate.set(state.summaryBusy?'正在生成…':report?'更新本轮总结':'生成真实模型总结');
+    this.buttons.summaryGenerate.root.mouseEnabled=!state.summaryBusy&&!replay&&own.some(e=>e.runId===runId);this.buttons.summaryGenerate.root.alpha=this.buttons.summaryGenerate.root.mouseEnabled?1:.45;
+    for(const [id,enabled]of [['historyNewer',!!this.historyDetail||this.historyPage>0],['historyOlder',!!this.historyDetail||this.historyPage<pages-1]] as const){this.buttons[id].root.mouseEnabled=enabled;this.buttons[id].root.alpha=enabled?1:.4;}
   }
   private selectIndex(index:number):void{const id=this.state?.world.residents[index]?.id;if(id)this.api.onSelect(id);}
   private seekAtPointer():void{if(this.state?.mode!=='REPLAY')return;this.api.onSeek(Math.round(Math.max(0,Math.min(1,(L.stage.mouseX-320)/880))*this.state.maxTick));}
