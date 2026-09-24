@@ -13,7 +13,7 @@ class GatewayProvider implements BrainProvider{
   async decide(request:BrainRequest,signal?:AbortSignal):Promise<BrainResponse>{
     const r=await gatewayRequest('/api/decide',{method:'POST',body:request,signal});
     const value=await r.json();
-    if(!r.ok)throw Error(value.message??value.error?.message??value.error??'模型网关请求失败');
+    if(!r.ok){console.error('[Survive gateway]',{status:r.status,code:value.error,traceId:value.traceId});throw Error(`${value.message??'模型网关请求失败'} [HTTP ${r.status} · ${value.error??'UNKNOWN'}${value.traceId?' · '+value.traceId:''}]`);}
     if(value.source!=='REAL_MODEL')throw Error('真实自治模式拒绝非真实模型响应');
     return value;
   }

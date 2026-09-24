@@ -80,3 +80,25 @@ test('T09 HTTP local one-time session, hostile origin and unauthenticated decide
     assert.equal((await fetch(base+'/api/decide',{method:'POST',headers:{cookie:cookie.split(';')[0]},body:JSON.stringify(request())})).status,503);
   }finally{await new Promise<void>((resolve,reject)=>server.close(e=>e?reject(e):resolve()));}
 });
+
+test('Network diagnostics classify runtime failures without logging private errors',async()=>{
+  const audits:any[]=[];
+  const gateway=new RealModelGateway({...config(),retries:0},{fetch:async()=>{throw new TypeError('Illegal invocation: incorrect this reference MOCK_TEST_SECRET private details');},audit:r=>audits.push(r)});
+  await assert.rejects(gateway.decide(request()),/网络请求失败/);
+  assert.deepEqual(audits[0].networkIssues,['FETCH_INVALID_RECEIVER']);
+  assert.equal(JSON.stringify(audits).includes('MOCK_TEST_SECRET'),false);
+  assert.equal(JSON.stringify(audits).includes('private details'),false);
+});
+
+test('Default upstream fetch keeps the global receiver required by Workers',async()=>{
+  const original=globalThis.fetch;let calls=0;
+  globalThis.fetch=async function(this:unknown){assert.equal(this,globalThis);calls++;return response(decision());};
+  try{const gateway=new RealModelGateway(config());assert.equal((await gateway.decide(request())).source,'REAL_MODEL');assert.equal(calls,1);}
+  finally{globalThis.fetch=original;}
+});
+
+test('Workers-compatible manual redirect mode never forwards model credentials',async()=>{
+  let calls=0;
+  const gateway=new RealModelGateway(config(),{fetch:async(_url,init)=>{calls++;assert.equal(init.redirect,'manual');return new Response(null,{status:302,headers:{location:'https://untrusted.example'}});}});
+  await assert.rejects(gateway.decide(request()),/重定向/);assert.equal(calls,1);
+});

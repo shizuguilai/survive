@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-09-24",
+  "rootCauses": [
+    "FETCH_INVALID_RECEIVER",
+    "FETCH_REDIRECT_ERROR"
+  ],
+  "fixes": [
+    "globalThis.fetch wrapper preserves receiver",
+    "manual redirect mode with explicit rejection of 3xx"
+  ],
+  "tests": {
+    "gatewayWorker": {
+      "passed": 13,
+      "type": "unit and mock"
+    },
+    "typecheck": "passed",
+    "build": "passed",
+    "productionSyntheticRealModel": {
+      "httpStatus": 200,
+      "source": "REAL_MODEL",
+      "model": "glm-4.5-air",
+      "requestId": "c6fb08e7-c513-4a07-bbeb-063661853a04",
+      "input": "synthetic fixture only; no private resident memory"
+    },
+    "earlierNarrowSyntheticProbe": "MODEL_INVALID_DECISION; network succeeded, validation remained strict",
+    "browserLiveResidents": "not_run",
+    "device": "not_run"
+  },
+  "deployment": {
+    "status": "succeeded",
+    "id": "appgdep_6ab49e1bb90081918b29d22e103a6168",
+    "sourceCommit": "f180128cb5476d67e19c69f554f9881ddce0e62e",
+    "environmentRevision": 3
+  },
+  "logging": "bounded failure categories, status, duration, traceId; no key, raw error, provider response or private context"
+}

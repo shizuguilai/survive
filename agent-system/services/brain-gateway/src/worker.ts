@@ -29,6 +29,8 @@ async function readJSON(request:Request):Promise<unknown>{
 export default {
   async fetch(request:Request,env:WorkerEnv):Promise<Response>{
     const url=new URL(request.url);
+    const traceId=crypto.randomUUID();
+    const started=Date.now();
     if(!url.pathname.startsWith('/api/')){
       if(request.method!=='GET'&&request.method!=='HEAD')return json({error:'METHOD_NOT_ALLOWED'},405);
       return env.ASSETS.fetch(request);
@@ -44,7 +46,7 @@ export default {
       if(request.headers.get('origin')!==url.origin)return json({error:'ORIGIN_REJECTED',message:'模型请求必须来自本站。'},403);
       return json(await gateway.decide(await readJSON(request),request.signal));
     }catch(error){
-      if(error instanceof GatewayError)return json({error:error.code,message:error.message},error.status);
+      if(error instanceof GatewayError){console.error(JSON.stringify({event:'gateway_failure',traceId,code:error.code,status:error.status,durationMs:Date.now()-started}));return json({error:error.code,message:error.message,traceId},error.status);}
       if(error instanceof ContractError)return json({error:'INVALID_CONTRACT',message:'决策请求不符合独立居民上下文契约。'},400);
       return json({error:'GATEWAY_ERROR',message:'模型网关暂时失败；世界保持暂停。'},500);
     }

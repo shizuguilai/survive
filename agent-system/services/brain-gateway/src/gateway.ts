@@ -14,7 +14,7 @@ export function loadConfig(env:NodeJS.ProcessEnv=process.env):GatewayConfig {
   if(baseUrl!=='https://open.bigmodel.cn/api/paas/v4'||model!=='glm-4.5-air')throw new GatewayError('CONFIG_REJECTED','模型 endpoint 或型号不在服务端允许清单',503);
   return {apiKey:env.SURVIVE_MODEL_API_KEY??'',baseUrl,model,timeoutMs:120_000,retries:2,repairs:2};
 }
-export type AuditRecord={requestId:string;agentId:string;runId:string;barrierId:string;contextHash:string;snapshotHash:string;tick:number;source:'REAL_MODEL';model:string;providerVersion:'unknown';temperature:number;thinking:'disabled';attempts:number;repairs:number;durationMs:number;accepted:boolean;code:string;validationIssues:string[];decision?:Decision};
+export type AuditRecord={requestId:string;agentId:string;runId:string;barrierId:string;contextHash:string;snapshotHash:string;tick:number;source:'REAL_MODEL';model:string;providerVersion:'unknown';temperature:number;thinking:'disabled';attempts:number;repairs:number;durationMs:number;accepted:boolean;code:string;validationIssues:string[];networkIssues:string[];decision?:Decision};
 type Fetcher=(input:string,init:RequestInit)=>Promise<Response>;
 type CacheEntry={binding:string;promise:Promise<BrainResponse>};
 export class RealModelGateway {
@@ -27,7 +27,7 @@ export class RealModelGateway {
   constructor(config:GatewayConfig,options:{fetch?:Fetcher;audit?:(record:AuditRecord)=>void}={}){
     if(config.baseUrl!=='https://open.bigmodel.cn/api/paas/v4'||config.model!=='glm-4.5-air')throw new GatewayError('CONFIG_REJECTED','模型配置不在允许清单',503);
     if(config.timeoutMs<=0||config.timeoutMs>120_000||config.retries<0||config.retries>2||config.repairs<0||config.repairs>2)throw new GatewayError('CONFIG_REJECTED','请求时限或重试次数超出允许范围',503);
-    this.config=config;this.#fetch=options.fetch??fetch;this.#audit=options.audit??(()=>{});
+    this.config=config;this.#fetch=options.fetch??((input,init)=>globalThis.fetch(input,init));this.#audit=options.audit??(()=>{});
   }
   get configured(){return Boolean(this.config.apiKey.trim());}
   async decide(raw:unknown,signal?:AbortSignal):Promise<BrainResponse>{
@@ -53,10 +53,10 @@ export class RealModelGateway {
     return promise.then(value=>structuredClone(value));
   }
   async #execute(request:BrainRequest,signal?:AbortSignal):Promise<BrainResponse>{
-    const start=Date.now();let attempts=0;let repairs=0;const validationIssues:string[]=[];
+    const start=Date.now();let attempts=0;let repairs=0;const validationIssues:string[]=[];const networkIssues:string[]=[];
     const timeout=AbortSignal.timeout(this.config.timeoutMs);
     const combined=signal?AbortSignal.any([timeout,signal]):timeout;
-    const audit=(accepted:boolean,code:string,decision?:Decision)=>this.#audit({requestId:request.metadata.requestId,agentId:request.metadata.agentId,runId:request.metadata.runId,barrierId:request.metadata.barrierId,contextHash:request.metadata.contextHash,snapshotHash:request.metadata.snapshotHash,tick:request.metadata.tick,source:'REAL_MODEL',model:this.config.model,providerVersion:'unknown',temperature:0.4,thinking:'disabled',attempts,repairs,durationMs:Date.now()-start,accepted,code,validationIssues:[...validationIssues],...(decision?{decision}:{})});
+    const audit=(accepted:boolean,code:string,decision?:Decision)=>this.#audit({requestId:request.metadata.requestId,agentId:request.metadata.agentId,runId:request.metadata.runId,barrierId:request.metadata.barrierId,contextHash:request.metadata.contextHash,snapshotHash:request.metadata.snapshotHash,tick:request.metadata.tick,source:'REAL_MODEL',model:this.config.model,providerVersion:'unknown',temperature:0.4,thinking:'disabled',attempts,repairs,durationMs:Date.now()-start,accepted,code,validationIssues:[...validationIssues],networkIssues:[...networkIssues],...(decision?{decision}:{})});
     // Describe only actions this resident can currently execute. This narrows the
     // supplied contract, never invents a decision or changes accepted model output.
     const schema=structuredClone(decisionSchema);
@@ -79,7 +79,8 @@ export class RealModelGateway {
         for(let retry=0;retry<=this.config.retries;retry++){
           combined.throwIfAborted();attempts++;
           try{
-            response=await this.#fetch(`${this.config.baseUrl}/chat/completions`,{method:'POST',redirect:'error',headers:{'content-type':'application/json','authorization':`Bearer ${this.config.apiKey}`},body:JSON.stringify({model:this.config.model,messages,temperature:0.4,max_tokens:4096,thinking:{type:'disabled'},stream:false,response_format:{type:'json_object'}}),signal:combined});
+            response=await this.#fetch(`${this.config.baseUrl}/chat/completions`,{method:'POST',redirect:'manual',headers:{'content-type':'application/json','authorization':`Bearer ${this.config.apiKey}`},body:JSON.stringify({model:this.config.model,messages,temperature:0.4,max_tokens:4096,thinking:{type:'disabled'},stream:false,response_format:{type:'json_object'}}),signal:combined});
+            if(response.status>=300&&response.status<400){await response.body?.cancel();throw new GatewayError('MODEL_REDIRECT_REJECTED','真实模型接口发生重定向，已拒绝转发凭据；世界保持暂停。');}
             if(response.ok)break;
             if(response.status===401){await response.body?.cancel();throw new GatewayError('MODEL_AUTH_FAILED','智谱密钥认证失败（HTTP 401）。请在服务端更新完整有效的 API Key；世界保持暂停。',502);}
             if(!(response.status===429||response.status>=500)||retry===this.config.retries)throw new GatewayError('MODEL_HTTP_ERROR',`真实模型服务请求失败（HTTP ${response.status}）；世界保持暂停。`);
@@ -87,6 +88,9 @@ export class RealModelGateway {
           }catch(error){
             if(combined.aborted)throw error;
             if(error instanceof GatewayError)throw error;
+            const message=error instanceof Error?error.message:'';
+            const category=/illegal invocation|incorrect this/i.test(message)?'FETCH_INVALID_RECEIVER':/redirect/i.test(message)?'FETCH_REDIRECT_ERROR':/dns|resolve/i.test(message)?'FETCH_DNS_ERROR':/tls|ssl|certificate/i.test(message)?'FETCH_TLS_ERROR':/not allowed|blocked|denied/i.test(message)?'FETCH_BLOCKED':/fetch failed/i.test(message)?'FETCH_FAILED':'FETCH_RUNTIME_ERROR';
+            networkIssues.push(category);
             if(retry===this.config.retries)throw new GatewayError('MODEL_NETWORK_ERROR','真实模型服务网络请求失败；世界保持暂停。');
           }
           await new Promise<void>((resolve,reject)=>{const done=()=>{clearTimeout(timer);combined.removeEventListener('abort',abort);};const abort=()=>{done();reject(new GatewayError('MODEL_TIMEOUT','真实模型请求已停止'));};const timer=setTimeout(()=>{done();resolve();},100*(retry+1));combined.addEventListener('abort',abort,{once:true});});
