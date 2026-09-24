@@ -2265,21 +2265,25 @@
       ],
       "status": "partial",
       "codeStatus": "implemented_scoped",
-      "scopeNote": "真实最小任务循环通过，不保证永不重复或长期协作完成",
+      "scopeNote": "修复普通视觉变化与句内语音片段造成的频繁认知；默认营地真实移动通过。仍不保证永不重复或长期协作完成。",
       "verification": {
         "static": "passed",
-        "mock": "passed",
-        "realModel": "passed_local_scoped_task_cycle",
+        "mock": "passed_11_to_1_walk_cadence",
+        "realModel": "passed_default_camp_real_movement",
         "webBuild": "passed",
-        "browser": "passed_native_laya_ui",
+        "browser": "passed_delayed_transport_diagnostics",
         "physicalDevice": "not_run",
-        "publication": "web_public_deployed_scoped"
+        "publication": "web_public_deployed_v031"
       },
       "evidence": [
         "evidence/camp-real.json",
         "evidence/camp-tests.txt",
         "evidence/camp-browser.json",
-        "evidence/camp-deployment.json"
+        "evidence/camp-deployment.json",
+        "evidence/thinking-cadence.json",
+        "evidence/thinking-real.json",
+        "evidence/thinking-browser.json",
+        "evidence/thinking-deployment.json"
       ]
     },
     {
@@ -2579,6 +2583,33 @@
       "wechatPublication": "not_run",
       "model": "glm-4.5-air",
       "secretLocation": "server_runtime_only"
+    }
+  },
+  "thinkingFix": {
+    "simCoreVersion": "0.3.1",
+    "baselineHead": "e03e790d8d73868fcaebdcded3fcd2e6614925d2",
+    "source": "user_report_always_thinking",
+    "evidence": [
+      "evidence/thinking-cadence.json",
+      "evidence/thinking-real.json",
+      "evidence/thinking-browser.json",
+      "evidence/thinking-deployment.json"
+    ],
+    "publication": "web_public_deployed",
+    "deployment": {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_66f2c89f13148191a78b191afb704798",
+      "deploymentId": "appgdep_6ab4be076318819186d24f11ee92337a",
+      "sourceCommit": "8ce87945da04859657e3fa7d025cf9fb2a4c9124",
+      "envSetRevision": 3,
+      "publishedAt": "2026-09-24T06:07:11.085807+00:00",
+      "access": "public",
+      "realModel": "passed_local_default_camp_movement",
+      "browser": "passed_explicit_delayed_transport_fixture",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run"
     }
   }
 }

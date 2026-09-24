@@ -1,5 +1,5 @@
 import {GatewayError,loadConfig,RealModelGateway} from './gateway.ts';
-import {ContractError} from '../../../packages/contracts/src/validation.ts';
+import {ContractError,validateBrainRequest} from '../../../packages/contracts/src/validation.ts';
 
 export type WorkerEnv={SURVIVE_PUBLIC_PLAY?:string;SURVIVE_MODEL_API_KEY?:string;SURVIVE_MODEL_NAME?:string;SURVIVE_MODEL_BASE_URL?:string;ASSETS:{fetch(request:Request):Promise<Response>}};
 const instances=new WeakMap<object,RealModelGateway>();
@@ -44,7 +44,11 @@ export default {
       if(url.pathname!=='/api/decide')return json({error:'NOT_FOUND'},404);
       if(request.method!=='POST')return json({error:'METHOD_NOT_ALLOWED'},405);
       if(request.headers.get('origin')!==url.origin)return json({error:'ORIGIN_REJECTED',message:'模型请求必须来自本站。'},403);
-      return json(await gateway.decide(await readJSON(request),request.signal));
+      const input=validateBrainRequest(await readJSON(request));
+      console.info(JSON.stringify({event:'model_request_started',traceId,requestId:input.metadata.requestId,agentId:input.metadata.agentId,tick:input.metadata.tick}));
+      const result=await gateway.decide(input,request.signal);
+      console.info(JSON.stringify({event:'model_request_completed',traceId,requestId:input.metadata.requestId,durationMs:Date.now()-started}));
+      return json(result);
     }catch(error){
       if(error instanceof GatewayError){console.error(JSON.stringify({event:'gateway_failure',traceId,code:error.code,status:error.status,durationMs:Date.now()-started}));return json({error:error.code,message:error.message,traceId},error.status);}
       if(error instanceof ContractError)return json({error:'INVALID_CONTRACT',message:'决策请求不符合独立居民上下文契约。'},400);

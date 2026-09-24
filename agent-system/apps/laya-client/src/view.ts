@@ -14,6 +14,7 @@ export type ViewCallbacks = {
   onSeek(tick:number):void; onSpeed(value:number):void; onStart():void; onConnect(token:string):void;
 };
 export type ViewState = {
+  cognitionDetail?:string;
   history?:JournalEntry[];historyVersion?:number;historyWarning?:string;
   pendingTasks?:number;world:World; overlays:Record<string,SensoryOverlay>; status:string; error?:string;
   mode:'UNCONFIGURED'|'REAL_MODEL'|'REPLAY'; selectedId:string; showSenses:boolean;
@@ -99,7 +100,7 @@ export class ObserverView {
     this.text(this.root,'SURVIVE',23,18,27,palette.ink,230).bold=true;
     this.text(this.root,'微小世界 · 独立心智',25,54,13,'#60786d',240);
     this.labels.mode=this.text(this.root,'等待连接真实模型',323,18,17,palette.ink,430);
-    this.labels.status=this.text(this.root,'世界尚未启动',323,49,13,'#60786d',560);
+    this.labels.status=this.text(this.root,'世界尚未启动',323,47,12,'#60786d',663);
     this.labels.time=this.text(this.root,'模拟 00:00',1000,21,24,palette.ink,250);this.labels.time.align='right';
     this.text(this.root,'等待模型时，全世界静止',1000,54,12,'#60786d',250).align='right';
     this.text(this.root,'观察对象',20,104,12,palette.muted);
@@ -111,7 +112,8 @@ export class ObserverView {
     this.text(this.root,'此刻的私人感知',20,285,12,palette.muted);
     this.labels.perception=this.text(this.root,'暂无感知事件',20,312,14,'#e5f1df',250);this.labels.perception.height=118;this.labels.perception.overflow='hidden';
     this.text(this.root,'当前意图',20,444,12,palette.muted);
-    this.labels.goal=this.text(this.root,'尚未得到真实模型决策',20,468,14,'#e5f1df',252);this.labels.goal.height=53;this.labels.goal.overflow='hidden';
+    this.labels.goal=this.text(this.root,'尚未得到真实模型决策',20,468,14,'#e5f1df',252);this.labels.goal.height=40;this.labels.goal.overflow='hidden';
+    this.labels.action=this.text(this.root,'实际动作：尚未开始',20,516,11,palette.amber,252);this.labels.action.height=16;this.labels.action.overflow='hidden';
     this.button('history','历史 / 档案',18,538,121,()=>this.openHistory(),true);
     this.button('senses','感官显示 开',151,538,121,()=>this.api.onToggleSenses());
     this.labels.person.mouseEnabled=true;this.labels.person.on(L.Event.CLICK,this,()=>this.openHistory());
@@ -271,7 +273,8 @@ export class ObserverView {
     this.labels.hosted.visible=Boolean(state.hosted);
     const r=state.world.residents.find(x=>x.id===state.selectedId)||state.world.residents[0];
     const mode=state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':'真实模型 · 独立居民';
-    this.labels.mode.text=mode;this.labels.status.text=this.humanStatus(state.status);
+    this.labels.mode.text=mode;this.labels.status.text=this.humanStatus(state.status)+(state.cognitionDetail?' · '+state.cognitionDetail:'');
+    const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
     const seconds=Math.floor(state.world.tick*defaults.simulation.fixedDtMs/1000);this.labels.time.text=`模拟 ${Math.floor(seconds/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;
     for(let i=0;i<2;i++){const person=state.world.residents[i];this.buttons['resident'+i].set(person?`${person.id===state.selectedId?'●  ':''}${person.name}`:'暂无居民');}
     if(r){const hp=Math.round(r.health??100),hunger=Math.round(r.hunger*100),fatigue=Math.round(r.fatigue*100);this.labels.vitality.text=`生命 ${hp}${hp===0?'（倒下）':''}     饥饿 ${hunger}%     疲劳 ${fatigue}%`;this.vitality.graphics.clear();[hp/100,r.hunger,r.fatigue].forEach((v,i)=>{this.vitality.graphics.drawRect(i*85,0,75,4,'#325153');this.vitality.graphics.drawRect(i*85,0,75*v,4,['#9ee3be','#f3c87c','#8eabcf'][i]);});

@@ -1,0 +1,164 @@
+{
+  "checkedAt": "2026-09-24T06:03:27.806Z",
+  "status": "passed_real_movement",
+  "model": "glm-4.5-air",
+  "mockUsed": false,
+  "execution": "node-local-real-provider",
+  "requests": 11,
+  "freezeChecks": 1902,
+  "freezeViolation": false,
+  "tick": 120,
+  "movement": 8.150638627377313,
+  "taskProgress": 0,
+  "taskAcceptedBy": [
+    "resident-b",
+    "resident-a"
+  ],
+  "completedOperations": [
+    "walk",
+    "read_notice",
+    "accept_task",
+    "speak"
+  ],
+  "failedActions": [],
+  "inventories": [
+    {
+      "agentId": "resident-a",
+      "supplies": {}
+    },
+    {
+      "agentId": "resident-b",
+      "supplies": {}
+    }
+  ],
+  "operations": [
+    "speak",
+    "walk",
+    "read_notice",
+    "gather",
+    "continue",
+    "accept_task"
+  ],
+  "audit": [
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "speak",
+        "walk",
+        "read_notice"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk",
+        "read_notice",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task",
+        "walk",
+        "gather"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-b",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "continue"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "accept_task"
+      ],
+      "validationIssues": []
+    },
+    {
+      "agentId": "resident-a",
+      "accepted": true,
+      "code": "ACCEPTED",
+      "attempts": 1,
+      "ops": [
+        "walk"
+      ],
+      "validationIssues": []
+    }
+  ],
+  "browser": "not_run",
+  "physicalDevice": "not_run",
+  "scope": "Default unprepared camp; actual real-model movement and cadence; not full camp cooperation or online real-browser validation"
+}

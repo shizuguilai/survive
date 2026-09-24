@@ -12,7 +12,7 @@ import {addModelMemories} from './knowledge.ts';
 export type SimulationStatus='RUNNING'|'THINKING'|'COMMITTING'|'READY'|'ERROR_PAUSED'|'STOPPED';
 export type AcceptedDecision={request:BrainRequest;response:BrainResponse};
 export type CommitRecord={schemaVersion:'1.0.0';runId:string;barrierId:string;tick:number;beforeHash:string;afterHash:string;accepted:AcceptedDecision[];nextWorld:World};
-export type BarrierView={id:string;tick:number;worldRevision:number;snapshotHash:string;dueAgentIds:string[];causeObservationIds:string[];status:SimulationStatus;errors:Record<string,string>;acceptedAgentIds:string[]};
+export type BarrierView={id:string;tick:number;worldRevision:number;snapshotHash:string;dueAgentIds:string[];causeObservationIds:string[];status:SimulationStatus;errors:Record<string,string>;acceptedAgentIds:string[];requestAttempts:Record<string,number>};
 type Slot={context:CharacterContext;generation:number;accepted?:AcceptedDecision;error?:string};
 type Pending={view:BarrierView;snapshot:World;slots:Map<string,Slot>;epoch:number};
 export type SimulationOptions={world?:World;seed?:number;runId?:string;allowMock?:boolean;maxRetries?:number;requestTimeoutMs?:number;
@@ -98,7 +98,7 @@ export class Simulation {
     const snapshot=cloneWorld(this.world),snapshotHash=hashCanonical(snapshot);
     const slots=new Map<string,Slot>();
     for(const agentId of dueAgentIds){const resident=snapshot.residents.find(r=>r.id===agentId);if(!resident)throw new Error('Unknown due resident');slots.set(agentId,{context:buildContext(snapshot,resident),generation:0});}
-    this.pending={view:{id,tick:snapshot.tick,worldRevision:snapshot.revision,snapshotHash,dueAgentIds,causeObservationIds:[...slots.values()].flatMap(s=>s.context.observations.map(o=>o.obsRef)),status:'THINKING',errors:{},acceptedAgentIds:[]},snapshot,slots,epoch:this.epoch};
+    this.pending={view:{id,tick:snapshot.tick,worldRevision:snapshot.revision,snapshotHash,dueAgentIds,causeObservationIds:[...slots.values()].flatMap(s=>s.context.observations.map(o=>o.obsRef)),status:'THINKING',errors:{},acceptedAgentIds:[],requestAttempts:{}},snapshot,slots,epoch:this.epoch};
     this.notify();this.active=this.resolve(this.pending);
   }
   private current(pending:Pending):boolean{return this.pending===pending&&pending.epoch===this.epoch&&this.status!=='STOPPED';}
@@ -135,6 +135,7 @@ export class Simulation {
     const attempts=1+Math.max(0,Math.min(2,this.options.maxRetries??2));
     for(let attempt=0;attempt<attempts&&this.current(pending);attempt++){
       const generation=++slot.generation;
+      pending.view.requestAttempts[agentId]=generation;this.notify();
       const request:BrainRequest={metadata:{runId:pending.snapshot.runId,barrierId:pending.view.id,agentId,requestId:`request-${hashCanonical({runId:pending.snapshot.runId,barrierId:pending.view.id,agentId,generation}).split(':').pop()}`,generation,tick:pending.snapshot.tick,snapshotHash:pending.view.snapshotHash,contextHash:hashCanonical(slot.context),schemaVersion:'1.0.0'},context:structuredClone(slot.context)};
       const controller=new AbortController();this.controllers.add(controller);
       let timer:ReturnType<typeof setTimeout>|undefined;

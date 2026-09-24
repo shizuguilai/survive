@@ -1,0 +1,36 @@
+{
+  "status": "passed",
+  "mode": "explicit-delayed-transport-fixture-no-model-response",
+  "profiles": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "waitingNamesAndCount": true,
+      "elapsedTime": true,
+      "historyOperableWhileFrozen": true,
+      "worldTimeFrozen": true,
+      "stopOperable": true,
+      "requests": 2,
+      "acceptedDecisions": 0,
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390
+      },
+      "waitingNamesAndCount": true,
+      "elapsedTime": true,
+      "historyOperableWhileFrozen": true,
+      "worldTimeFrozen": true,
+      "stopOperable": true,
+      "requests": 2,
+      "acceptedDecisions": 0,
+      "errors": []
+    }
+  ],
+  "realModel": "not_run_in_browser",
+  "physicalDevice": "not_run"
+}

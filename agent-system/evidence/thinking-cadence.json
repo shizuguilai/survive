@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "source": "MOCK_TEST",
+  "scenario": "same 65-tick single resident walk before and after change",
+  "beforeRequests": 11,
+  "afterRequests": 1,
+  "requestTicks": [
+    0
+  ],
+  "simulationSeconds": 3.25,
+  "distanceMoved": 4.550000000000001,
+  "unitTests": {
+    "total": 99,
+    "passed": 98,
+    "skipped": 1
+  },
+  "realModel": "see thinking-real.json"
+}

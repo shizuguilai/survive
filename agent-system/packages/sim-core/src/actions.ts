@@ -93,7 +93,7 @@ export function stepActions(world:World,nextTick:number):string[] {
           // At most four characters per delivered fragment; no future sentence suffix enters sound queues.
           if(spoken-progress.emittedChars>=4||(spoken===letters.length&&spoken>progress.emittedChars)){
             const text=letters.slice(progress.emittedChars,spoken).join('');
-            world.sounds.push({id:`sound-${resident.id}-${progress.startedTick}-${progress.emittedChars}`,sourceId:resident.id,position:{...resident.position},heading:resident.heading,text,volume:params.volume,emittedTick:nextTick,deliveredTo:[]});
+            world.sounds.push({id:`sound-${resident.id}-${progress.startedTick}-${progress.emittedChars}`,utteranceId:`utterance-${resident.id}-${progress.startedTick}`,final:spoken===letters.length,sourceId:resident.id,position:{...resident.position},heading:resident.heading,text,volume:params.volume,emittedTick:nextTick,deliveredTo:[]});
             world.events.push({tick:nextTick,kind:'speech_fragment',agentId:resident.id,text});progress.emittedChars=spoken;
             ownReceipt(resident,world,`我已经实际说出：${letters.slice(0,spoken).join('')}。${spoken<letters.length?'这句话尚未说完。':'这句话已说完，不要当作还没说过。'}`,`memory_spoken_${progress.startedTick}`);
           }

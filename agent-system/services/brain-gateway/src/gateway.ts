@@ -71,6 +71,7 @@ export class RealModelGateway {
       '工作台：先亲自read_notice学习配方，随后在附近用craft制作工具、exchange置换物资，stationRef是工作台，recipeRef是自己学到的配方。投入随身材料，实际完成后才获得产物；材料不足可采集或领取仓储。做成工具后自己equip_item持握才发挥作用。建房：先读公告接受任务，自主组织备料，材料需haul到公共仓储；走到施工项目附近，再按自己读到的步骤引用执行build(projectRef,stepRef)，地基、墙体、屋顶有前置顺序。只有实际完工才推进制作和建房任务。你可以与同伴商量，但不能控制他人的行动。',
       '引用有不同用途：公告板实体可以read_notice；已读任务引用可直接accept_task，不是需要再次阅读的公告板；施工步骤引用用于build的stepRef。已经知道配方、任务或已到达位置时，不要无故重复阅读和走到原地。合成前还不存在的工具没有可用itemRef，完成后依据新的自有装备信息再决定equip_item，不要猜物品编号。',
       '简化建房规则：build在建设地块附近进行，完成时直接从公共仓储自动扣本步骤的材料，不消耗随身资源。因此仓储已备齐的建筑材料无需withdraw，更不必先搬到地块；只有库存不足才需要补充。新感官出现时，若没有必要打断现有动作，使用continue保留进度，不要每次replace把正在执行的施工或移动从头开始。',
+      '复查节奏：正常行走、采集、加工、建造或休息时，可将nextReviewAfterSimMs设为5000到10000，让已有动作执行。新人物、听见讲话、身体不适、行动失败和计划结束仍会触发及时复查。相对方向或距离的普通变化并不表示需要重做计划。',
       '不要编造行动已经完成。仅输出符合以下 JSON Schema 的完整 JSON，不要代码围栏，不要输出内部思维过程；reasonBrief 只写简短可解释理由。',
       '引用只能使用当前上下文中你自己已知的引用；没有必要改变现有计划时可 continue。不同 stage 顺序执行，同一 stage 不得占用冲突身体通道。',
       '协议格式：decisionKind 为 continue 时，actions 必须仅包含 {"op":"continue","stage":0,"params":{}}，不要重新列出原 walk/speak 等动作。只有 currentPlan.actions 非空才可以 continue；决定新动作时使用 adjust 或 replace。',

@@ -104,13 +104,21 @@ function vision(world: World, resident: Resident): boolean {
   }
   const signature = JSON.stringify(percepts.map(percept => percept.detail));
   let changed = false;
+  const executing=resident.plan.some(p=>!p.done);
+  const watched=(ref:string)=>resident.lastDecision?.watch.some(w=>['visual_enter','known_person_seen'].includes(w.kind)&&(w.knownRef===null||w.knownRef===ref));
   if (signature !== resident.visualSignature) {
     const oldDetails: Record<string, any>[] = (() => { try { return JSON.parse(resident.visualSignature || '[]'); } catch { return []; } })();
     for (const percept of percepts) {
       const previous = oldDetails.find(detail => detail.knownRef === percept.entry.ref);
       if (JSON.stringify(previous) !== JSON.stringify(percept.detail)) {
         appendObservation(world, resident, 'visual', percept.detail, percept.certainty);
-        changed = true;
+        // Retinal changes still enter personal perception. They do not, by themselves,
+        // require a new decision in the middle of a model-authored action.
+        const person=world.residents.some(r=>r.id===percept.entry.entityId);
+        const meaningChanged=!previous||previous.level!==percept.detail.level||previous.recognizedName!==percept.detail.recognizedName||JSON.stringify(previous.appearance)!==JSON.stringify(percept.detail.appearance);
+        const activeTarget=resident.plan.some(p=>!p.done&&Object.entries(p.action.params).some(([key,value])=>key.endsWith('Ref')&&value===percept.entry.ref));
+        const targetContentChanged=activeTarget&&previous&&percept.detail.level!=='detected'&&JSON.stringify(previous.appearance)!==JSON.stringify(percept.detail.appearance);
+        if(!executing||meaningChanged&&(person||targetContentChanged||watched(percept.entry.ref)))changed=true;
       }
     }
     for (const entry of wasVisible.filter(entry => !entry.visible)) {
@@ -119,7 +127,7 @@ function vision(world: World, resident: Resident): boolean {
         distanceBand: distanceBand(planarDistance(resident.position, entry.lastPosition)),
         appearance: [`先前看到的${entry.description}已离开视野；仅记得最后看到的位置。`.slice(0, 120)], recognizedName: entry.recognizedName, knownRef: entry.ref,
       }, 'uncertain');
-      changed = true;
+      if(!executing||world.residents.some(r=>r.id===entry.entityId)||watched(entry.ref))changed=true;
     }
     resident.visualSignature = signature;
   }
@@ -163,7 +171,13 @@ function hearing(world: World, resident: Resident): boolean {
       soundKind: 'speech', relativeDirection: direction(resident, sound.position), distanceBand: distanceBand(distance),
       heardText, recognizedSpeakerName: name, speakerKnownRef: known?.ref ?? null,
     }, heardText ? 'clear' : 'uncertain');
-    changed = true;
+    // Speech is still physically delivered fragment by fragment. Repeated chunks
+    // of one ongoing utterance update hearing without forcing another model turn.
+    const key=sound.utteranceId?`${sound.utteranceId}:${heardText?'clear':'detected'}`:null;
+    const first=!key||!resident.heardUtteranceKeys?.includes(key);
+    if(key&&first)resident.heardUtteranceKeys=[...(resident.heardUtteranceKeys??[]),key].slice(-64);
+    const nameWatch=resident.lastDecision?.watch.some(w=>w.kind==='heard_name')&&heardText?.includes(resident.name);
+    if(first||sound.final||nameWatch||!resident.plan.some(p=>!p.done))changed=true;
   }
   return changed;
 }

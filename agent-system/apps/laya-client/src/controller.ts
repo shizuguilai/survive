@@ -36,6 +36,7 @@ export async function boot():Promise<void>{
   let recorder=new ReplayRecorder();let player:ReplayPlayer|null=null;
   let replayJournal:ResidentJournal|null=null;
   let selectedId='resident-a',showSenses=true,speed=1;
+  let observedBarrier='';let barrierWallStart=0;let latestRequestMs=0;
   let journal:ResidentJournal;let savedJournalVersion=-1;let lastJournalSave=0;let historyWarning='';
   try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_resident_history_v1'):globalThis.localStorage.getItem('survive_resident_history_v1');journal=new ResidentJournal(raw?JSON.parse(raw):undefined);}catch{journal=new ResidentJournal();historyWarning='历史存储读取失败，本次记录仍可在会话内查看。';}
   function saveJournal():void{if(savedJournalVersion===journal.version)return;try{persist('survive_resident_history_v1',journal.rows);savedJournalVersion=journal.version;historyWarning='';}catch{historyWarning='本机历史存储失败；本次会话内仍可查看，刷新可能丢失。';}}
@@ -100,9 +101,19 @@ export async function boot():Promise<void>{
       else{sim.frame(now);world=sim.world;cover=overlays(world);}
       const liveStatus=sim.pauseTokens.has('USER_PAUSE')&&!['ERROR_PAUSED','STOPPED'].includes(sim.status)?'PAUSED':sim.status;
       const modelErrors=Object.values(sim.barrier?.errors??{}).join('；');
+      const barrier=sim.barrier;let cognitionDetail='';
+      if(barrier&&['THINKING','COMMITTING','ERROR_PAUSED'].includes(sim.status)){
+        if(observedBarrier!==barrier.id){observedBarrier=barrier.id;barrierWallStart=now;}
+        const pending=barrier.dueAgentIds.filter(id=>!barrier.acceptedAgentIds.includes(id)).map(id=>sim.world.residents.find(r=>r.id===id)?.name??id);
+        const elapsed=Math.floor((now-barrierWallStart)/1000);
+        cognitionDetail=`${barrier.id.replace('cognition-','第')}批 · 已返回${barrier.acceptedAgentIds.length}/${barrier.dueAgentIds.length} · ${pending.length?'等'+pending.join('、'):'提交中'} ${elapsed}秒`;
+        const attempt=Math.max(1,...Object.values(barrier.requestAttempts));if(attempt>1)cognitionDetail+=` · 第${attempt}次尝试`;
+        if(elapsed>=30)cognitionDetail+=' · 等待较久，可停止';
+        latestRequestMs=now-barrierWallStart;
+      }else if(started)cognitionDetail=`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
       if(!sim.pendingTaskCount&&diagnostic.startsWith('目标已排队'))diagnostic='';
       if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
-      const s:ViewState={world,overlays:cover,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
+      const s:ViewState={world,overlays:cover,cognitionDetail:player?'':cognitionDetail,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
         mode:player?'REPLAY':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
         error:diagnostic||sim.observerError||modelErrors||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);
