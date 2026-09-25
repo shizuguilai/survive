@@ -7,7 +7,7 @@ export class CharacterMesh {
   readonly node:any;
   height=1.9;
   private signature='';private visuals:any;
-  private geometries:any[]=[];private materials:any[]=[];private disposed=false;
+  private geometries:any[]=[];private materials:any[]=[];private ink:any;private disposed=false;
   private readonly L:any;
   constructor(resident:Resident){
     this.L=(globalThis as any).Laya;
@@ -28,29 +28,35 @@ export class CharacterMesh {
   private part(name:string,geometry:any,color:string,x:number,y:number,z:number,sx=1,sy=1,sz=1,parent=this.visuals):any{
     const L=this.L,mesh=new L.MeshSprite3D(geometry,name);this.geometries.push(geometry);
     mesh.transform.localPosition=new L.Vector3(x,y,z);mesh.transform.localScale=new L.Vector3(sx,sy,sz);
-    const material=new L.BlinnPhongMaterial();material.albedoColor=this.color(color);material.specularColor=new L.Color(.035,.035,.035,1);this.materials.push(material);
-    mesh.meshRenderer.sharedMaterial=material;parent.addChild(mesh);return mesh;
+    const material=new L.BlinnPhongMaterial();material.albedoColor=this.color(color);material.specularColor=new L.Color(0,0,0,1);this.materials.push(material);
+    mesh.meshRenderer.sharedMaterial=material;parent.addChild(mesh);
+    if(!/eye|nose|belt|strap|collar|lapel|binding|guard|flap|shadow/.test(name)){
+      if(!this.ink){this.ink=new (L.UnlitMaterial??L.BlinnPhongMaterial)();this.ink.albedoColor=this.color('#292c29');this.ink.cull=L.RenderState?.CULL_FRONT??1;this.materials.push(this.ink);}
+      const outline=new L.MeshSprite3D(geometry,'ink silhouette');outline.transform.localScale=new L.Vector3(1.055,1.055,1.055);outline.meshRenderer.sharedMaterial=this.ink;mesh.addChild(outline);
+    }
+    return mesh;
   }
-  private sphere(name:string,color:string,r:number,x:number,y:number,z:number,sx=1,sy=1,sz=1):any{return this.part(name,this.L.PrimitiveMesh.createSphere(r,10,12),color,x,y,z,sx,sy,sz);}
+  private sphere(name:string,color:string,r:number,x:number,y:number,z:number,sx=1,sy=1,sz=1):any{return this.part(name,this.L.PrimitiveMesh.createSphere(r,12,16),color,x,y,z,sx,sy,sz);}
   private box(name:string,color:string,w:number,h:number,d:number,x:number,y:number,z:number):any{return this.part(name,this.L.PrimitiveMesh.createBox(w,h,d),color,x,y,z);}
   private clearVisuals():void{
     if(this.visuals){this.visuals.destroy(true);this.visuals=null;}
     for(const geometry of this.geometries)geometry.destroy();
     for(const material of this.materials)material.destroy();
-    this.geometries=[];this.materials=[];
+    this.geometries=[];this.materials=[];this.ink=null;
   }
   private rebuild(character:CharacterState):void{
     this.clearVisuals();const L=this.L,a=character.appearance;
     this.visuals=new L.Sprite3D('appearance and equipment');this.node.addChild(this.visuals);
-    const width=.33*a.bodyWidth,bodyH=(a.bodyShape==='rounded'?.96:1.18)*a.bodyLength;
-    const headR=.31*a.headSize,headY=.13+bodyH+headR*.77,handR=.12*a.handSize;
+    const width=.43*a.bodyWidth,bodyH=(a.bodyShape==='rounded'?.79:.96)*a.bodyLength;
+    const headR=.40*a.headSize,headY=.13+bodyH+headR*.77,handR=.14*a.handSize;
     this.height=headY+headR*1.35;
     const torso=equippedItem(character,'torso'),skin=a.skinColor;
     // Single continuous body; two round hands; no independent animation/timer.
-    this.part('body',L.PrimitiveMesh.createCapsule(1,3,8,12),torso?a.clothingColor:skin,0,.1+bodyH/2,0,width,bodyH/3,width*.78);
-    this.sphere('head',skin,headR,0,headY,0);
+    this.part('body',L.PrimitiveMesh.createCapsule(1,3,8,12),torso?a.clothingColor:skin,0,.1+bodyH/2,0,width,bodyH/3,width*.69);
+    this.sphere('head',skin,headR,0,headY,.04,1,.95,.91);
+    this.part('contact shadow',L.PrimitiveMesh.createCylinder(.57,.018,20),'#4c5237',.07,.015,-.04,1,1,.63);
     this.sphere('nose',skin,headR*.15,0,headY-.02,headR*.95,1,1,1.1);
-    for(const side of [-1,1])this.sphere(`eye ${side}`,'#272c2b',headR*.06,side*headR*.33,headY+headR*.08,headR*.93,1,1.1,.6);
+    for(const side of [-1,1])this.sphere(`eye ${side}`,'#252725',headR*.065,side*headR*.33,headY+headR*.08,headR*.93,1,1.1,.6);
     // Cloth hems distinguish a tunic from a long coat; all garments keep chosen dye colors.
     if(torso){
       this.box('cloth belt',a.trimColor,width*1.72,.075,width*1.38,0,.1+bodyH*.46,.015);

@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "mode": "EXPLICIT_RENDER_FIXTURE",
+  "results": [
+    {
+      "profile": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1
+      },
+      "canvas": {
+        "pixels": [
+          1280,
+          720
+        ],
+        "css": [
+          1440,
+          810
+        ],
+        "retina": false
+      },
+      "worldUnchanged": true,
+      "modelCalls": 0,
+      "errors": []
+    },
+    {
+      "profile": {
+        "width": 844,
+        "height": 390,
+        "dpr": 2
+      },
+      "canvas": {
+        "pixels": [
+          1280,
+          720
+        ],
+        "css": [
+          693.3333129882812,
+          390
+        ],
+        "retina": false
+      },
+      "worldUnchanged": true,
+      "modelCalls": 0,
+      "errors": []
+    }
+  ],
+  "physicalDevice": "not_run",
+  "realModel": "not_run_visual_only"
+}

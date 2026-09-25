@@ -1,5 +1,7 @@
 # Survive Agent · 独立居民观察场
 
+最新美术：高清画布与抗锯齿、俯视圆头居民、地块/木石材质和深色观察界面。[改动与分项验收](docs/implementation/ART_DIRECTION.md)。
+
 **v0.4.0：三种运行模式。默认由一个glm-4.5-air统筹4名居民，按阶段执行任务；保留独立居民模式，另有免远程的本地算法。** 右上「运行设置」可切换、设置人数/阶段工作量/调用间隔/失败降级；「规划 / 建房」布置任务。真实验证仅3次模型调用完成8木材和整间小屋。见[模式说明与分项验收](docs/implementation/CONTROL_MODES.md)。
 
 v0.3.3新增每名居民独立的**地图记忆 + 文字记忆**。左侧「地图记忆 · 个人探索」查看走过的路线、曾见资源和障碍；暗色区域未知，旧记忆可能过时。文字继续保留对话、约定和行动结果。修复认出过的树被模糊视角覆盖、原地walk反复记成成功的问题。见[实现与分项验收](docs/implementation/MAP_MEMORY_AND_WALK_LOOP.md)。
@@ -112,7 +114,7 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 
 ## 云端发布
 
-已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [workshop-deployment.json](evidence/workshop-deployment.json)，早期部署保留为历史。
+已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [art-deployment.json](evidence/art-deployment.json)，早期部署保留为历史。
 
 `services/brain-gateway/src/worker.ts` 仅在服务端明确开启 `SURVIVE_PUBLIC_PLAY` 时接受公开试玩请求；仍校验同源、输入合同及指定模型。`/api/health` 不返回密钥。线上实时模型浏览器验收与本地真实模型验证分开记录，不能用页面可访问代替真实行为验证。
 

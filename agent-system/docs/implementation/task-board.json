@@ -4,7 +4,7 @@
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "latestBindingDecision": "用户2026-09-25新要求：默认单模型统筹阶段任务，保留独立居民模式，另提供明确标注的本地算法；每人记忆独立。实际认知仍全局冻结，完整批次提交后恢复，不追等待帧。",
-  "statusNote": "最新三模式验收见CONTROL01；历史各项范围继续保留。",
+  "statusNote": "美术与高清渲染见ART01；三模式验收见CONTROL01；保留所有历史范围。",
   "tasks": [
     {
       "id": "T00",
@@ -2611,6 +2611,45 @@
       "blockers": [
         "Laya IDE与微信AppID/合法域名/真机验收未具备",
         "任意自然语言任务、完整绕障与长期无限人口未实现"
+      ]
+    },
+    {
+      "id": "ART01",
+      "title": "俯视营地美术、人物与高清画布",
+      "dependsOn": [
+        "CHAR01",
+        "T13",
+        "HOUSE01",
+        "CONTROL01"
+      ],
+      "status": "code_complete",
+      "codeStatus": "implemented",
+      "verification": {
+        "code": "implemented_native_laya_visuals",
+        "static": "passed",
+        "mock": "passed_15_character_tests_explicit_art_fixture",
+        "realModel": "not_run_visual_only",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_desktop_high_dpi_mobile_render_and_control_regression",
+        "liveModelBrowser": "not_run",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_v14",
+        "wechatPublication": "not_run"
+      },
+      "evidence": [
+        "docs/implementation/ART_DIRECTION.md",
+        "evidence/art-before-browser.json",
+        "evidence/art-after-browser.json",
+        "evidence/art-character-tests.txt",
+        "evidence/art-control-browser.json",
+        "evidence/web-build.json",
+        "evidence/art-deployment.json"
+      ],
+      "scopeNote": "原生几何、非游戏资产复制；人物和房屋截图明确为美术夹具。未更改模拟、记忆、模型输入或决策节奏。",
+      "blockers": [
+        "Laya IDE、微信构建与真机尚未验收",
+        "低端手机高DPI/MSAA长时帧率需真机实测"
       ]
     }
   ],

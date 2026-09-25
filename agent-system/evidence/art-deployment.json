@@ -1,0 +1,19 @@
+{
+  "status": "succeeded",
+  "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+  "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+  "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_f9106d8dfc88819197f516d8cfcf0c5e",
+  "versionNumber": 14,
+  "deploymentId": "appgdep_6ab605aca260819186f43b497a7e0c4e",
+  "sourceCommit": "7b9c86dd36977aac11019b59d76dc62bfaad2f29",
+  "envSetRevision": 3,
+  "publishedAt": "2026-09-25T05:25:17.420708+00:00",
+  "access": "public",
+  "code": "native_laya_art_and_retina",
+  "mock": "explicit_render_fixture_and_remote_failure_injection",
+  "realModel": "not_run_visual_only",
+  "browser": "passed_local_desktop_and_high_dpi_mobile",
+  "liveModelBrowser": "not_run",
+  "physicalDevice": "not_run",
+  "wechatPublication": "not_run"
+}
