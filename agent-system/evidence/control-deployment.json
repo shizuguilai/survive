@@ -1,0 +1,19 @@
+{
+  "id": "appgdep_6ab5fc241a2c8191b4abb0496b355d8a",
+  "project_id": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+  "title": "Survive · 独立居民观察场",
+  "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_684f693fbdb88191b8403df3301435e2",
+  "type": "publish",
+  "status": "succeeded",
+  "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+  "screenshot_asset_pointer": null,
+  "provider_deployment_id": "site---6ab48dc223e081918869ba05be1b88ed",
+  "failure_message": null,
+  "env_set_revision": 3,
+  "updated_at": "2026-09-25T04:44:39.637721+00:00",
+  "siteSourceCommit": "b24e733dff9941a9e06a6c0d046a02dec95a2b16",
+  "versionNumber": 13,
+  "audience": "public",
+  "browserLive": "not_run",
+  "physicalDevice": "not_run"
+}

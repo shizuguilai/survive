@@ -13,7 +13,7 @@ const SCAN_TICKS = Math.max(1, Math.round(VISION.scanEverySimMs / DT));
 // Only observed absence counts; brief turns/occlusion stay in the same encounter.
 const ENCOUNTER_ABSENCE_TICKS = Math.ceil(2000 / DT);
 const DIRECTIONS = ['front', 'front_right', 'right', 'back_right', 'back', 'back_left', 'left', 'front_left'];
-const ALLOWED = ['continue', 'walk', 'look', 'listen', 'gather', 'rest', 'speak', 'wait', 'equip_item', 'unequip_item'];
+const ALLOWED = ['survey', 'continue', 'walk', 'look', 'listen', 'gather', 'rest', 'speak', 'wait', 'equip_item', 'unequip_item'];
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value));
 const planarDistance = (a: Vec3, b: Vec3) => Math.hypot(a.x - b.x, a.z - b.z);
 const angleDifference = (angle: number) => Math.atan2(Math.sin(angle), Math.cos(angle));

@@ -3,8 +3,8 @@
   "project": "survive",
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
-  "latestBindingDecision": "任何居民需要大模型认知时全世界模拟暂停；运行时网络和观察者UI继续；批次完整提交后恢复，不追真实等待帧。",
-  "statusNote": "新增地图与文字双记忆、原地walk循环修复；各轮状态单独保留，最新见MAPMEM01。T14完整验收、T15/T16完整协作与微信仍未完成。",
+  "latestBindingDecision": "用户2026-09-25新要求：默认单模型统筹阶段任务，保留独立居民模式，另提供明确标注的本地算法；每人记忆独立。实际认知仍全局冻结，完整批次提交后恢复，不追等待帧。",
+  "statusNote": "最新三模式验收见CONTROL01；历史各项范围继续保留。",
   "tasks": [
     {
       "id": "T00",
@@ -2568,6 +2568,49 @@
       "blockers": [
         "完整自由探索与绕障寻路、长期记忆衰减和现场存档恢复另行跟踪",
         "实时模型浏览器、微信真机和微信发布尚未验收"
+      ]
+    },
+    {
+      "id": "CONTROL01",
+      "title": "默认单模型阶段统筹、独立模式、本地算法与配置",
+      "dependsOn": [
+        "MAPMEM01",
+        "HOUSE01",
+        "WORKSHOP01",
+        "LIFE01",
+        "T05",
+        "T12",
+        "T13"
+      ],
+      "status": "code_complete",
+      "codeStatus": "implemented_scoped",
+      "verification": {
+        "code": "implemented_scoped",
+        "static": "passed",
+        "mock": "passed_atomic_batch_private_reports_cadence_fallback_and_routes",
+        "realModel": "passed_local_official_glm_4_5_air_3_calls_house_and_wood",
+        "localAlgorithm": "passed_no_remote_from_zero_house_tool_wood",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_desktop_touch_actual_local_algorithm_mock_remote_failures",
+        "liveModelBrowser": "not_run",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_v13",
+        "wechatPublication": "not_run"
+      },
+      "evidence": [
+        "docs/implementation/CONTROL_MODES.md",
+        "evidence/command-real.json",
+        "evidence/colony-local.json",
+        "evidence/control-tests.json",
+        "evidence/control-browser.json",
+        "evidence/web-build.json",
+        "evidence/control-deployment.json"
+      ],
+      "scopeNote": "用户授权新增统筹和本地算法模式；独立模式仍保持真实独立请求。默认4人/4份/30模拟秒，支持2/4/6人。阶段宏动作由明确执行器完成，不伪报真实模型决定。",
+      "blockers": [
+        "Laya IDE与微信AppID/合法域名/真机验收未具备",
+        "任意自然语言任务、完整绕障与长期无限人口未实现"
       ]
     }
   ],

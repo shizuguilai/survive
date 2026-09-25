@@ -52,3 +52,10 @@ export function createCampWorld():World{
   postTask(world,{resource:'wood',amount:8,note:'为营地准备第一批材料。可自由选择是否参与，完成后再读新目标。'});
   return world;
 }
+
+/** New-camp crew size; each additional resident starts with separate knowledge and memories. */
+export function createCrewWorld(count=4):World{
+ const w=createCampWorld();const names=['阿林','小禾','阿岚','小川','阿青','小麦'];
+ for(let i=2;i<count;i++){const r=makeResident('resident-'+String.fromCharCode(97+i),names[i],(i-3)*1.5,i%2?Math.PI:0,'营地同伴');r.position.z=2;r.supplies={};r.skills={gathering:0,crafting:0,construction:0};r.personalGoal='在营地生活，按当前模式参与工作并照顾自己。';w.residents.push(r);}
+ return w;
+}

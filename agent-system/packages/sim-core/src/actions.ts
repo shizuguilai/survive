@@ -6,7 +6,7 @@ import {HOUSE_STEPS,taskTitle} from './recipes.ts';
 import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS} from './camp.ts';
 import {rememberMapCell} from './spatial-memory.ts';
 import { applyEquipmentAction } from './character.ts';
-export const IMPLEMENTED_ACTIONS = ['craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
+export const IMPLEMENTED_ACTIONS = ['survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
 const distance=(a:Vec3,b:Vec3)=>Math.hypot(a.x-b.x,a.z-b.z);
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
 function channels(action:Action):string[] {
@@ -16,7 +16,7 @@ function channels(action:Action):string[] {
     case 'read_notice':return ['head'];case 'eat':return ['hands','mouth'];
     case 'equip_item':case 'unequip_item':return ['hands'];
     case 'walk':return ['locomotion'];case 'gather':return ['hands','locomotion'];case 'rest':return ['hands','locomotion'];
-    case 'look':return ['head'];case 'speak':return ['mouth'];case 'listen':return ['hearing'];case 'wait':return [action.params.scope];default:return [];
+    case 'look':case 'survey':return ['head'];case 'speak':return ['mouth'];case 'listen':return ['hearing'];case 'wait':return [action.params.scope];default:return [];
   }
 }
 export function validateActionConcurrency(actions:Action[]):void {
@@ -80,6 +80,7 @@ export function stepActions(world:World,nextTick:number):string[] {
           if(distance(resident.position,target)<=0.80001)progress.done=true;
           break;
         }
+        case 'survey':{resident.heading+=Math.PI*2*FIXED_DT_MS/params.durationSimMs;progress.done=progress.elapsedTicks*FIXED_DT_MS>=params.durationSimMs;break;}
         case 'look':{
           const target=progress.targetPosition!;
           const desired=Math.atan2(target.z-resident.position.z,target.x-resident.position.x);

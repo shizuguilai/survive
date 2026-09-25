@@ -1,0 +1,34 @@
+{
+  "mode": "LOCAL_ALGORITHM",
+  "mockUsed": false,
+  "status": "passed_from_zero_tasks_house_tool",
+  "tick": 1813,
+  "tasks": [
+    {
+      "kind": "gather",
+      "progress": 8,
+      "amount": 8,
+      "status": "done"
+    },
+    {
+      "kind": "craft",
+      "progress": 1,
+      "amount": 1,
+      "status": "done"
+    },
+    {
+      "kind": "house",
+      "progress": 3,
+      "amount": 3,
+      "status": "done"
+    }
+  ],
+  "stock": {
+    "wood": 4,
+    "stone": 2
+  },
+  "errors": {},
+  "remoteCalls": 0,
+  "executionBatches": 44,
+  "physicalDevice": "not_run"
+}

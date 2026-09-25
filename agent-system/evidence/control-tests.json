@@ -1,0 +1,12 @@
+{
+  "checkedAt": "2026-09-25T04:42:23.091963+00:00",
+  "status": "passed",
+  "tests": 127,
+  "passed": 126,
+  "skipped": 1,
+  "skipReason": "optional long wall-clock soak",
+  "typecheck": "passed",
+  "webBuild": "passed",
+  "mode": "explicit_mock_transport_and_actual_local_algorithm_separate_from_real",
+  "physicalDevice": "not_run"
+}

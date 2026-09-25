@@ -47,3 +47,10 @@ test('PUBLIC_PLAY: anonymous visitors can start only with explicit server opt-in
   assert.equal((await (await worker.fetch(new Request(origin+'/api/health'),closed)).json()).canStart,false);
   assert.equal((await worker.fetch(anonymous(origin),closed)).status,401);
 });
+
+test('Commander route enforces the same authorization, origin and input bounds as resident route',async()=>{
+ const e=env('');
+ assert.equal((await worker.fetch(new Request(origin+'/api/command',{method:'POST',headers:{origin,'content-type':'application/json'},body:'{}'}),e)).status,401);
+ assert.equal((await worker.fetch(new Request(origin+'/api/command',{method:'POST',headers:{...identity,origin:'https://elsewhere.example','content-type':'application/json'},body:'{}'}),e)).status,403);
+ assert.equal((await worker.fetch(new Request(origin+'/api/command',{method:'POST',headers:{...identity,origin,'content-type':'application/json'},body:'{}'}),e)).status,400);
+});

@@ -62,7 +62,7 @@ const actionFields: Record<string, string[]> = {
   craft:['stationRef','recipeRef'],exchange:['stationRef','recipeRef'],withdraw:['storageRef','resource','amount'],build:['projectRef','stepRef'],
   haul:['sourceRef','destinationRef','amount'],
   read_notice:['noticeRef'],accept_task:['taskRef','evidenceRefs'],decline_task:['taskRef','reason'],eat:['foodRef','amount'],
-  continue: [], walk: ['targetRef', 'gait'], look: ['targetRef'], listen: ['durationSimMs'],
+  survey:['durationSimMs'], continue: [], walk: ['targetRef', 'gait'], look: ['targetRef'], listen: ['durationSimMs'],
   gather: ['targetRef', 'amount'], rest: ['placeRef', 'durationSimMs'],
   speak: ['text', 'volume', 'towardRef'], wait: ['durationSimMs', 'scope'],
   equip_item: ['itemRef', 'slot'], unequip_item: ['itemRef'],

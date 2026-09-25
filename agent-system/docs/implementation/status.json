@@ -1,5 +1,5 @@
 {
-  "overall": "CAMP_GOALS_AND_VITALS_IMPLEMENTED_SCOPED; REAL_TASK_PROGRESS_PASS; FULL_COOPERATION_PENDING",
+  "overall": "CONTROL_MODES_IMPLEMENTED_SCOPED; REAL_COMMAND_3_CALLS_HOUSE_PASS; LOCAL_ZERO_REMOTE_PASS; WECHAT_PENDING",
   "originalSourceUntouched": false,
   "main": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "branch": "work/agent-cognition-20260924",
@@ -307,6 +307,50 @@
       "updated_at": "2026-09-24T10:04:37.381801+00:00",
       "siteSourceCommit": "db48d2472c4c1ba9e9990ed480f5b547394d9042",
       "versionNumber": 12,
+      "audience": "public",
+      "browserLive": "not_run",
+      "physicalDevice": "not_run"
+    }
+  },
+  "controlModesMilestone": {
+    "task": "CONTROL01",
+    "verification": {
+      "code": "implemented_scoped",
+      "static": "passed",
+      "mock": "passed_atomic_batch_private_reports_cadence_fallback_and_routes",
+      "realModel": "passed_local_official_glm_4_5_air_3_calls_house_and_wood",
+      "localAlgorithm": "passed_no_remote_from_zero_house_tool_wood",
+      "webBuild": "passed",
+      "layaBuild": "blocked_missing_ide",
+      "browser": "passed_desktop_touch_actual_local_algorithm_mock_remote_failures",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "publication": "web_public_deployed_v13",
+      "wechatPublication": "not_run"
+    },
+    "evidence": [
+      "docs/implementation/CONTROL_MODES.md",
+      "evidence/command-real.json",
+      "evidence/colony-local.json",
+      "evidence/control-tests.json",
+      "evidence/control-browser.json",
+      "evidence/web-build.json"
+    ],
+    "deployment": {
+      "id": "appgdep_6ab5fc241a2c8191b4abb0496b355d8a",
+      "project_id": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "title": "Survive · 独立居民观察场",
+      "version_id": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_684f693fbdb88191b8403df3301435e2",
+      "type": "publish",
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "screenshot_asset_pointer": null,
+      "provider_deployment_id": "site---6ab48dc223e081918869ba05be1b88ed",
+      "failure_message": null,
+      "env_set_revision": 3,
+      "updated_at": "2026-09-25T04:44:39.637721+00:00",
+      "siteSourceCommit": "b24e733dff9941a9e06a6c0d046a02dec95a2b16",
+      "versionNumber": 13,
       "audience": "public",
       "browserLive": "not_run",
       "physicalDevice": "not_run"

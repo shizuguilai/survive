@@ -1,3 +1,4 @@
+import {controlSettings,DEFAULT_CONTROL,type ControlSettings} from '../../../packages/contracts/src/command.ts';
 import type { World, SensoryOverlay } from '../../../packages/sim-core/src/domain.ts';
 import {RESOURCE_LABELS,type TaskDraft} from '../../../packages/sim-core/src/camp.ts';
 import {MemoryMapView} from './memory-map.ts';
@@ -11,6 +12,7 @@ import {publicCharacterSummary} from '../../../packages/sim-core/src/character.t
 import defaults from '../../../packages/sim-core/defaults.json' with {type:'json'};
 
 export type ViewCallbacks = {
+  onControl?(settings:ControlSettings,newCamp?:boolean):void;onRemoteRetry?():void;
   onSummarize?(request:SummaryRequest):void;
   onTask(draft:TaskDraft):void;
   onPause():void; onResume():void; onRetry():void; onStop():void;
@@ -18,11 +20,12 @@ export type ViewCallbacks = {
   onSeek(tick:number):void; onSpeed(value:number):void; onStart():void; onConnect(token:string):void;
 };
 export type ViewState = {
+  control?:ControlSettings;controlDetail?:string;controlNotice?:string;fallbackActive?:boolean;
   summaries?:SavedSummary[];summaryBusy?:boolean;summaryError?:string;summaryVersion?:number;
   cognitionDetail?:string;
   history?:JournalEntry[];historyVersion?:number;historyWarning?:string;
   pendingTasks?:number;world:World; overlays:Record<string,SensoryOverlay>; status:string; error?:string;
-  mode:'UNCONFIGURED'|'REAL_MODEL'|'REPLAY'; selectedId:string; showSenses:boolean;
+  mode:'UNCONFIGURED'|'REAL_MODEL'|'REPLAY'|'LOCAL_ALGORITHM'; selectedId:string; showSenses:boolean;
   playbackTick:number; maxTick:number; speed:number; hosted?:boolean;
 };
 
@@ -51,6 +54,7 @@ export class ObserverView {
   private labels:Record<string,any>={};private buttons:Record<string,NativeButton>={};
   private residents=new Map<string,CharacterMesh>();private objects=new Map<string,WorldMesh>();private objectSignatures=new Map<string,string>();private placeLabels=new Map<string,any>();
   private nameLabels=new Map<string,any>();private speechLabels=new Map<string,any>();private senseLines:any;private selection:any;
+  private controlPanel:any;private controlDraft=controlSettings(null);
   private memoryPanel:any;private memoryMap!:MemoryMapView;
   private planner:any;private taskNote:any;private draftResource:TaskDraft['resource']='wood';private draftAmount=8;private vitality:any;
   private draftKind:'gather'|'craft'|'house'='gather';private draftRecipe='stone_axe';private draftSite='east';
@@ -109,9 +113,10 @@ export class ObserverView {
     this.labels.mode=this.text(this.root,'等待连接真实模型',323,18,17,palette.ink,430);
     this.labels.status=this.text(this.root,'世界尚未启动',323,47,12,'#60786d',663);
     this.labels.time=this.text(this.root,'模拟 00:00',1000,21,24,palette.ink,250);this.labels.time.align='right';
-    this.text(this.root,'等待模型时，全世界静止',1000,54,12,'#60786d',250).align='right';
+    this.button('control','运行设置',1094,50,156,()=>{this.controlDraft=controlSettings(this.state?.control);this.hideModals();this.controlPanel.visible=true;});
     this.text(this.root,'观察对象',20,104,12,palette.muted);
-    this.button('resident0','居民 A',18,129,121,()=>this.selectIndex(0));this.button('resident1','居民 B',151,129,121,()=>this.selectIndex(1));
+    this.button('nextResident','下一位',187,89,85,()=>this.nextResident());
+    this.button('resident0','居民 A',18,129,121,()=>this.selectIndex(this.residentPage()));this.button('resident1','居民 B',151,129,121,()=>this.selectIndex(this.residentPage()+1));
     this.labels.person=this.text(this.root,'选择一名居民',21,186,24,'#f1f4dc',252);this.labels.person.bold=true;
     this.labels.personality=this.text(this.root,'每个人只拥有自己的感官与记忆。',21,220,11,'#aac2b7',250);this.labels.personality.height=24;this.labels.personality.overflow='hidden';
     this.labels.vitality=this.text(this.root,'',21,244,10,'#e5f1df',252);this.vitality=new L.Sprite();this.vitality.pos(21,260);this.root.addChild(this.vitality);
@@ -154,11 +159,11 @@ export class ObserverView {
     this.timeline=this.panel(this.root,320,681,880,8,'#c8d4c2',4);this.timeline.mouseEnabled=true;this.timeline.hitArea=new L.Rectangle(0,-12,880,34);
     this.timeline.on(L.Event.MOUSE_DOWN,this,()=>{this.scrubbing=true;this.seekAtPointer();});
     this.labels.timeline=this.text(this.root,'暂无回放',1210,675,12,'#60786d',67);
-    this.text(this.root,'仅播放模拟时间；网络等待不会出现在回放中',320,699,10,'#82907f',650);
-    this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();
+    this.text(this.root,'保留最近30秒回放；历史档案另存。网络等待不计模拟时间',320,699,10,'#82907f',650);
+    this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();
   }
 
-  private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel])if(panel)panel.visible=false;}
+  private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel,this.controlPanel])if(panel)panel.visible=false;}
   private modal(name:string,width=910):any{const p=new L.Sprite();p.name=name;this.root.addChild(p);const background=this.panel(p,320,145,width,450,palette.panel,12);background.mouseEnabled=true;background.hitArea=new L.Rectangle(0,0,width,450);p.visible=false;return p;}
   private modalButton(parent:any,id:string,label:string,x:number,y:number,w:number,fn:()=>void,bright=true):NativeButton{const b=this.button(id,label,x,y,w,fn,bright);parent.addChild(b.root);return b;}
   private buildPlanner():void{
@@ -191,14 +196,32 @@ export class ObserverView {
     this.modalButton(this.workshopPanel,'workshopGoal','发布制作目标',344,545,175,()=>{this.hideModals();this.draftKind='craft';this.draftAmount=1;this.planner.visible=true;});
     this.modalButton(this.workshopPanel,'closeWorkshop','返回观察',881,545,147,()=>{this.workshopPanel.visible=false;});
   }
+  private residentPage():number{return Math.floor(Math.max(0,this.state?.world.residents.findIndex(r=>r.id===this.state?.selectedId)??0)/2)*2;}
+  private nextResident():void{const w=this.state?.world;if(w)this.selectIndex((w.residents.findIndex(r=>r.id===this.state?.selectedId)+1)%w.residents.length);}
+  private buildControl():void{
+    this.controlPanel=this.modal('Control settings');
+    this.text(this.controlPanel,'运行设置 · 玩家布置任务，居民执行',344,167,22,'#f1f4dc',845);
+    for(const [i,mode]of (['commander','independent','local'] as const).entries())this.modalButton(this.controlPanel,'mode-'+mode,['模型统筹（默认）','独立居民','本地算法'][i],344+i*290,218,276,()=>{this.controlDraft.mode=mode;});
+    this.labels.controlHelp=this.text(this.controlPanel,'',344,270,14,palette.muted,835);this.labels.controlHelp.height=85;
+    this.modalButton(this.controlPanel,'phaseSize','',344,365,264,()=>{this.controlDraft.phaseUnits=this.controlDraft.phaseUnits===4?8:4;});
+    this.modalButton(this.controlPanel,'reviewGap','',628,365,285,()=>{const a=[30,60,120] as const;this.controlDraft.reviewSeconds=a[(a.indexOf(this.controlDraft.reviewSeconds)+1)%3];});
+    this.modalButton(this.controlPanel,'crewCount','',933,365,270,()=>{const a=[2,4,6] as const;this.controlDraft.residents=a[(a.indexOf(this.controlDraft.residents)+1)%3];});
+    this.modalButton(this.controlPanel,'localFallback','',344,416,420,()=>{this.controlDraft.fallback=!this.controlDraft.fallback;});
+    this.modalButton(this.controlPanel,'remoteRetry','重新尝试远程统筹',790,416,413,()=>{this.api.onRemoteRetry?.();});
+    this.text(this.controlPanel,'应用设置保留现场与私人记忆；人数仅在“新营地”生效。新营地会重置当前世界。',344,476,13,palette.amber,850);
+    this.modalButton(this.controlPanel,'applyControl','应用设置',344,545,265,()=>{this.api.onControl?.(this.controlDraft);this.controlPanel.visible=false;});
+    this.modalButton(this.controlPanel,'newCamp','新营地（重置）',631,545,285,()=>{this.api.onControl?.(this.controlDraft,true);this.controlPanel.visible=false;});
+    this.modalButton(this.controlPanel,'closeControl','返回观察',936,545,266,()=>{this.controlPanel.visible=false;});
+  }
   private buildMemoryMap():void{
     this.memoryPanel=this.modal('Personal map memory');
     this.text(this.memoryPanel,'地图记忆 · 每个人记住的世界不同',344,166,22,'#f1f4dc',840);
     this.text(this.memoryPanel,'记录本人走过与看见的地方；文字记忆另存对话、约定、行动结果和重要经历。',344,207,12,palette.muted,852);
     this.memoryMap=new MemoryMapView(this.memoryPanel);
-    this.modalButton(this.memoryPanel,'memoryPerson0','阿林的地图',344,545,167,()=>this.selectIndex(0));
-    this.modalButton(this.memoryPanel,'memoryPerson1','小禾的地图',525,545,167,()=>this.selectIndex(1));
+    this.modalButton(this.memoryPanel,'memoryPerson0','阿林的地图',344,545,167,()=>this.selectIndex(this.residentPage()));
+    this.modalButton(this.memoryPanel,'memoryPerson1','小禾的地图',525,545,167,()=>this.selectIndex(this.residentPage()+1));
     this.modalButton(this.memoryPanel,'memoryArchive','文字记忆 / 档案',707,545,198,()=>{this.historyFilter='memory';this.openHistory();});
+    this.modalButton(this.memoryPanel,'memoryNext','下一位',923,545,124,()=>this.nextResident());
     this.modalButton(this.memoryPanel,'closeMemory','返回观察',1061,545,143,()=>{this.memoryPanel.visible=false;});
   }
   private refreshHistory():void{this.historySnapshot=null;this.historyPage=0;this.historyDetail=null;this.historyCache='';}
@@ -248,7 +271,7 @@ export class ObserverView {
     const key=[state.summaryVersion,state.summaryBusy,state.summaryError,state.historyVersion,state.selectedId,this.historyFilter,this.historyPage,this.historyAllRuns,this.historyDetail?.id,state.mode,state.historyWarning,this.historySnapshotScope].join('|');if(this.historyCache===key)return;this.historyCache=key;
     const r=state.world.residents.find(r=>r.id===state.selectedId)!;
     const rows=selectJournal(this.historySnapshot,r.id,this.historyFilter==='summary'?'all':this.historyFilter,replay||!this.historyAllRuns?state.world.runId:undefined,replay?state.world.tick:Infinity);
-    this.displayedHistory=rows.map(e=>({...e,title:`${journalTime(e.tick)}  ${JOURNAL_LABELS[e.category]}${e.source?' · '+(e.source==='REAL_MODEL'?'真实模型':'Mock 测试'):''}${e.runId!==state.world.runId?' · 之前轮次':''}`}));
+    this.displayedHistory=rows.map(e=>({...e,title:`${journalTime(e.tick)}  ${JOURNAL_LABELS[e.category]}${e.source?' · '+({REAL_MODEL:'独立真实模型',MODEL_DIRECTED:'模型统筹 / 执行器',LOCAL_ALGORITHM:'本地算法',MOCK_TEST:'Mock 测试'}[e.source]??e.source):''}${e.runId!==state.world.runId?' · 之前轮次':''}`}));
     const own=this.historySnapshot.filter(e=>e.residentId===r.id);
     const runs=this.historyRuns();
     if(!runs.includes(this.historySummaryRunId)){
@@ -346,17 +369,20 @@ export class ObserverView {
     this.labels.gateway.visible=this.token.visible=this.buttons.connect.root.visible=!state.hosted;
     this.labels.hosted.visible=Boolean(state.hosted);
     const r=state.world.residents.find(x=>x.id===state.selectedId)||state.world.residents[0];
-    const mode=state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':'真实模型 · 独立居民';
-    this.labels.mode.text=mode;this.labels.status.text=this.humanStatus(state.status)+(state.cognitionDetail?' · '+state.cognitionDetail:'');
+    const control=state.control??{...DEFAULT_CONTROL,mode:'independent' as const};
+    const mode=state.mode==='LOCAL_ALGORITHM'?'本地算法 · 无远程模型':state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':control.mode==='commander'?'模型统筹 · 阶段执行':'真实模型 · 独立居民';
+    this.labels.mode.text=mode;this.labels.status.text=(state.controlDetail&&!['THINKING','ERROR_PAUSED'].includes(state.status)?state.controlDetail:this.humanStatus(state.status)+(state.cognitionDetail?' · '+state.cognitionDetail:''));this.labels.status.overflow='hidden';this.labels.status.height=26;
+    this.buttons.start.set('开始运行');
+    if(this.controlPanel.visible){const d=this.controlDraft;for(const m of ['commander','independent','local'])this.buttons['mode-'+m].label.color=m===d.mode?'#176236':'#60786d';this.labels.controlHelp.text=d.mode==='commander'?'一个glm-4.5-air统筹阶段目标；执行器持续完成走路、采集、搬运和施工。每人记忆独立。阶段结束、新任务或持续受阻时汇总复查；最短间隔按模拟时间计算。':d.mode==='independent'?'每名居民独立调用真实模型，只读自己的感官与记忆。保留原有认知触发；模型失败保持暂停，可手动切换本地模式。':'完全本地任务算法，免密钥、免远程请求；不是大模型。根据任务和有限感知执行采集、备料、制作与分步建房。';this.buttons.phaseSize.set('阶段工作量：'+d.phaseUnits+'份');this.buttons.reviewGap.set('模型最短间隔：'+d.reviewSeconds+'秒');this.buttons.crewCount.set('新营地人数：'+d.residents);this.buttons.localFallback.set('统筹失败自动转本地：'+(d.fallback?'开':'关'));}
     const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
     const seconds=Math.floor(state.world.tick*defaults.simulation.fixedDtMs/1000);this.labels.time.text=`模拟 ${Math.floor(seconds/60).toString().padStart(2,'0')}:${(seconds%60).toString().padStart(2,'0')}`;
-    for(let i=0;i<2;i++){const person=state.world.residents[i];this.buttons['resident'+i].set(person?`${person.id===state.selectedId?'●  ':''}${person.name}`:'暂无居民');}
+    for(let i=0;i<2;i++){const person=state.world.residents[this.residentPage()+i];this.buttons['resident'+i].set(person?`${person.id===state.selectedId?'●  ':''}${person.name}`:'暂无居民');this.buttons['memoryPerson'+i].set(person?person.name+'的地图':'暂无居民');}
     if(r){const hp=Math.round(r.health??100),hunger=Math.round(r.hunger*100),fatigue=Math.round(r.fatigue*100);this.labels.vitality.text=`生命 ${hp}${hp===0?'（倒下）':''}     饥饿 ${hunger}%     疲劳 ${fatigue}%`;this.vitality.graphics.clear();[hp/100,r.hunger,r.fatigue].forEach((v,i)=>{this.vitality.graphics.drawRect(i*85,0,75,4,'#325153');this.vitality.graphics.drawRect(i*85,0,75*v,4,['#9ee3be','#f3c87c','#8eabcf'][i]);});
-      this.labels.equipment.text=r.supplies?`随身：木材${r.supplies.wood??0} 石料${r.supplies.stone??0} 食物${r.supplies.food??0} / 30\n`+(r.character?publicCharacterSummary(r.character):''):r.character?publicCharacterSummary(r.character):'';this.labels.person.text=r.name;this.labels.personality.text=r.personality;this.labels.goal.text=r.goal||'尚未得到真实模型决策';
+      this.labels.equipment.text=r.supplies?`随身：木材${r.supplies.wood??0} 石料${r.supplies.stone??0} 食物${r.supplies.food??0} / 30\n`+(r.character?publicCharacterSummary(r.character):''):r.character?publicCharacterSummary(r.character):'';this.labels.person.text=r.name;this.labels.personality.text=r.personality;this.labels.goal.text=r.goal||'尚未安排阶段任务';
       const obs=state.overlays[r.id]?.observations||r.observations;this.labels.perception.text=obs.slice(-4).map(o=>{const d=o.detail;if(o.modality==='auditory')return `听 · ${d.heardText?(d.recognizedSpeakerName?d.recognizedSpeakerName+'：':'')+d.heardText:'听到模糊说话声，未听清内容'}`;if(o.modality==='visual')return `视 · ${Array.isArray(d.appearance)?d.appearance.join('；'):d.appearance||'注意到一个轮廓'}`;const senses:Record<string,string>={hunger:'饥饿',fatigue:'疲劳',pain:'疼痛',touch:'触碰',imbalance:'失衡',obstructed:'受阻'},intensity:Record<string,string>={mild:'轻微',noticeable:'明显',severe:'严重'};return `身 · ${senses[d.sensation]||'身体状态'}：${intensity[d.intensity]||'有所变化'}`;}).join('\n')||'尚未感知到新的线索';}
     this.buttons.senses.set(`感官显示  ${state.showSenses?'开':'关'}`);this.buttons.replay.set(state.mode==='REPLAY'?'返回现场':'查看回放');this.buttons.speed.set(`${state.speed}× 播放`);
     this.buttons.pause.set(/PAUS|STOP|暂停/i.test(state.status)?'继续':'暂停');
-    this.labels.error.text=state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
+    this.labels.error.text=state.controlNotice?state.controlNotice:state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
     this.labels.caption.text=state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'营地 · 林地 / 采石区 / 浆果丛 · 滚轮缩放、拖动探索':'两名居民 · 两棵树 · 一堵墙';
     const tasks=state.world.camp?.tasks??[],recipe=RECIPES.find(r=>r.id===this.draftRecipe)!;
     this.buttons.publishTask.set(this.draftKind==='house'?'发布建房项目':this.draftKind==='craft'?`发布${recipe.label}制作目标`:`发布${RESOURCE_LABELS[this.draftResource]}目标`);

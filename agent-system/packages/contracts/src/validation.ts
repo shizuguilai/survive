@@ -85,7 +85,7 @@ export function validateBrainRequest(value: unknown): BrainRequest {
   if(request.metadata.contextHash!==hashCanonical(request.context))fail('$.metadata.contextHash','context fingerprint mismatch');
   return request;
 }
-const channels:Record<string,string[]>={craft:['hands','locomotion'],exchange:['hands','locomotion'],withdraw:['hands','locomotion'],walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
+const channels:Record<string,string[]>={survey:['head'],craft:['hands','locomotion'],exchange:['hands','locomotion'],withdraw:['hands','locomotion'],walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
 export function validateDecision(value: unknown, context: CharacterContext): Decision {
   // Give the model a safe, specific field error for a recognized operation.
   // The generic oneOf error otherwise hides what its repair must change.

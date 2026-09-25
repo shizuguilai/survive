@@ -1,8 +1,10 @@
+import {CommandGateway} from './command.ts';
 import {JournalSummaryGateway} from './summary.ts';
 import {GatewayError,loadConfig,RealModelGateway} from './gateway.ts';
 import {ContractError,validateBrainRequest} from '../../../packages/contracts/src/validation.ts';
 
 export type WorkerEnv={SURVIVE_PUBLIC_PLAY?:string;SURVIVE_MODEL_API_KEY?:string;SURVIVE_MODEL_NAME?:string;SURVIVE_MODEL_BASE_URL?:string;ASSETS:{fetch(request:Request):Promise<Response>}};
+const commands=new WeakMap<object,CommandGateway>();
 const summaries=new WeakMap<object,JournalSummaryGateway>();
 const instances=new WeakMap<object,RealModelGateway>();
 function gatewayFor(env:WorkerEnv):RealModelGateway{
@@ -43,9 +45,10 @@ export default {
       const gateway=gatewayFor(env);
       if(url.pathname==='/api/health'&&request.method==='GET')return json({configured:gateway.configured,authenticated,canStart,publicPlay:env.SURVIVE_PUBLIC_PLAY==='true',accessMode:'hosted',source:'REAL_MODEL',model:gateway.config.model,status:gateway.configured?'CONFIGURED':'UNCONFIGURED'});
       if(!canStart)return json({error:'AUTH_REQUIRED',message:'请用本站所属账号登录后再启动真实模型。'},401);
-      if(!['/api/decide','/api/summarize'].includes(url.pathname))return json({error:'NOT_FOUND'},404);
+      if(!['/api/decide','/api/summarize','/api/command'].includes(url.pathname))return json({error:'NOT_FOUND'},404);
       if(request.method!=='POST')return json({error:'METHOD_NOT_ALLOWED'},405);
       if(request.headers.get('origin')!==url.origin)return json({error:'ORIGIN_REJECTED',message:'模型请求必须来自本站。'},403);
+      if(url.pathname==='/api/command'){let commander=commands.get(env);if(!commander){commander=new CommandGateway(gateway.config);commands.set(env,commander);}const result=await commander.plan(await readJSON(request) as any,request.signal);console.info(JSON.stringify({event:'command_phase_completed',traceId,durationMs:Date.now()-started}));return json(result);}
       if(url.pathname==='/api/summarize'){
         let summary=summaries.get(env);if(!summary){summary=new JournalSummaryGateway(gateway.config);summaries.set(env,summary);}
         const result=await summary.summarize(await readJSON(request),request.signal);

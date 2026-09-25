@@ -20,5 +20,5 @@ export type CharacterContext = {
 };
 export type RequestMetadata = {runId:string;barrierId:string;agentId:string;requestId:string;generation:number;tick:number;snapshotHash:string;contextHash:string;schemaVersion:'1.0.0'};
 export type BrainRequest = {metadata:RequestMetadata;context:CharacterContext};
-export type BrainResponse = {metadata:RequestMetadata;decision:Decision;source:'REAL_MODEL'|'MOCK_TEST';model:string};
+export type BrainResponse = {metadata:RequestMetadata;decision:Decision;source:'REAL_MODEL'|'MOCK_TEST'|'MODEL_DIRECTED'|'LOCAL_ALGORITHM';model:string};
 export interface BrainProvider { decide(request:BrainRequest, signal?:AbortSignal):Promise<BrainResponse>; }

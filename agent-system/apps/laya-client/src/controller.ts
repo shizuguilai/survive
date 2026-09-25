@@ -1,5 +1,7 @@
+import {ColonyProvider} from '../../../packages/sim-core/src/colony.ts';
+import {controlSettings,type ControlSettings,type CommandProvider,type CommandRequest,type CommandResponse} from '../../../packages/contracts/src/command.ts';
 import {Simulation} from '../../../packages/sim-core/src/cognition.ts';
-import {createCampWorld} from '../../../packages/sim-core/src/world.ts';
+import {createCrewWorld,createCampWorld} from '../../../packages/sim-core/src/world.ts';
 import {getOverlay} from '../../../packages/sim-core/src/perception.ts';
 import {ReplayRecorder,ReplayPlayer} from '../../../packages/sim-core/src/replay.ts';
 import type {ReplayFile} from '../../../packages/sim-core/src/replay.ts';
@@ -21,6 +23,9 @@ class GatewayProvider implements BrainProvider{
     return value;
   }
 }
+class GatewayCommander implements CommandProvider{
+ async plan(request:CommandRequest,signal?:AbortSignal):Promise<CommandResponse>{const r=await gatewayRequest('/api/command',{method:'POST',body:request,signal});const v=await r.json();if(!r.ok)throw Error(v.message??'统筹网关请求失败');return v;}
+}
 function overlays(world:World):Record<string,SensoryOverlay>{return Object.fromEntries(world.residents.map(r=>[r.id,getOverlay(world,r)]));}
 function persist(key:string,value:unknown):void{
   // Storage is observer infrastructure; failures propagate and keep cognition frozen.
@@ -37,6 +42,8 @@ export async function boot():Promise<void>{
   let view:ObserverView;let configured=false;let canStart=false;let hosted=false;let diagnostic='';let started=false;
   let recorder=new ReplayRecorder();let player:ReplayPlayer|null=null;
   let replayJournal:ResidentJournal|null=null;
+  let settings=controlSettings(null);try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_control_v1'):globalThis.localStorage.getItem('survive_control_v1');settings=controlSettings(raw?JSON.parse(raw):null);}catch{}
+  let colony:ColonyProvider|null=null;
   let selectedId='resident-a',showSenses=true,speed=1;
   let observedBarrier='';let barrierWallStart=0;let latestRequestMs=0;
   let journal:ResidentJournal;let savedJournalVersion=-1;let lastJournalSave=0;let historyWarning='';
@@ -56,8 +63,9 @@ export async function boot():Promise<void>{
     finally{summaryBusy=false;summaryVersion++;}
   }
   const provider=new GatewayProvider();
-  function makeSimulation():Simulation{
-    return new Simulation(provider,{world:createCampWorld(),allowMock:false,
+  function makeSimulation(world?:World):Simulation{
+    colony=settings.mode==='independent'?null:new ColonyProvider(settings,new GatewayCommander());
+    return new Simulation(colony??provider,{world:world??createCrewWorld(settings.residents),allowMock:false,controlMode:settings.mode,allowLocalFallback:settings.fallback,requestTimeoutMs:settings.mode==='independent'?120000:30000,
       onSnapshot:(world:World)=>{recorder.capture(world,overlays(world));journal.collect(world);},
       onCommit:async(record:any)=>{
         // A single replacement stores a complete transaction before world release.
@@ -71,21 +79,22 @@ export async function boot():Promise<void>{
   journal.collect(sim.world);
   async function health():Promise<void>{
     try{
-      const r=await gatewayRequest('/api/health');const h=await r.json();
+      const r=await gatewayRequest('/api/health',{signal:AbortSignal.timeout(4000)});const h=await r.json();
       if(!r.ok)throw Error('网关状态读取失败');
       configured=h.configured===true;canStart=h.canStart===true||(h.canStart===undefined&&h.authenticated===true);hosted=h.accessMode==='hosted';
       if(!configured)diagnostic='服务端尚未配置真实模型。世界保持静止，感官与镜头可操作。';
       else if(!canStart)diagnostic=hosted?'请使用本站所属账号登录后启动。':'请使用网关启动时给出的本地登录链接。';
-      else if(!started)diagnostic='真实模型已配置，点击「开始真实自治」启动两名居民。';
+      else if(!started)diagnostic='点击「开始运行」，或在「运行设置」选择模式和居民数量。';
     }catch{configured=false;canStart=false;diagnostic='无法连接模型网关，请稍后重试。';}
   }
   function pause():void{if(player)player.pause();else sim.pause('USER_PAUSE');}
   function resume():void{if(player)player.play();else sim.resume('USER_PAUSE');}
   async function start():Promise<void>{
     if(player){diagnostic='请先返回现场再开始。';return;}
-    await health();if(!configured||!canStart)return;
+    if(settings.mode!=='local'){if(!configured||!canStart)await health();if(!configured||!canStart){if(settings.mode==='commander'&&settings.fallback)colony?.useLocal('网关尚未配置或不可连接，可在设置中重试远程。');else return;}}
     if(started&&sim.status!=='STOPPED'){diagnostic='本轮已启动；失败时可重试，暂停时可继续。';return;}
     if(started){recorder=new ReplayRecorder();sim=makeSimulation();}
+    if(settings.mode==='commander'&&settings.fallback&&(!configured||!canStart))colony?.useLocal('网关尚未配置或不可连接，可在设置中重试远程。');
     started=true;diagnostic='';sim.resume('NOT_STARTED');
     await sim.bootstrap();
   }
@@ -96,10 +105,20 @@ export async function boot():Promise<void>{
       player=new ReplayPlayer(recording);replayJournal=new ResidentJournal();for(const frame of recording.frames)replayJournal.collect(frame.world);sim.pause('REPLAY_VIEW');player.play();diagnostic='';
       // Save only on explicit replay action; never disguise storage failure as success.
       try{persist('survive_agent_replay_v1',recording);}catch{diagnostic='回放已在本次会话打开；本机存储空间不足，未能持久保存。';}
-      if(recording.manifest.decisionMode!=='real')diagnostic='当前回放明确包含 Mock 测试决策，不是已验证真实模型运行。';
+      if(recording.manifest.decisionCounts.mock)diagnostic='此回放含Mock测试决策。';else if(recording.manifest.decisionCounts.local)diagnostic='此回放含本地算法执行，未标成真实模型。';else if(recording.manifest.decisionCounts.directed)diagnostic='此回放为模型阶段安排与本地执行器，不是逐人独立模型。';
     }catch(e){diagnostic=(e as Error).message;}
   }
+  async function configure(next:ControlSettings,newCamp=false):Promise<void>{
+    if(player){diagnostic='请先返回现场再修改模式';return;}
+    const keepPaused=sim.pauseTokens.has('USER_PAUSE');const world=sim.world,queued=sim.queuedTasks;sim.stop();settings=controlSettings(next);
+    try{persist('survive_control_v1',settings);}catch{historyWarning='运行设置未能保存，当前会话仍有效';}
+    if(newCamp){recorder=new ReplayRecorder();selectedId='resident-a';}
+    sim=makeSimulation(newCamp?undefined:world);if(!newCamp)for(const task of queued)sim.queueTask(task);if(keepPaused)sim.pause('USER_PAUSE');
+    diagnostic=newCamp?'已建立新营地。':'模式已更新，现有居民、任务和私人记忆保留。';
+    if(started)await sim.bootstrap();else{sim.pause('NOT_STARTED');recorder.capture(sim.world,overlays(sim.world));}
+  }
   view=await initialize({
+    onControl:(next,newCamp)=>{void configure(next,newCamp).catch(e=>{diagnostic=e.message;});},onRemoteRetry:()=>{colony?.retryRemote();},
     onSummarize:request=>{void summarize(request);},
     onPause:pause,onResume:resume,onRetry:()=>{if(!player)void health().then(()=>sim.retry());},
     onTask:draft=>{if(player){diagnostic='回放中不能发布目标，请先返回现场。';return;}try{sim.queueTask(draft);diagnostic='目标已排队，将在下一模拟步写入公告板。';}catch(e){diagnostic=(e as Error).message;}},
@@ -110,11 +129,12 @@ export async function boot():Promise<void>{
     onStart:()=>{void start().catch(e=>{diagnostic=e.message;});},
     onConnect:token=>{void gatewayRequest('/api/session',{method:'POST',body:{token}}).then(health).catch(()=>{diagnostic='本地登录失败，请使用服务端提供的登录链接。';});}
   });
+  let overlayKey='';let overlayCache:Record<string,SensoryOverlay>={};
   function frame():void{
     try{
       const now=performance.now();let world=sim.world,cover:Record<string,SensoryOverlay>;
       if(player){const f=player.frame(now);world=f.world;cover=f.overlays;}
-      else{sim.frame(now);world=sim.world;cover=overlays(world);}
+      else{sim.frame(now);world=sim.world;const key=world.runId+':'+world.revision;if(key!==overlayKey){overlayCache=overlays(world);overlayKey=key;}cover=overlayCache;}
       const liveStatus=sim.pauseTokens.has('USER_PAUSE')&&!['ERROR_PAUSED','STOPPED'].includes(sim.status)?'PAUSED':sim.status;
       const modelErrors=Object.values(sim.barrier?.errors??{}).join('；');
       const barrier=sim.barrier;let cognitionDetail='';
@@ -129,9 +149,9 @@ export async function boot():Promise<void>{
       }else if(started)cognitionDetail=`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
       if(!sim.pendingTaskCount&&diagnostic.startsWith('目标已排队'))diagnostic='';
       if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
-      const s:ViewState={summaries,summaryBusy,summaryError,summaryVersion,world,overlays:cover,cognitionDetail:player?'':cognitionDetail,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
-        mode:player?'REPLAY':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
-        error:diagnostic||sim.observerError||modelErrors||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
+      const s:ViewState={control:settings,controlDetail:colony?.detail,controlNotice:colony?.notice,fallbackActive:colony?.fallbackActive,summaries,summaryBusy,summaryError,summaryVersion,world,overlays:cover,cognitionDetail:player?'':cognitionDetail,history:player?replayJournal?.rows:journal.rows,historyVersion:player?replayJournal?.version:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,speed,hosted,playbackTick:player?.tick??world.tick,maxTick:player?.manifest.endTick??world.tick,
+        mode:player?'REPLAY':settings.mode==='local'||colony?.fallbackActive?'LOCAL_ALGORITHM':configured?'REAL_MODEL':'UNCONFIGURED',status:player?(player.buffering?'BUFFERING':player.playing?'PLAYING':'PAUSED'):liveStatus,
+        error:sim.observerError||modelErrors||diagnostic||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);
     }catch(e){sim.pause('OBSERVER_ERROR');diagnostic=(e as Error).message;}
   }
@@ -139,5 +159,5 @@ export async function boot():Promise<void>{
   const wx=(globalThis as any).wx;
   if(wx?.onHide){wx.onHide(()=>{sim.pause('APP_BACKGROUND');player?.pause();saveJournal();});wx.onShow(()=>sim.resume('APP_BACKGROUND'));}
   else {globalThis.addEventListener('pagehide',saveJournal);document.addEventListener('visibilitychange',()=>{if(document.hidden){sim.pause('APP_BACKGROUND');player?.pause();saveJournal();}else sim.resume('APP_BACKGROUND');});}
-  await health();frame();
+  if(settings.mode!=='local')await health();frame();
 }

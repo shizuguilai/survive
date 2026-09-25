@@ -1,0 +1,29 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {Simulation} from '../packages/sim-core/src/cognition.ts';import {createCrewWorld} from '../packages/sim-core/src/world.ts';import {ColonyProvider} from '../packages/sim-core/src/colony.ts';import {postTask} from '../packages/sim-core/src/camp.ts';import {DEFAULT_CONTROL,type CommandRequest,validateCommandPlan} from '../packages/contracts/src/command.ts';import {hashCanonical} from '../packages/contracts/src/canonical.ts';import {ReplayRecorder,ReplayPlayer} from '../packages/sim-core/src/replay.ts';import {CommandGateway} from '../services/brain-gateway/src/command.ts';import {loadConfig} from '../services/brain-gateway/src/gateway.ts';
+const local={...DEFAULT_CONTROL,mode:'local' as const};const forbidden={async plan(){throw Error('No remote call allowed');}};
+async function advance(sim:Simulation,ticks:number,stop=()=>false){while(sim.world.tick<ticks&&sim.status!=='ERROR_PAUSED'&&!stop()){if(sim.paused)await sim.settled();else sim.step();}}
+const fixture=(r:CommandRequest)=>({requestId:r.requestId,source:'REAL_MODEL' as const,model:'glm-4.5-air' as const,plan:{summary:'Explicit MOCK transport fixture: one task phase',assignments:r.reports.map(x=>({residentId:x.residentId,objective:r.tasks[0]?.id??'rest'}))}});
+test('Local algorithm completes from-zero house, tool and gathering tasks without model or mock decisions',async()=>{
+ const w=createCrewWorld(4);postTask(w,{kind:'craft',recipeId:'stone_axe',resource:'wood',amount:1,note:'test'});postTask(w,{kind:'house',siteId:'east',resource:'wood',amount:3,note:'test'});
+ const p=new ColonyProvider(local,forbidden),sim=new Simulation(p,{world:w,controlMode:'local'});await sim.bootstrap();await advance(sim,6000,()=>sim.world.camp!.tasks.every(t=>t.status==='done'));
+ assert.notEqual(sim.status,'ERROR_PAUSED',JSON.stringify(sim.barrier?.errors));assert.ok(sim.world.camp!.tasks.every(t=>t.status==='done'));assert.equal(p.remoteCalls,0);assert.ok(sim.world.events.filter(e=>e.kind==='decision').every(e=>e.source==='LOCAL_ALGORITHM'));assert.ok(sim.world.objects.some(o=>o.kind==='house'));assert.ok(sim.world.residents.every(r=>r.spatialMemory&&r.memories.length>1));sim.stop();
+});
+test('MOCK transport: one grouped request, private reports, frozen world and stage cadence',async()=>{
+ let release!:()=>void;const wait=new Promise<void>(r=>release=r);let calls=0;const w=createCrewWorld(4);w.residents[0].memories.push({ref:'secret_a',kind:'belief',text:'PRIVATE_A_SECRET',evidenceRefs:[],experiencedWhen:'past'});
+ const p=new ColonyProvider({...DEFAULT_CONTROL,reviewSeconds:60},{async plan(r){calls++;assert.equal(r.reports.length,4);assert.ok(!JSON.stringify(r).includes('PRIVATE_A_SECRET'));await wait;return fixture(r);}});
+ const sim=new Simulation(p,{world:w,controlMode:'commander'});const bootstrap=sim.bootstrap(),frozen=hashCanonical(sim.world);for(let i=0;i<30;i++)sim.frame(i*1000);assert.equal(hashCanonical(sim.world),frozen);release();await bootstrap;sim.frame(60000);assert.equal(sim.world.tick,0);await advance(sim,800);assert.equal(calls,1);assert.notEqual(sim.status,'ERROR_PAUSED');assert.ok(sim.world.camp!.tasks[0].progress>0);assert.ok(sim.world.residents.slice(1).every(r=>!JSON.stringify(r.memories).includes('PRIVATE_A_SECRET')));sim.stop();
+});
+test('Explicit fallback stays local after one failed remote request; disabled fallback stays paused',async()=>{
+ for(const fallback of [true,false]){let calls=0;const p=new ColonyProvider({...DEFAULT_CONTROL,fallback},{async plan(){calls++;throw Error('TEST_PROVIDER_UNAVAILABLE');}});const s=new Simulation(p,{world:createCrewWorld(2),controlMode:'commander',allowLocalFallback:fallback});await s.bootstrap();
+  if(fallback){assert.equal(p.fallbackActive,true);await advance(s,400);assert.equal(calls,1);assert.ok(s.world.events.filter(e=>e.kind==='decision').every(e=>e.source==='LOCAL_ALGORITHM'));}else{assert.equal(s.status,'ERROR_PAUSED');assert.equal(s.world.tick,0);assert.equal(s.world.events.filter(e=>e.kind==='decision').length,0);}s.stop();}
+});
+test('Grouped model output cannot omit residents or assign an unoffered objective',()=>{
+ const r={reports:[{residentId:'a',options:[{id:'rest'}]},{residentId:'b',options:[{id:'rest'}]}]} as CommandRequest;
+ assert.throws(()=>validateCommandPlan({summary:'test',assignments:[{residentId:'a',objective:'rest'}]},r));assert.throws(()=>validateCommandPlan({summary:'test',assignments:[{residentId:'a',objective:'hidden'},{residentId:'b',objective:'rest'}]},r));
+});
+test('Rolling replay bounds frames and correctly labels local algorithm with an earlier source anchor',async()=>{
+ const recorder=new ReplayRecorder(40),p=new ColonyProvider(local,forbidden);const s=new Simulation(p,{world:createCrewWorld(2),controlMode:'local',onSnapshot:w=>recorder.capture(w,{}),onCommit:c=>recorder.commit(c)});await s.bootstrap();await advance(s,90);assert.equal(recorder.frames.length,40);const replay=recorder.export();assert.equal(replay.manifest.decisionMode,'local');assert.equal(replay.manifest.decisionCounts.real,0);const player=new ReplayPlayer(replay);assert.equal(player.seek(90).tick,90);s.stop();
+});
+test('MOCK HTTP command gateway sends a compact glm-4.5-air phase request, never independent prompts',async()=>{
+ const p=new ColonyProvider(DEFAULT_CONTROL,{async plan(r){let calls=0;const gateway=new CommandGateway(loadConfig({SURVIVE_MODEL_API_KEY:'MOCK_ONLY'}),async(_url,init)=>{calls++;const body=JSON.parse(init!.body as string);assert.equal(body.model,'glm-4.5-air');assert.equal(body.max_tokens,900);return Response.json({choices:[{message:{content:JSON.stringify(fixture(r).plan)}}]});});const result=await gateway.plan(r);assert.equal(calls,1);return result;}});const s=new Simulation(p,{world:createCrewWorld(4),controlMode:'commander'});await s.bootstrap();assert.notEqual(s.status,'ERROR_PAUSED');s.stop();
+});

@@ -898,6 +898,39 @@
               "stage",
               "params"
             ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "survey"
+              },
+              "stage": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "durationSimMs": {
+                    "type": "integer",
+                    "minimum": 500,
+                    "maximum": 5000
+                  }
+                },
+                "required": [
+                  "durationSimMs"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "stage",
+              "params"
+            ]
           }
         ]
       },

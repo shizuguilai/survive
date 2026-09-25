@@ -1,0 +1,71 @@
+{
+  "checkedAt": "2026-09-25T04:33:42.967Z",
+  "model": "glm-4.5-air",
+  "mode": "commander",
+  "mockUsed": false,
+  "localFallbackUsed": false,
+  "status": "passed_real_phases_tasks_and_house",
+  "remoteCalls": 3,
+  "latenciesMs": [
+    13157,
+    2109,
+    5644
+  ],
+  "executionBatches": 33,
+  "freezeChecks": 817,
+  "freezeViolation": false,
+  "tick": 1419,
+  "tasks": [
+    {
+      "kind": "gather",
+      "progress": 8,
+      "amount": 8,
+      "status": "done"
+    },
+    {
+      "kind": "house",
+      "progress": 3,
+      "amount": 3,
+      "status": "done"
+    }
+  ],
+  "stock": {
+    "wood": 6,
+    "stone": 0
+  },
+  "residents": [
+    {
+      "id": "resident-a",
+      "textMemories": 54,
+      "mapCells": 123
+    },
+    {
+      "id": "resident-b",
+      "textMemories": 58,
+      "mapCells": 123
+    },
+    {
+      "id": "resident-c",
+      "textMemories": 68,
+      "mapCells": 154
+    },
+    {
+      "id": "resident-d",
+      "textMemories": 74,
+      "mapCells": 184
+    }
+  ],
+  "errors": {},
+  "completedOps": [
+    "read_notice",
+    "walk",
+    "accept_task",
+    "gather",
+    "haul",
+    "wait",
+    "build"
+  ],
+  "physicalDevice": "not_run",
+  "browser": "not_run",
+  "scope": "Node local official provider, four ordinary unprepared residents. High-level model orders compiled by explicit deterministic executor; not independent resident decisions."
+}
