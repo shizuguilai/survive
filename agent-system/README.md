@@ -1,5 +1,7 @@
 # Survive Agent · 独立居民观察场
 
+**在线性能更新：取消回放按钮、时间轴和后台逐步录制，保留私人记忆与居民档案。默认流畅画面，可切回精细画面。** 四居民对照测试至2000步约67秒降至7秒（测试总耗时，不是手机帧率），同一步世界哈希一致。见[原因、实测与分项验收](docs/implementation/LIVE_PERFORMANCE.md)。
+
 最新：左侧居民信息默认折叠，底部保留档案/地图/感官；人物双手、持物和身体起伏由模拟时间驱动，冻结时一起停住。[使用与验收](docs/implementation/INSPECTOR_AND_GAIT.md)。
 
 最新美术：高清画布与抗锯齿、俯视圆头居民、地块/木石材质和深色观察界面。[改动与分项验收](docs/implementation/ART_DIRECTION.md)。
@@ -62,7 +64,7 @@ v0.3.1减少无意义的感官唤醒，保留人物、语音、身体和行动�
 
 ## 观察与居民装备
 
-场景支持拖动镜头、滚轮缩放、选择居民、开关感官显示，以及按模拟时间查看已有回放。视觉扇形、听力参考环和最后已知位置用于解释有限感知；开关不改变居民实际输入。
+场景支持拖动镜头、滚轮缩放、选择居民、开关感官显示，以及查看私人地图和历史档案；在线回放与后台录制已移除。视觉扇形、听力参考环和最后已知位置用于解释有限感知；开关不改变居民实际输入。
 
 居民初始化就穿衣。原生角色由圆头、圆润或修长身体和两个圆手构成，初始化可配置肤色、尺寸、发型、胡须和衣物颜色。**后续穿换衣、持拿武器与收纳物品由居民自己的模型决定，没有玩家换装面板。** 装备动作具有模拟时长、归属与容量限制；武器目前仅为造型和持拿，不包含攻击或伤害实现。
 
@@ -116,7 +118,7 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 
 ## 云端发布
 
-已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [inspector-deployment.json](evidence/inspector-deployment.json)，早期部署保留为历史。
+已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [performance-deployment.json](evidence/performance-deployment.json)，早期部署保留为历史。
 
 `services/brain-gateway/src/worker.ts` 仅在服务端明确开启 `SURVIVE_PUBLIC_PLAY` 时接受公开试玩请求；仍校验同源、输入合同及指定模型。`/api/health` 不返回密钥。线上实时模型浏览器验收与本地真实模型验证分开记录，不能用页面可访问代替真实行为验证。
 

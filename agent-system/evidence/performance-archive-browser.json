@@ -1,0 +1,43 @@
+{
+  "status": "passed",
+  "profiles": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "touch": false
+      },
+      "previousNextPages": true,
+      "oldRunsVisibleAfterReload": true,
+      "detailEvidence": true,
+      "summaryLoadingAndFailure": true,
+      "summaryPersisted": true,
+      "summaryEvidenceSurvivesRawArchiveEviction": true,
+      "isolatedResidentInput": true,
+      "transport": "explicit_mock_fixture_only",
+      "realModelCalls": 0,
+      "errors": []
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "touch": true
+      },
+      "previousNextPages": true,
+      "oldRunsVisibleAfterReload": true,
+      "detailEvidence": true,
+      "summaryLoadingAndFailure": true,
+      "summaryPersisted": true,
+      "summaryEvidenceSurvivesRawArchiveEviction": true,
+      "isolatedResidentInput": true,
+      "transport": "explicit_mock_fixture_only",
+      "realModelCalls": 0,
+      "errors": []
+    }
+  ],
+  "dynamicPaginationStable": true,
+  "physicalDevice": "not_run",
+  "liveModelBrowser": "not_run",
+  "modelResponseFixture": "explicit_mock_transport_source_field_exercises_validation_not_real_model"
+}

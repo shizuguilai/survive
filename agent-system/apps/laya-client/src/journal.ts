@@ -6,14 +6,15 @@ const categories:JournalCategory[]=['decision','action','speech','memory','world
 /** Observer-only archive. It is never read by perception or sent to the brain. */
 export class ResidentJournal{
  rows:JournalEntry[]=[];version=0;
- private runId='';private eventCursor=0;private seen=new Map<string,string>();private sequence=0;
+ private runId='';private eventCursor=0;private seen=new Map<string,string>();private sequence=0;private ids=new Set<string>();
  constructor(saved?:unknown){
   if(Array.isArray(saved))this.rows=saved.filter((r:any)=>r&&typeof r.id==='string'&&typeof r.runId==='string'&&typeof r.residentId==='string'&&Number.isSafeInteger(r.tick)&&r.tick>=0&&categories.includes(r.category)&&typeof r.text==='string'&&r.text.length<=4000).slice(-JOURNAL_LIMIT);
+  this.ids=new Set(this.rows.map(r=>r.id));
  }
  collect(world:World):void{
   if(this.runId!==world.runId){this.runId=world.runId;this.eventCursor=0;this.seen.clear();}
   let changed=false;
-  const existingIds=new Set(this.rows.map(row=>row.id));
+  const existingIds=this.ids;
   const add=(row:Omit<JournalEntry,'id'|'runId'>)=>{let id:string;do{id=`${world.runId}:${++this.sequence}`;}while(existingIds.has(id));existingIds.add(id);this.rows.push({...row,id,runId:world.runId});changed=true;};
   for(let i=this.eventCursor;i<world.events.length;i++){
    const e=world.events[i];
@@ -29,7 +30,7 @@ export class ResidentJournal{
    const action=memory.ref.startsWith('memory_action_')||memory.ref.startsWith('memory_task_');
    add({tick:world.tick,residentId:r.id,category:action?'action':'memory',text:memory.text});
   }
-  if(changed){this.rows=this.rows.slice(-JOURNAL_LIMIT);this.version++;}
+  if(changed){if(this.rows.length>JOURNAL_LIMIT){for(const row of this.rows.splice(0,this.rows.length-JOURNAL_LIMIT))this.ids.delete(row.id);}this.version++;}
  }
 }
 export function selectJournal(rows:JournalEntry[],residentId:string,category:JournalCategory|'all',runId?:string,maxTick=Infinity):JournalEntry[]{

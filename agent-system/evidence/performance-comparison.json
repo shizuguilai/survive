@@ -1,0 +1,19 @@
+{
+  "baselineHead": "b4b86c2da26f0931cecf47dd5185826484783e4e",
+  "fixture": "deterministic_four_resident_local_algorithm",
+  "remoteCalls": 0,
+  "matchedWorldHashesAtTicks": [
+    500,
+    2000,
+    4000
+  ],
+  "liveRanThroughTick": 8000,
+  "liveRetainedReplayFrames": 0,
+  "at2000": {
+    "beforeWallMs": 67135,
+    "afterWallMs": 6959,
+    "beforeCaptureMs": 50723,
+    "afterCaptureMs": 0
+  },
+  "scope": "Node microbenchmark, not real-time browser FPS. Wall time includes evidence serialization; heapUsed includes transient allocations. No physical device or real model benchmark."
+}

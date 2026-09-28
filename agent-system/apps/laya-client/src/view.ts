@@ -17,8 +17,8 @@ export type ViewCallbacks = {
   onSummarize?(request:SummaryRequest):void;
   onTask(draft:TaskDraft):void;
   onPause():void; onResume():void; onRetry():void; onStop():void;
-  onSelect(id:string):void; onToggleSenses():void; onReplay():void; onLive():void;
-  onSeek(tick:number):void; onSpeed(value:number):void; onStart():void; onConnect(token:string):void;
+  onSelect(id:string):void; onToggleSenses():void; onReplay?():void; onLive?():void;
+  onSeek?(tick:number):void; onSpeed?(value:number):void; onStart():void; onConnect(token:string):void;
 };
 export type ViewState = {
   control?:ControlSettings;controlDetail?:string;controlNotice?:string;fallbackActive?:boolean;
@@ -27,13 +27,13 @@ export type ViewState = {
   history?:JournalEntry[];historyVersion?:number;historyWarning?:string;
   pendingTasks?:number;world:World; overlays:Record<string,SensoryOverlay>; status:string; error?:string;
   mode:'UNCONFIGURED'|'REAL_MODEL'|'REPLAY'|'LOCAL_ALGORITHM'; selectedId:string; showSenses:boolean;
-  playbackTick:number; maxTick:number; speed:number; hosted?:boolean;
+  playbackTick?:number; maxTick?:number; speed?:number; hosted?:boolean;
 };
 
 // All visible controls and graphics use Laya. Only its engine-owned Input bridge
 // uses platform input facilities; no game scene, HUD, or controls use DOM rendering.
 const L:any=(globalThis as any).Laya;
-const WIDTH=1280,HEIGHT=720,SIDE=292,TOP=84,BOTTOM=614;
+const WIDTH=1280,HEIGHT=720,SIDE=292,TOP=84,BOTTOM=654;
 const palette={ink:'#e6e0cb',muted:'#a6afa7',paper:'#20272a',panel:'#2c3437',line:'#465052',mint:'#9cae83',amber:'#ddbd7d'};
 type HistoryRow=JournalEntry&{title:string;evidence?:JournalEntry[]};
 type NativeButton={root:any;label:any;set(text:string):void};
@@ -64,9 +64,10 @@ export class ObserverView {
   private draftKind:'gather'|'craft'|'house'='gather';private draftRecipe='stone_axe';private draftSite='east';
   private historyPanel:any;private workshopPanel:any;private historyFilter:JournalCategory|'all'|'summary'='action';private historyPage=0;private historyAllRuns=true;private historyDetail:HistoryRow|null=null;
   private historyRows:any[]=[];private displayedHistory:HistoryRow[]=[];private historySnapshot:JournalEntry[]|null=null;private historySnapshotScope='';private historySummaryRunId='';private historyCache='';
-  private state:ViewState|null=null;private token:any;private timeline:any;
+  private state:ViewState|null=null;private token:any;
+  private worldRevision='';private senseRevision='';private hudRevision='';private mapRevision='';private hudDirty=true;private highQuality=false;
   private offset={x:0,z:0};private drag:{x:number;y:number;ox:number;oz:number;moved:boolean}|null=null;
-  private markers:any;private sceneInput:any;private zoom=18;private scrubbing=false;
+  private markers:any;private sceneInput:any;private zoom=18;
 
   constructor(private api:ViewCallbacks){
     this.scene=new L.Scene3D();this.scene.name='Survive — 认知观察场';L.stage.addChild(this.scene);
@@ -75,7 +76,9 @@ export class ObserverView {
     this.camera.clearColor=new L.Color(.16,.19,.19,1);this.camera.clearFlag=L.CameraClearFlags.SolidColor;
     this.camera.orthographic=true;this.camera.orthographicVerticalSize=this.zoom;
     this.camera.normalizedViewport=new L.Viewport(this.sceneLeft/WIDTH,TOP/HEIGHT,(WIDTH-this.sceneLeft)/WIDTH,(BOTTOM-TOP)/HEIGHT);
-    this.camera.enableHDR=false;this.camera.enableBuiltInRenderTexture=true;this.camera.msaa=true;
+    this.camera.enableHDR=false;this.camera.enableBuiltInRenderTexture=true;
+    try{this.highQuality=globalThis.localStorage?.getItem('survive_render_quality_v1')==='fine';}catch{}
+    this.applyQuality();
     this.moveCamera();
     const light=new L.Sprite3D('Daylight');this.scene.addChild(light);
     light.transform.rotationEuler=new L.Vector3(-55,25,0);const dl=light.addComponent(L.DirectionLightCom);dl.color=new L.Color(1,.92,.76,1);dl.intensity=.65;
@@ -101,7 +104,7 @@ export class ObserverView {
   private button(id:string,text:string,x:number,y:number,w:number,click:()=>void,bright=false):NativeButton{
     const r=this.panel(this.root,x,y,w,35,bright?palette.mint:palette.line,3);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,35);
     const t=this.text(r,text,0,10,14,bright?'#202a23':'#eee9d9',w);t.align='center';t.mouseEnabled=false;
-    r.on(L.Event.CLICK,this,click);const b={root:r,label:t,set:(s:string)=>t.text=s};this.buttons[id]=b;return b;
+    r.on(L.Event.CLICK,this,()=>{this.hudDirty=true;click();});const b={root:r,label:t,set:(s:string)=>t.text=s};this.buttons[id]=b;return b;
   }
   private buildUI():void{
     this.inspector=new L.Sprite();this.inspector.name='Resident inspector';this.inspector.zOrder=10;this.root.addChild(this.inspector);
@@ -148,26 +151,23 @@ export class ObserverView {
     this.button('tasks','规划 / 建房',1064,94,185,()=>{this.hideModals();this.planner.visible=true;},true);
     this.labels.taskSummary=this.text(this.root,'',320,122,12,'#eee3c4',560);this.labels.taskSummary.mouseEnabled=false;
     this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',908);this.labels.error.height=104;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
-    this.button('quickHistory','档案',18,628,77,()=>this.openHistory());
-    this.button('quickMap','地图',105,628,77,()=>{this.hideModals();this.memoryPanel.visible=true;});
-    this.button('quickSenses','感官',192,628,77,()=>this.api.onToggleSenses());
-    this.button('start','开始真实认知',315,628,130,()=>this.api.onStart(),true);
-    this.button('pause','暂停',455,628,72,()=>{const paused=/PAUS|STOP|暂停/i.test(this.state?.status||'');paused?this.api.onResume():this.api.onPause();});
-    this.button('retry','重试',537,628,72,()=>this.api.onRetry());
-    this.button('stop','停止',619,628,72,()=>this.api.onStop());
-    this.button('replay','查看回放',705,628,104,()=>this.state?.mode==='REPLAY'?this.api.onLive():this.api.onReplay());
-    this.button('speed','1× 播放',819,628,94,()=>{const current=this.state?.speed||1;this.api.onSpeed(current>=4?.5:current*2);});
-    this.labels.gateway=this.text(this.root,'网关令牌',929,636,12,'#b4b7a8',84);
-    this.labels.hosted=this.text(this.root,'云端模型 · 密钥由服务端保管',936,639,12,'#b4b7a8',315);this.labels.hosted.visible=false;
-    this.token=new L.Input();this.token.pos(1007,629);this.token.size(152,33);this.token.fontSize=14;this.token.color='#26352c';this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
-    this.button('connect','连接',1170,628,86,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
-    this.timeline=this.panel(this.root,320,681,880,8,'#c8d4c2',4);this.timeline.mouseEnabled=true;this.timeline.hitArea=new L.Rectangle(0,-12,880,34);
-    this.timeline.on(L.Event.MOUSE_DOWN,this,()=>{this.scrubbing=true;this.seekAtPointer();});
-    this.labels.timeline=this.text(this.root,'暂无回放',1210,675,12,'#b4b7a8',67);
-    this.text(this.root,'保留最近30秒回放；历史档案另存。网络等待不计模拟时间',320,699,10,'#82907f',650);
+    this.button('quickHistory','档案',18,670,77,()=>this.openHistory());
+    this.button('quickMap','地图',105,670,77,()=>{this.hideModals();this.memoryPanel.visible=true;});
+    this.button('quickSenses','感官',192,670,77,()=>this.api.onToggleSenses());
+    this.button('start','开始真实认知',315,670,130,()=>this.api.onStart(),true);
+    this.button('pause','暂停',455,670,72,()=>{const paused=/PAUS|STOP|暂停/i.test(this.state?.status||'');paused?this.api.onResume():this.api.onPause();});
+    this.button('retry','重试',537,670,72,()=>this.api.onRetry());
+    this.button('stop','停止',619,670,72,()=>this.api.onStop());
+    this.button('quality','画面：流畅优先',705,670,208,()=>{this.highQuality=!this.highQuality;this.applyQuality();try{globalThis.localStorage?.setItem('survive_render_quality_v1',this.highQuality?'fine':'fast');}catch{}});
+    this.labels.gateway=this.text(this.root,'网关令牌',929,678,12,'#b4b7a8',84);
+    this.labels.hosted=this.text(this.root,'云端模型 · 密钥由服务端保管',936,681,12,'#b4b7a8',315);this.labels.hosted.visible=false;
+    this.token=new L.Input();this.token.pos(1007,671);this.token.size(152,33);this.token.fontSize=14;this.token.color='#26352c';this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
+    this.button('connect','连接',1170,670,86,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
+    this.text(this.root,'居民档案自动保存 · 可切换流畅 / 精细画面',315,710,9,'#a6afa7',650);
     this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();
   }
 
+  private applyQuality():void{this.camera.msaa=this.highQuality;L.stage.frameRate=this.highQuality?L.Stage.FRAME_FAST:L.Stage.FRAME_SLOW;this.buttons.quality?.set(this.highQuality?'画面：精细优先':'画面：流畅优先');}
   private layoutInspector():void{
     const left=this.sceneLeft;this.inspector.visible=!this.sidebarCollapsed;
     for(const id of ['quickHistory','quickMap','quickSenses'])this.buttons[id].root.visible=this.sidebarCollapsed;
@@ -175,10 +175,10 @@ export class ObserverView {
     this.sceneInput.pos(left,TOP);this.sceneInput.size(WIDTH-left,BOTTOM-TOP);this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-left,BOTTOM-TOP);
     this.labels.caption.x=this.sidebarCollapsed?195:315;this.labels.taskSummary.x=this.sidebarCollapsed?195:320;
     for(const {panel,width}of this.modalLayouts)panel.x=left+(WIDTH-left-width)/2-320;
-    this.updateInspectorButton();this.drag=null;this.positionLabels();
+    this.applyQuality();this.updateInspectorButton();this.drag=null;this.positionLabels();
   }
   private updateInspectorButton():void{const r=this.state?.world.residents.find(r=>r.id===this.state?.selectedId);this.buttons.inspectorToggle.set(this.sidebarCollapsed?(r?.name??'居民')+' · 信息 ›':'‹ 收起信息');}
-  private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel,this.controlPanel])if(panel)panel.visible=false;}
+  private hideModals():void{this.hudDirty=true;for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel,this.controlPanel])if(panel)panel.visible=false;}
   private modal(name:string,width=910):any{const p=new L.Sprite();p.name=name;p.zOrder=20;this.root.addChild(p);this.modalLayouts.push({panel:p,width});const background=this.panel(p,320,145,width,450,palette.panel,12);background.mouseEnabled=true;background.hitArea=new L.Rectangle(0,0,width,450);p.visible=false;return p;}
   private modalButton(parent:any,id:string,label:string,x:number,y:number,w:number,fn:()=>void,bright=true):NativeButton{const b=this.button(id,label,x,y,w,fn,bright);parent.addChild(b.root);return b;}
   private buildPlanner():void{
@@ -250,7 +250,7 @@ export class ObserverView {
     for(let i=0;i<5;i++){
       const row=this.panel(this.historyPanel,344,280+i*45,860,39,'#234144',6);row.mouseEnabled=true;row.hitArea=new L.Rectangle(0,0,860,39);
       const heading=this.text(row,'',10,4,10,palette.mint,820),body=this.text(row,'',10,19,12,'#e5f1df',822);heading.height=14;heading.overflow='hidden';body.height=16;body.overflow='hidden';
-      row.on(L.Event.CLICK,this,()=>{this.historyDetail=this.displayedHistory[this.historyPage*5+i]??null;this.labels.historyDetail.scrollY=0;this.historyCache='';});this.historyRows.push({root:row,heading,body});
+      row.on(L.Event.CLICK,this,()=>{this.hudDirty=true;this.historyDetail=this.displayedHistory[this.historyPage*5+i]??null;this.labels.historyDetail.scrollY=0;this.historyCache='';});this.historyRows.push({root:row,heading,body});
     }
     this.labels.historyDetail=this.text(this.historyPanel,'',350,282,14,'#e5f1df',842);this.labels.historyDetail.height=222;this.labels.historyDetail.overflow='scroll';
     this.labels.historyEmpty=this.text(this.historyPanel,'',355,310,16,'#e5f1df',820);this.labels.historyEmpty.height=170;this.labels.historyEmpty.overflow='hidden';
@@ -272,7 +272,7 @@ export class ObserverView {
     const saved=(s.summaries??[]).filter(e=>e.response.residentId===s.selectedId&&(s.mode!=='REPLAY'||e.response.runId===s.world.runId&&e.response.throughTick<=s.world.tick)).map(e=>e.response.runId);
     return [...new Set([...saved,...(this.historySnapshot??[]).filter(e=>e.residentId===s.selectedId&&(s.mode!=='REPLAY'||e.runId===s.world.runId)).map(e=>e.runId)])].reverse();
   }
-  private turnHistory(direction:number):void{
+  private turnHistory(direction:number):void{this.hudDirty=true;
     if(this.historyDetail){const t=this.labels.historyDetail;t.scrollY=Math.max(0,Math.min(Math.max(0,t.textHeight-t.height),t.scrollY+direction*180));return;}
     this.historyPage=Math.max(0,Math.min(Math.max(0,Math.ceil(this.displayedHistory.length/5)-1),this.historyPage+direction));this.historyCache='';
   }
@@ -326,15 +326,12 @@ export class ObserverView {
     for(const [id,enabled]of [['historyNewer',!!this.historyDetail||this.historyPage>0],['historyOlder',!!this.historyDetail||this.historyPage<pages-1]] as const){this.buttons[id].root.mouseEnabled=enabled;this.buttons[id].root.alpha=enabled?1:.4;}
   }
   private selectIndex(index:number):void{const id=this.state?.world.residents[index]?.id;if(id)this.api.onSelect(id);}
-  private seekAtPointer():void{if(this.state?.mode!=='REPLAY')return;this.api.onSeek(Math.round(Math.max(0,Math.min(1,(L.stage.mouseX-320)/880))*this.state.maxTick));}
   private pointerMove():void{
-    if(this.scrubbing){this.seekAtPointer();return;}
     if(!this.drag)return;const dx=L.stage.mouseX-this.drag.x,dy=L.stage.mouseY-this.drag.y;
     if(Math.abs(dx)+Math.abs(dy)>4)this.drag.moved=true;
     this.offset.x=this.drag.ox-dx*this.zoom/900;this.offset.z=this.drag.oz-dy*this.zoom/550;this.moveCamera();this.positionLabels();
   }
   private pointerUp():void{
-    this.scrubbing=false;
     const drag=this.drag;this.drag=null;if(!drag||drag.moved||!this.state)return;
     let nearest:string|null=null,distance=42;
     for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+1});const d=Math.hypot(p.x-L.stage.mouseX,p.y-L.stage.mouseY);if(d<distance){nearest=r.id;distance=d;}}
@@ -379,8 +376,12 @@ export class ObserverView {
     for(const known of o.lastKnown){this.ring(this.senseLines,known.position,.35,'#798caa',true);this.line(this.senseLines,{...known.position,y:.04},{...known.position,y:1},'#798caa');}
   }
   render(state:ViewState):void{
-    this.state=state;if(this.memoryPanel?.visible){const remembered=state.world.residents.find(r=>r.id===state.selectedId);if(remembered)this.memoryMap.render(remembered);}
-    this.drawWorld(state.world);this.drawSenses(state);
+    this.state=state;const worldKey=[state.world.runId,state.world.revision,state.world.tick].join(':');
+    if(worldKey!==this.worldRevision){this.drawWorld(state.world);this.worldRevision=worldKey;}
+    const senseKey=[worldKey,state.selectedId,state.showSenses].join('|');if(senseKey!==this.senseRevision){this.drawSenses(state);this.senseRevision=senseKey;}
+    const mapKey=worldKey+'|'+state.selectedId;if(this.memoryPanel?.visible&&(this.hudDirty||this.mapRevision!==mapKey)){const remembered=state.world.residents.find(r=>r.id===state.selectedId);if(remembered)this.memoryMap.render(remembered);this.mapRevision=mapKey;}
+    const hudKey=[worldKey,state.selectedId,state.showSenses,state.status,state.mode,state.error,state.hosted,state.cognitionDetail,state.controlDetail,state.controlNotice,state.fallbackActive,state.historyVersion,state.historyWarning,state.summaryVersion,state.summaryBusy,state.summaryError,state.pendingTasks].join('|');
+    if(!this.hudDirty&&this.hudRevision===hudKey)return;this.hudDirty=false;this.hudRevision=hudKey;
     this.updateInspectorButton();
     this.labels.gateway.visible=this.token.visible=this.buttons.connect.root.visible=!state.hosted;
     this.labels.hosted.visible=Boolean(state.hosted);
@@ -396,7 +397,7 @@ export class ObserverView {
     if(r){const hp=Math.round(r.health??100),hunger=Math.round(r.hunger*100),fatigue=Math.round(r.fatigue*100);this.labels.vitality.text=`生命 ${hp}${hp===0?'（倒下）':''}     饥饿 ${hunger}%     疲劳 ${fatigue}%`;this.vitality.graphics.clear();[hp/100,r.hunger,r.fatigue].forEach((v,i)=>{this.vitality.graphics.drawRect(i*85,0,75,4,'#325153');this.vitality.graphics.drawRect(i*85,0,75*v,4,['#9ee3be','#f3c87c','#8eabcf'][i]);});
       this.labels.equipment.text=r.supplies?`随身：木材${r.supplies.wood??0} 石料${r.supplies.stone??0} 食物${r.supplies.food??0} / 30\n`+(r.character?publicCharacterSummary(r.character):''):r.character?publicCharacterSummary(r.character):'';this.labels.person.text=r.name;this.labels.personality.text=r.personality;this.labels.goal.text=r.goal||'尚未安排阶段任务';
       const obs=state.overlays[r.id]?.observations||r.observations;this.labels.perception.text=obs.slice(-4).map(o=>{const d=o.detail;if(o.modality==='auditory')return `听 · ${d.heardText?(d.recognizedSpeakerName?d.recognizedSpeakerName+'：':'')+d.heardText:'听到模糊说话声，未听清内容'}`;if(o.modality==='visual')return `视 · ${Array.isArray(d.appearance)?d.appearance.join('；'):d.appearance||'注意到一个轮廓'}`;const senses:Record<string,string>={hunger:'饥饿',fatigue:'疲劳',pain:'疼痛',touch:'触碰',imbalance:'失衡',obstructed:'受阻'},intensity:Record<string,string>={mild:'轻微',noticeable:'明显',severe:'严重'};return `身 · ${senses[d.sensation]||'身体状态'}：${intensity[d.intensity]||'有所变化'}`;}).join('\n')||'尚未感知到新的线索';}
-    this.buttons.senses.set(`感官显示  ${state.showSenses?'开':'关'}`);this.buttons.replay.set(state.mode==='REPLAY'?'返回现场':'查看回放');this.buttons.speed.set(`${state.speed}× 播放`);
+    this.buttons.senses.set(`感官显示  ${state.showSenses?'开':'关'}`);
     this.buttons.pause.set(/PAUS|STOP|暂停/i.test(state.status)?'继续':'暂停');
     this.labels.error.text=state.controlNotice?state.controlNotice:state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
     this.labels.caption.text=state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'营地 · 林地 / 采石区 / 浆果丛 · 滚轮缩放、拖动探索':'两名居民 · 两棵树 · 一堵墙';
@@ -416,9 +417,6 @@ export class ObserverView {
     this.labels.stock.text='公共仓储：'+(materialText(state.world.camp?.stock??{})||'暂无材料');
     this.labels.taskNotice.text=state.pendingTasks?`已排队${state.pendingTasks}项，世界恢复后写入`:(state.error??'').slice(0,70);
     this.renderHistory(state);
-    this.timeline.graphics.clear();this.timeline.graphics.drawRoundRect(0,0,880,8,4,4,4,4,'#c8d4c2');const progress=state.maxTick>0?Math.max(0,Math.min(1,state.playbackTick/state.maxTick)):0;
-    if(progress>0)this.timeline.graphics.drawRoundRect(0,0,880*progress,8,4,4,4,4,'#4c8970');this.timeline.graphics.drawCircle(880*progress,4,6,'#4c8970');
-    this.labels.timeline.text=state.maxTick?`${state.playbackTick}/${state.maxTick}`:'暂无回放';
   }
   private humanStatus(status:string):string{const map:Record<string,string>={RUNNING:'世界运行中',PAUSED:'观察者已暂停',THINKING:'居民正在思考 · 世界已冻结',COMMITTING:'完整决策批次正在提交 · 世界保持冻结',READY:'准备开始',PLAYING:'回放播放中 · 不调用模型',BUFFERING:'回放缓冲中',ERROR_PAUSED:'认知请求失败 · 世界保持冻结',WAITING_FOR_MODEL:'模型思考中 · 世界已冻结',WAITING:'模型思考中 · 世界已冻结',ERROR:'认知请求失败 · 世界保持冻结',IDLE:'准备开始',STOPPED:'已停止',UNCONFIGURED:'未配置真实模型'};return map[status]||status;}
 }

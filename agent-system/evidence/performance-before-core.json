@@ -1,0 +1,60 @@
+{
+  "mode": "V15_REPLAY_HOOKS",
+  "localAlgorithm": true,
+  "remoteCalls": 0,
+  "commits": 90,
+  "samples": [
+    {
+      "tick": 500,
+      "wallMs": 8969,
+      "captureMs": 6356,
+      "journalMs": 70,
+      "storageMs": 35,
+      "snapshots": 514,
+      "retainedFrames": 501,
+      "events": 57,
+      "memories": 188,
+      "history": 213,
+      "worldHash": "fnv1a64:d90df322d6b340d6",
+      "retainedJsonMiCodeUnits": 103.54,
+      "heapMiBBeforeGC": 256,
+      "worldCodeUnits": 271364,
+      "checkpointCodeUnits": 643145
+    },
+    {
+      "tick": 2000,
+      "wallMs": 67135,
+      "captureMs": 50723,
+      "journalMs": 646,
+      "storageMs": 220,
+      "snapshots": 2047,
+      "retainedFrames": 600,
+      "events": 191,
+      "memories": 355,
+      "history": 432,
+      "worldHash": "fnv1a64:faaa62d6f0084c1b",
+      "retainedJsonMiCodeUnits": 362.39,
+      "heapMiBBeforeGC": 762,
+      "worldCodeUnits": 666150,
+      "checkpointCodeUnits": 1423607
+    },
+    {
+      "tick": 4000,
+      "wallMs": 205961,
+      "captureMs": 159210,
+      "journalMs": 1959,
+      "storageMs": 588,
+      "snapshots": 4091,
+      "retainedFrames": 600,
+      "events": 350,
+      "memories": 498,
+      "history": 637,
+      "worldHash": "fnv1a64:eb2aa9dcdce52b78",
+      "retainedJsonMiCodeUnits": 598.16,
+      "heapMiBBeforeGC": 1315,
+      "worldCodeUnits": 1066683,
+      "checkpointCodeUnits": 2222194
+    }
+  ],
+  "methodology": "Deterministic four-resident local simulation; serialized sizes count UTF-16 code units; wall time includes sampling and JSON size inspection; heap is process heapUsed before explicit GC, not retained or phone memory. Storage time measures serialization only."
+}

@@ -3,8 +3,8 @@
   "project": "survive",
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
-  "latestBindingDecision": "用户2026-09-25新要求：默认单模型统筹阶段任务，保留独立居民模式，另提供明确标注的本地算法；每人记忆独立。实际认知仍全局冻结，完整批次提交后恢复，不追等待帧。",
-  "statusNote": "折叠信息栏与模拟步态见ART02；美术见ART01；三模式见CONTROL01；保留历史各项范围。",
+  "latestBindingDecision": "用户2026-09-28追加：面向指挥/经营玩法移除在线回放与时间轴，排查运行至2000步的卡顿；保留每人私人地图/文字记忆、档案与三模式。实际认知仍全局冻结，完整批次持久提交后恢复，不追等待帧。",
+  "statusNote": "在线性能与回放移除见PERF01；折叠信息和步态见ART02；三模式见CONTROL01；历史回放验收保留为过去版本记录。",
   "tasks": [
     {
       "id": "T00",
@@ -2689,6 +2689,50 @@
         "Laya IDE/微信构建与真机未验收",
         "低端机长时间帧率尚需真机验证"
       ]
+    },
+    {
+      "id": "PERF01",
+      "title": "移除在线回放采集、长时开销定位与画面更新缓存",
+      "dependsOn": [
+        "ART02",
+        "CONTROL01",
+        "T12"
+      ],
+      "status": "code_complete",
+      "codeStatus": "implemented",
+      "verification": {
+        "code": "implemented_no_live_recording_compact_atomic_checkpoint_revision_caches",
+        "static": "passed",
+        "mock": "passed_130_tests_1_long_wall_clock_test_skipped",
+        "localAlgorithm": "passed_8000_ticks_zero_remote_calls_equal_world_hashes_at_common_ticks",
+        "realModel": "not_run_performance_only",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_local_desktop_touch_controls_archive_quality_and_static_render_perf",
+        "liveModelBrowser": "not_run",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_v16",
+        "wechatPublication": "not_run"
+      },
+      "evidence": [
+        "docs/implementation/LIVE_PERFORMANCE.md",
+        "evidence/performance-comparison.json",
+        "evidence/performance-before-core.json",
+        "evidence/performance-after-core.json",
+        "evidence/performance-before-browser.json",
+        "evidence/performance-after-browser.json",
+        "evidence/performance-tests.txt",
+        "evidence/performance-control-browser.json",
+        "evidence/performance-inspector-browser.json",
+        "evidence/web-build.json",
+        "evidence/performance-archive-browser.json",
+        "evidence/performance-deployment.json"
+      ],
+      "scopeNote": "用户新要求覆盖T12在线回放界面要求，离线回放工具与历史证据仍保留。性能是Node/浏览器微测，不是真机FPS；居民私人状态没有删减。",
+      "blockers": [
+        "低端真机与数小时大营地长测未验收",
+        "Laya IDE、微信构建与发布未验收"
+      ]
     }
   ],
   "implementationDirectory": "agent-system",
@@ -2989,6 +3033,44 @@
       "browser": "passed_desktop_and_touch_explicit_mock_transport",
       "liveModelBrowser": "not_run",
       "physicalDevice": "not_run"
+    }
+  },
+  "performanceMilestone": {
+    "baselineHead": "b4b86c2da26f0931cecf47dd5185826484783e4e",
+    "verification": {
+      "code": "implemented_no_live_recording_compact_atomic_checkpoint_revision_caches",
+      "static": "passed",
+      "mock": "passed_130_tests_1_long_wall_clock_test_skipped",
+      "localAlgorithm": "passed_8000_ticks_zero_remote_calls_equal_world_hashes_at_common_ticks",
+      "realModel": "not_run_performance_only",
+      "webBuild": "passed",
+      "layaBuild": "blocked_missing_ide",
+      "browser": "passed_local_desktop_touch_controls_archive_quality_and_static_render_perf",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "publication": "web_public_deployed_v16",
+      "wechatPublication": "not_run"
+    },
+    "documentation": "docs/implementation/LIVE_PERFORMANCE.md",
+    "deployment": {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_3302e99bc7008191bbdebe1996aebf07",
+      "versionNumber": 16,
+      "deploymentId": "appgdep_6aba70fd73dc81918e604fb1116cdf3c",
+      "sourceCommit": "0b0aea8506489ece6b19792199a0adf8e252cd1d",
+      "envSetRevision": 3,
+      "publishedAt": "2026-09-28T13:52:40.565550+00:00",
+      "access": "public",
+      "code": "no_live_replay_compact_atomic_checkpoint_revision_caches_render_quality",
+      "mock": "130_tests_passed_1_long_wall_clock_test_skipped_explicit_render_and_transport_fixtures",
+      "localAlgorithm": "8000_ticks_zero_remote_calls_matching_world_hashes",
+      "realModel": "not_run_performance_only",
+      "browser": "passed_local_desktop_touch_controls_archive_gait_and_static_render_perf",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "wechatPublication": "not_run"
     }
   }
 }

@@ -1,0 +1,32 @@
+{
+  "status": "passed",
+  "environment": "headless_swiftshader_not_physical_phone",
+  "fixture": "static_four_residents_senses_on",
+  "observerBatch": {
+    "ms": 0.5999999977648258,
+    "counts": {
+      "render": 300,
+      "drawWorld": 0,
+      "drawSenses": 0,
+      "characters": 0
+    },
+    "times": {
+      "render": 0.4999999962747097,
+      "drawWorld": 0,
+      "drawSenses": 0,
+      "characters": 0
+    }
+  },
+  "rendering": {
+    "msaa": false,
+    "frameRate": "slow",
+    "canvas": [
+      1387,
+      780
+    ],
+    "heapBytes": 44042840
+  },
+  "worldUnchanged": true,
+  "remoteCalls": 0,
+  "errors": []
+}
