@@ -125,3 +125,7 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 `services/brain-gateway/src/worker.ts` 仅在服务端明确开启 `SURVIVE_PUBLIC_PLAY` 时接受公开试玩请求；仍校验同源、输入合同及指定模型。`/api/health` 不返回密钥。线上实时模型浏览器验收与本地真实模型验证分开记录，不能用页面可访问代替真实行为验证。
 
 带有 `.openai/hosting.json` 的托管检出目录运行 `npm run build` 会生成 `dist/client` 与 `dist/server/index.js`；普通本地目录仍生成原有 Web 包。密钥通过发布平台的运行时 secret 配置，不能打包进产物。
+
+## 生活、昼夜与住房成长
+
+背包和生活详情可单指滑动，带可拖动滚动条；顶部统筹简介点击展开全文。提示自动消失，所有身体状态条都以100%为好。居民有住房与生活心愿，气泡和详情显示原因；长期需求未满足会影响心情。加入昼夜、床、柜子、灯、拖把，以及备料后自主拆旧扩建。详见 [生活系统说明与验证](docs/implementation/LIVING_SYSTEM.md)。

@@ -1,7 +1,8 @@
 import type {Resident,World,WorldObject,ResourceKind} from './domain.ts';
+import {homeSize,isInside} from './living.ts';
 import {clearNewWalls} from './navigation.ts';
-import {grantKnown,ownReceipt,updateBoard} from './camp.ts';
-import {RECIPES,HOUSE_STEPS,materialText,taskTitle,skillLevel} from './recipes.ts';
+import {grantKnown,ownReceipt,updateBoard,learnHouse} from './camp.ts';
+import {RECIPES,HOUSE_STEPS,houseSteps,materialText,taskTitle,skillLevel} from './recipes.ts';
 import {validateCharacterState,equippedItem} from './character.ts';
 export function addSkill(r:Resident,skill:'gathering'|'crafting'|'construction',amount=1):void{r.skills??={gathering:0,crafting:0,construction:0};r.skills[skill]+=amount;}
 export function skillDuration(r:Resident,skill:'crafting'|'construction',base:number):number{return base*(1-skillLevel(r.skills?.[skill])*.04);}
@@ -44,27 +45,35 @@ export function finishRecipe(world:World,r:Resident,stationRef:string,recipeRef:
 export function finishBuild(world:World,r:Resident,projectRef:string,stepRef:string):string|null{
  const task=world.camp?.tasks.find(t=>t.id===r.known[projectRef]?.entityId&&t.kind==='house');
  if(!task||task.status!=='open'||!task.acceptedBy.includes(r.id))return '必须先亲自阅读并自愿接受这项建房目标。';
- const plot=world.objects.find(o=>o.projectId===task.id);
- if(!nearby(r,plot,3))return '尚未走到这座小屋的建设地块。';
- const step=HOUSE_STEPS[task.progress];
+ const plot=world.objects.find(o=>o.projectId===task.id);if(!nearby(r,plot,3))return '尚未走到这座房屋的建设地块。';
+ const steps=houseSteps(task),step=steps[task.progress];
  if(!step||r.known[stepRef]?.entityId!==`${task.id}:${step.id}`)return '这个步骤已完成或前置步骤未完成，请根据现场进展或重读公告调整。';
- for(const [kind,count]of Object.entries(step.cost))if((world.camp!.stock?.[kind as ResourceKind]??0)<count)return `公共仓储材料不足：${step.label}需要${materialText(step.cost)}；先采集并haul存入。`;
- for(const [kind,count]of Object.entries(step.cost))world.camp!.stock![kind as ResourceKind]!-=count;
- task.progress++;plot!.buildStage=task.progress;plot!.appearance=`木石小屋：${task.progress}/3阶段完成，刚完成${step.label}`;
- if(task.progress===HOUSE_STEPS.length){task.status='done';plot!.kind='house';plot!.height=3.5;plot!.appearance='已经建成的木石小屋，南侧门口可进入，屋内可休息';if(task.ownerId){const owner=world.residents.find(x=>x.id===task.ownerId);if(owner)owner.homeId=plot!.id;const zone=world.camp?.tasks.find(t=>t.kind==='residential'&&t.zoneId===task.zoneId);if(zone)zone.progress++;}}
- clearNewWalls(world,plot!);
- addSkill(r,'construction');updateBoard(world);
- const text=`${r.name}完成${taskTitle(task)}的${step.label}，实际扣除仓储${materialText(step.cost)}。${task.status==='done'?'小屋已建成，可到门廊rest休息。':''}`;
- ownReceipt(r,world,text);world.events.push({tick:world.tick,kind:'construction',agentId:r.id,text});
- const own=r.known[projectRef];own.description=`${taskTitle(task)}：我参与完成${step.label}；${task.status==='done'?'已竣工':`下一步${HOUSE_STEPS[task.progress].label}，仍需准备其材料`}。`;
- return null;
+ const stock=task.reserved??world.camp!.stock??{};
+ for(const [kind,count]of Object.entries(step.cost))if((stock[kind as ResourceKind]??0)<count)return `建筑材料不足：${step.label}需要${materialText(step.cost)}；先采集并haul存入。`;
+ for(const [kind,count]of Object.entries(step.cost))stock[kind as ResourceKind]=(stock[kind as ResourceKind]??0)-count;
+ task.progress++;
+ if(step.id==='dismantle'){
+  const oldLevel=plot!.homeLevel??1;world.camp!.stock??={};world.camp!.stock.wood=(world.camp!.stock.wood??0)+6*oldLevel;world.camp!.stock.stone=(world.camp!.stock.stone??0)+4*oldLevel;
+  plot!.position={...task.targetPosition!};Object.assign(plot!,homeSize(task.homeLevel));plot!.homeLevel=task.homeLevel;plot!.zoneId=task.zoneId;plot!.kind='plot';
+ }
+ plot!.buildStage=task.progress-(task.renovation?1:0);plot!.appearance=`住宅施工：${task.progress}/${task.amount}，刚完成${step.label}`;
+ if(task.progress===steps.length){
+  task.status='done';plot!.kind='house';plot!.height=3.5;plot!.homeLevel=task.homeLevel??1;plot!.completedTick=world.tick;plot!.cleanliness??=1;
+  plot!.appearance=`${plot!.width}×${plot!.depth}住宅，南侧门口可进入，屋内可休息、添置家具与打扫`;
+  const owner=world.residents.find(x=>x.id===task.ownerId);if(owner){owner.homeId=plot!.id;if(owner.living){owner.living.housingWait=0;owner.living.upgradeWait=0;owner.living.desiredLevel=plot!.homeLevel;}if(owner.id===r.id)grantKnown(owner,plot!.id,plot!.appearance+'；自己的住处，可使用home_care改善生活。',plot!.position,world.tick);}
+  if(task.ownerId&&!task.renovation){const zone=world.camp?.tasks.find(t=>t.kind==='residential'&&t.zoneId===task.zoneId);if(zone)zone.progress++;}
+ }
+ clearNewWalls(world,plot!);addSkill(r,'construction');updateBoard(world);learnHouse(world,r,task);
+ const text=`${r.name}完成${task.note||taskTitle(task)}的${step.label}，消耗${materialText(step.cost)}。${task.status==='done'?'房屋已建成，可进屋rest或home_care改善生活。':''}`;
+ ownReceipt(r,world,text);world.events.push({tick:world.tick,kind:'construction',agentId:r.id,text});return null;
 }
 export function withdraw(world:World,r:Resident,storageRef:string,resource:ResourceKind,amount:number):string|null{
- const board=world.objects.find(o=>o.id===r.known[storageRef]?.entityId&&o.kind==='board');
- if(!nearby(r,board))return '必须实际走近公共仓储才能领取。';
+ const board=world.objects.find(o=>o.id===r.known[storageRef]?.entityId&&(o.kind==='board'||o.kind==='house'&&o.ownerId===r.id&&o.furniture?.cabinet));
+ if(!nearby(r,board)||board!.kind==='house'&&!isInside(r,board!))return '必须走近公共仓储，或进入自己的住房才能领取。';
  if(!world.camp||!Number.isInteger(amount)||amount<1||!['wood','stone','food'].includes(resource))return '领取参数无效。';
- if((world.camp.stock?.[resource]??0)<amount)return '眼前仓储该资源不足，未领取任何物资。';
+ const stock=board!.kind==='house'?(board!.stored??={}):(world.camp.stock??={});
+ if((stock[resource]??0)<amount)return '眼前仓储该资源不足，未领取任何物资。';
  if(r.inventory+amount>30)return '随身采集袋空间不足。';
- world.camp.stock![resource]!-=amount;r.supplies??={};r.supplies[resource]=(r.supplies[resource]??0)+amount;r.inventory+=amount;
- ownReceipt(r,world,`我从公共仓储实际领取${materialText({[resource]:amount})}。`);return null;
+ stock[resource]!-=amount;r.supplies??={};r.supplies[resource]=(r.supplies[resource]??0)+amount;r.inventory+=amount;
+ ownReceipt(r,world,`我从${board!.kind==='house'?'自己的柜子':'公共仓储'}实际领取${materialText({[resource]:amount})}。`);return null;
 }

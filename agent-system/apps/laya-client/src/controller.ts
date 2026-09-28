@@ -1,3 +1,4 @@
+import {UiNotice} from './ui-notice.ts';
 import {ColonyProvider} from '../../../packages/sim-core/src/colony.ts';
 import {controlSettings,type ControlSettings,type CommandProvider,type CommandRequest,type CommandResponse} from '../../../packages/contracts/src/command.ts';
 import {Simulation} from '../../../packages/sim-core/src/cognition.ts';
@@ -31,6 +32,7 @@ function persist(key:string,value:unknown):void{
   else globalThis.localStorage.setItem(key,JSON.stringify(value));
 }
 export async function boot():Promise<void>{
+  const notice=new UiNotice();
   let view:ObserverView;let configured=false;let canStart=false;let hosted=false;let diagnostic='';let started=false;
   let settings=controlSettings(null);try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_control_v1'):globalThis.localStorage.getItem('survive_control_v1');settings=controlSettings(raw?JSON.parse(raw):null);}catch{}
   let colony:ColonyProvider|null=null;
@@ -90,14 +92,14 @@ export async function boot():Promise<void>{
     try{persist('survive_control_v1',settings);}catch{historyWarning='运行设置未能保存，当前会话仍有效';}
     if(newCamp)selectedId='resident-a';
     sim=makeSimulation(newCamp?undefined:world);if(!newCamp)for(const task of queued)sim.queueTask(task);if(keepPaused)sim.pause('USER_PAUSE');
-    diagnostic=newCamp?'已建立新营地。':'模式已更新，现有居民、任务和私人记忆保留。';
+    diagnostic='';notice.show(newCamp?'已建立新营地。':'模式已更新，现有居民、任务和私人记忆保留。',performance.now());
     if(started)await sim.bootstrap();else sim.pause('NOT_STARTED');
   }
   view=await initialize({
     onControl:(next,newCamp)=>{void configure(next,newCamp).catch(e=>{diagnostic=e.message;});},onRemoteRetry:()=>{colony?.retryRemote();},
     onSummarize:request=>{void summarize(request);},
     onPause:pause,onResume:resume,onRetry:()=>{void health().then(()=>sim.retry());},
-    onTask:draft=>{try{sim.queueTask(draft);diagnostic='规划已排队，将在下一模拟步写入公告板。';return true;}catch(e){diagnostic=(e as Error).message;return false;}},
+    onTask:draft=>{try{sim.queueTask(draft);notice.show('规划已接收；世界恢复运行后写入公告板。',performance.now(),true);return true;}catch(e){diagnostic=(e as Error).message;return false;}},
     onStop:()=>{sim.stop();saveJournal();},
     onSelect:id=>{selectedId=id;},onToggleSenses:()=>{showSenses=!showSenses;},
     onStart:()=>{void start().catch(e=>{diagnostic=e.message;});},
@@ -118,11 +120,10 @@ export async function boot():Promise<void>{
         if(elapsed>=30)cognitionDetail+=' · 等待较久，可停止';
         latestRequestMs=now-barrierWallStart;
       }else if(started)cognitionDetail=`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
-      if(!sim.pendingTaskCount&&diagnostic.startsWith('目标已排队'))diagnostic='';
       if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
       const s:ViewState={control:settings,controlDetail:colony?.detail,controlNotice:colony?.notice,fallbackActive:colony?.fallbackActive,summaries,summaryBusy,summaryError,summaryVersion,world,overlays:cover,cognitionDetail,history:journal.rows,historyVersion:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,hosted,
         mode:settings.mode==='local'||colony?.fallbackActive?'LOCAL_ALGORITHM':configured?'REAL_MODEL':'UNCONFIGURED',status:liveStatus,
-        error:sim.observerError||modelErrors||diagnostic||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
+        error:sim.observerError||modelErrors||notice.read(now,sim.pendingTaskCount)||diagnostic||(sim.pauseTokens.has('USER_PAUSE')&&sim.status==='THINKING'?'用户已暂停；居民仍在思考，继续按钮只解除手动暂停。':'')};
       view.render(s);
     }catch(e){sim.pause('OBSERVER_ERROR');diagnostic=(e as Error).message;}
   }

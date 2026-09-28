@@ -1,4 +1,5 @@
 import type { Resident, World } from './domain.ts';
+import {advanceLiving,daylightAt} from './living.ts';
 import {postTask} from './camp.ts';
 import { createCharacterState } from './character.ts';
 export function createWorld(options: {seed?:number;runId?:string} = {}): World {
@@ -14,7 +15,7 @@ export function createWorld(options: {seed?:number;runId?:string} = {}): World {
       {id:'tree-west',kind:'tree',position:{x:-5,y:0,z:4},width:1,height:4,depth:1,appearance:'枝叶茂盛的树',resources:30},
       {id:'tree-east',kind:'tree',position:{x:5,y:0,z:4},width:1,height:4,depth:1,appearance:'枝叶稀疏的树',resources:30},
       {id:'wall-north',kind:'wall',position:{x:0,y:0,z:-4},width:5,height:3,depth:0.5,appearance:'不透光的石墙',resources:0},
-    ],sounds:[],daylight:0.65,weatherProgress:0,events:[]};
+    ],sounds:[],daylight:daylightAt(0),weatherProgress:0,events:[]};
 }
 function makeResident(id:string,name:string,x:number,heading:number,friend:string):Resident {
   const background=`你和${friend}是营地里相识多年的朋友，认识彼此的面容和声音。今早你们各自来到营地的空地附近。`;
@@ -33,8 +34,8 @@ export function advanceEnvironment(world:World):void {
     const previous=resident.health??100;resident.health=Math.max(0,Math.min(100,previous+(resident.hunger>=.9?-.015:resident.hunger<.5&&resident.fatigue<.4?.002:0)));
     if(previous>0&&resident.health===0)world.events.push({tick:world.tick,kind:'incapacitated',agentId:resident.id,text:'生命耗尽，无法行动'});
   }
-  for(const r of world.residents){const target=Math.max(.05,Math.min(1,.9-r.hunger*.38-r.fatigue*.28-r.pain*.4+(r.homeId?.length? .06:0)));r.mood=Math.max(0,Math.min(1,(r.mood??.75)+(target-(r.mood??.75))*.0005));}
-  world.daylight=0.65+Math.sin(world.tick/24000)*0.2;
+  advanceLiving(world);
+  world.daylight=daylightAt(world.tick);
   world.weatherProgress=(world.tick%72000)/72000;
 }
 

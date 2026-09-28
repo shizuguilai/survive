@@ -1,5 +1,5 @@
 import type {Resident,World,WorldObject,ResourceKind,CampTask,ResidentialBounds} from './domain.ts';
-import {BUILD_SITES,HOUSE_STEPS,RECIPES,materialText,taskTitle} from './recipes.ts';
+import {BUILD_SITES,HOUSE_STEPS,houseSteps,houseCost,RECIPES,materialText,taskTitle} from './recipes.ts';
 import {homeSites,validateZone,ownHomeProject} from './housing.ts';
 import {experiencedWhen,rememberObservation} from './knowledge.ts';
 export const RESOURCE_LABELS:Record<ResourceKind,string>={wood:'木材',stone:'石料',food:'浆果'};
@@ -31,6 +31,7 @@ export function postTask(world:World,draft:TaskDraft):void{
 }
 export function updateBoard(world:World):void{
   const board=world.objects.find(o=>o.kind==='board');if(!board||!world.camp)return;
+  for(const zone of world.camp.tasks.filter(t=>t.kind==='residential'))zone.progress=world.objects.filter(o=>o.kind==='house'&&o.ownerId&&o.zoneId===zone.zoneId).length;
   board.appearance=`公告板实体兼公共仓储，第${++world.camp.noticeVersion}版。走近后read_notice读取任务和库存；此实体引用可用于noticeRef或storageRef。`;
 }
 export function ownReceipt(resident:Resident,world:World,text:string,ref?:string):void{
@@ -77,13 +78,14 @@ export function claimHome(world:World,resident:Resident,notice:CampTask):string|
   if(!site)return '居住区暂无可用空地，需要扩大居住区或清理资源，原有房屋不会被覆盖。';
   const task:CampTask={id:`task-${++world.camp!.sequence}`,kind:'house',zoneId:zone.id,ownerId:resident.id,resource:'wood',amount:3,progress:0,note:`${resident.name}为自己建造的住处`,acceptedBy:[resident.id],status:'open',postedTick:world.tick};
   world.camp!.tasks.push(task);if(!notice.acceptedBy.includes(resident.id))notice.acceptedBy.push(resident.id);
-  world.objects.push({id:`home-${resident.id}`,kind:'plot',projectId:task.id,zoneId:zone.id,ownerId:resident.id,buildStage:0,position:{...site,y:0},width:4,height:.5,depth:3,appearance:`${resident.name}申请的住宅地块`,resources:0});
+  world.objects.push({id:`home-${resident.id}`,kind:'plot',projectId:task.id,zoneId:zone.id,ownerId:resident.id,homeLevel:1,buildStage:0,position:{...site,y:0},width:4,height:.5,depth:3,appearance:`${resident.name}申请的住宅地块`,resources:0});
   learnHouse(world,resident,task);updateBoard(world);
   ownReceipt(resident,world,'我自主申请了自己的住处，已确认地块和施工步骤。按需要采集并把木石搬入公共仓储，再按地基、墙体、屋顶施工。完成后可以进屋休息。');
   world.events.push({tick:world.tick,kind:'construction',agentId:resident.id,text:`${resident.name}在居住区申请了自己的小屋。`});return null;
 }
-function learnHouse(world:World,resident:Resident,task:CampTask):void{
+export function learnHouse(world:World,resident:Resident,task:CampTask):void{
   const plot=world.objects.find(o=>o.projectId===task.id);if(!plot)return;
-  const entry=grantKnown(resident,task.id,`${task.note||'木石小屋'}；进度${task.progress}/3；${task.status==='done'?'已建成，可从南侧门口进入休息':'需12木材8石料，施工自动扣公共仓储；无需取出随身携带；按地基→墙体→屋顶使用build'}；projectRef使用本引用。`,plot.position,world.tick);
-  HOUSE_STEPS.forEach((step,index)=>grantKnown(resident,`${task.id}:${step.id}`,`施工步骤${index+1}：${step.label}；消耗公共仓储${materialText(step.cost)}；${index<task.progress?'已完成':index===task.progress?'可准备':'等待前序'}；build的stepRef使用本引用，projectRef使用${entry.ref}。`,plot.position,world.tick));
+  if(task.status==='done'&&task.ownerId===resident.id)grantKnown(resident,plot.id,plot.appearance+'；自己的住处，可home_care改善生活。',plot.position,world.tick);
+  const entry=grantKnown(resident,task.id,`${task.note||'木石小屋'}；进度${task.progress}/${task.amount}；${task.status==='done'?'已建成，可从南侧门口进入休息':`需${materialText(houseCost(task.homeLevel))}，${task.reserved?'扩建材料已预留':'施工自动扣公共仓储'}；按${houseSteps(task).map(s=>s.label).join('→')}使用build`}；projectRef使用本引用。`,plot.position,world.tick);
+  houseSteps(task).forEach((step,index)=>grantKnown(resident,`${task.id}:${step.id}`,`施工步骤${index+1}：${step.label}；消耗公共仓储${materialText(step.cost)}；${index<task.progress?'已完成':index===task.progress?'可准备':'等待前序'}；build的stepRef使用本引用，projectRef使用${entry.ref}。`,plot.position,world.tick));
 }

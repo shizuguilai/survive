@@ -27,7 +27,7 @@ export class CharacterMesh {
     this.node.transform.rotationEuler=new L.Vector3(0,90-resident.heading*180/Math.PI,(resident.health??100)<=0?90:0);
     const pose=pawnPose(resident);this.visuals.transform.localPosition=new L.Vector3(0,pose.bob,0);
     this.shadow.transform.localPosition=new L.Vector3(.07,.015-pose.bob,-.04);
-    const work=workPose(resident);this.visuals.transform.localRotationEuler=new L.Vector3(work.lean,0,0);
+    const work=workPose(resident),sleeping=resident.plan?.some(p=>!p.done&&p.action.op==='rest'&&p.bedSettled)??false;if(sleeping)this.visuals.transform.localPosition=new L.Vector3(0,.43,.78);this.visuals.transform.localRotationEuler=new L.Vector3(sleeping?-90:work.lean,0,0);
     for(const h of this.hands){const lift=work.active?(this.twoHanded||h.side>0?work.right:work.left):0;const swing=pose.stride*(this.twoHanded?.045:h.side*.26);h.node.transform.localPosition=new L.Vector3(h.x,h.y+(this.twoHanded?0:Math.abs(pose.stride)*.045)+lift,h.z+swing+(work.active?.24-lift*.3:0));h.node.transform.localRotationEuler=new L.Vector3(work.active?-25-lift*100:this.twoHanded?0:pose.stride*h.side*14,0,0);}
     if(this.sharedGrip)this.sharedGrip.transform.localPosition=new L.Vector3(0,work.active?work.right:0,pose.stride*.045+(work.active?.18:0));
   }

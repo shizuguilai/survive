@@ -12,7 +12,7 @@ export type SpatialMemoryContext={frame:'personal_start_relative';cellSize:numbe
 export type CharacterContext = {
   spatialMemory?:SpatialMemoryContext;
   schemaVersion:'1.0.0'; identity:{name:string;background:string;personality:string;personalGoal:string};
-  experiencedWhen:string; body:{hunger:string;fatigue:string;pain:string};
+  experiencedWhen:string; body:{hunger:string;fatigue:string;pain:string;mood?:string;need?:string};
   currentPlan:{goal:string;actions:Action[];progress:string};
   observations:Observation[]; memories:Memory[];
   knownTargets:{ref:string;description:string;lastObservedWhen:string;atLastKnownPosition?:boolean}[];

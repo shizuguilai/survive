@@ -6,7 +6,8 @@ const wallCache=new WeakMap<WorldObject,{key:string;walls:WorldObject[]}>();cons
 export function solidWalls(object:WorldObject):WorldObject[]{
   if(object.kind!=='wall'&&(!['house','plot'].includes(object.kind)||(object.buildStage??3)<2))return EMPTY;
   const key=[object.kind,object.buildStage,object.position.x,object.position.y,object.position.z,object.width,object.depth].join(':');const cached=wallCache.get(object);if(cached?.key===key)return cached.walls;
-  const walls:WorldObject[]=object.kind==='wall'?[object]: [[0,-1.45,4,.18],[-1.92,0,.16,3],[1.92,0,.16,3],[-1.35,1.45,1.3,.17],[1.35,1.45,1.3,.17]].map(([x,z,width,depth],i)=>({
+  const hw=object.width/2,hd=object.depth/2,side=(object.width-1.4)/2,front=(hw+.7)/2;
+  const walls:WorldObject[]=object.kind==='wall'?[object]: [[0,-hd+.05,object.width,.18],[-hw+.08,0,.16,object.depth],[hw-.08,0,.16,object.depth],[-front,hd-.05,side,.17],[front,hd-.05,side,.17]].map(([x,z,width,depth],i)=>({
     ...object,id:`${object.id}:wall:${i}`,kind:'wall',position:{x:object.position.x+x,y:.37,z:object.position.z+z},width,depth,height:2.1,
   }));wallCache.set(object,{key,walls});return walls;
 }
@@ -23,8 +24,8 @@ export const movementBlocked=(w:World,a:Vec3,b:Vec3)=>w.objects.some(o=>solidWal
 export function floorHeight(w:World,p:Vec3):number{
   for(const o of w.objects)if(['house','plot'].includes(o.kind)&&(o.buildStage??3)>=1){
     const x=Math.abs(p.x-o.position.x),z=p.z-o.position.z;
-    if(x<1.8&&Math.abs(z)<1.6)return .405;
-    if(x<.6&&z>=1.6&&z<2.4)return .405*(2.4-z)/.8;
+    if(x<o.width/2-.2&&Math.abs(z)<o.depth/2+.1)return .405;
+    if(x<.6&&z>=o.depth/2+.1&&z<o.depth/2+.9)return .405*(o.depth/2+.9-z)/.8;
   }
   return 0;
 }

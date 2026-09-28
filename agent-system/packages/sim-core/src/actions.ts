@@ -2,17 +2,19 @@ import type { Action, Decision, Vec3 } from '../../contracts/src/types.ts';
 import type { ActionProgress, Resident, World } from './domain.ts';
 import { FIXED_DT_MS } from './clock.ts';
 import {readWorkbench,finishRecipe,findRecipe,finishBuild,withdraw,skillDuration,gatherPeriod,addSkill} from './workshop.ts';
-import {HOUSE_STEPS,taskTitle} from './recipes.ts';
+import {finishHomeCare} from './home-care.ts';
+import {onBreak,isInside,restRecovery} from './living.ts';
+import {HOUSE_STEPS,houseSteps,taskTitle} from './recipes.ts';
 import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS,claimHome} from './camp.ts';
 import {navigationPath,movementBlocked,floorHeight} from './navigation.ts';
 import {rememberMapCell} from './spatial-memory.ts';
 import { applyEquipmentAction } from './character.ts';
-export const IMPLEMENTED_ACTIONS = ['survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
+export const IMPLEMENTED_ACTIONS = ['home_care','survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
 const distance=(a:Vec3,b:Vec3)=>Math.hypot(a.x-b.x,a.z-b.z);
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
 function channels(action:Action):string[] {
   switch(action.op){
-    case 'craft':case 'exchange':case 'withdraw':case 'build':
+    case 'home_care':case 'craft':case 'exchange':case 'withdraw':case 'build':
     case 'haul':return ['hands','locomotion'];
     case 'read_notice':return ['head'];case 'eat':return ['hands','mouth'];
     case 'equip_item':case 'unequip_item':return ['hands'];
@@ -57,6 +59,7 @@ export function stepActions(world:World,nextTick:number):string[] {
     const pending=resident.plan.filter(p=>!p.done);if(!pending.length)continue;
     const stage=Math.min(...pending.map(p=>p.action.stage));
     for(const progress of pending.filter(p=>p.action.stage===stage)){
+      if(onBreak(world,resident)&&!['rest','eat','wait','speak','look','listen'].includes(progress.action.op))continue;
       const first=progress.startedTick===null;
       if(first)progress.startedTick=nextTick;
       progress.elapsedTicks++;
@@ -71,7 +74,7 @@ export function stepActions(world:World,nextTick:number):string[] {
           const target=progress.targetPosition!;const remaining=distance(resident.position,target);
           if(remaining<=0.80001){fail(world,resident,progress,nextTick,'我已在该目标最后已知位置附近，本次没有移动，不能算作新的移动进展。应根据已有感官决定下一步；目标当前状态不明时先观察。');due.add(resident.id);break;}
           const speed=(params.gait==='run'?2.6:1.4)*((resident.health??100)<30?.5:1);
-          const key=world.objects.filter(o=>['plot','house'].includes(o.kind)).map(o=>o.id+':'+o.buildStage).join('|');
+          const key=world.objects.filter(o=>['plot','house'].includes(o.kind)).map(o=>o.id+':'+o.buildStage+':'+o.width+':'+o.depth+':'+o.position.x+':'+o.position.z).join('|');
           if(!progress.waypoints||progress.navigationKey!==key){progress.waypoints=navigationPath(world,resident,target);progress.navigationKey=key;}
           while(progress.waypoints.length>1&&distance(resident.position,progress.waypoints[0])<.025)progress.waypoints.shift();
           const waypoint=progress.waypoints[0]??target,wayDistance=distance(resident.position,waypoint);
@@ -133,18 +136,24 @@ export function stepActions(world:World,nextTick:number):string[] {
           if(progress.elapsedTicks*FIXED_DT_MS>=500){const error=withdraw(world,resident,params.storageRef,params.resource,params.amount);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;}break;
         }
         case 'build':{
-          const step=HOUSE_STEPS.find(s=>resident.known[params.stepRef]?.entityId.endsWith(':'+s.id));
+          const buildTask=world.camp?.tasks.find(t=>t.id===resident.known[params.projectRef]?.entityId);
+          const step=buildTask?houseSteps(buildTask).find(s=>resident.known[params.stepRef]?.entityId.endsWith(':'+s.id)):undefined;
           if(!step){fail(world,resident,progress,nextTick,'尚未知晓这个施工步骤。');due.add(resident.id);break;}
           const project=world.objects.find(o=>o.projectId===resident.known[params.projectRef]?.entityId);
           if(project)resident.heading=Math.atan2(project.position.z-resident.position.z,project.position.x-resident.position.x);
           if(progress.elapsedTicks*FIXED_DT_MS>=skillDuration(resident,'construction',step.durationMs)){const error=finishBuild(world,resident,params.projectRef,params.stepRef);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;}break;
         }
+        case 'home_care':{
+          if(progress.elapsedTicks*FIXED_DT_MS>=4000){const error=finishHomeCare(world,resident,params.homeRef,params.improvement);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;}break;
+        }
         case 'haul':{
           const source=resident.known[params.sourceRef],destination=resident.known[params.destinationRef];
           const kind=(['wood','stone','food'] as const).find(k=>source?.entityId===`supply-${k}-${resident.id}`);
-          const board=world.objects.find(o=>o.id===destination?.entityId&&o.kind==='board');
+          const board=world.objects.find(o=>o.id===destination?.entityId&&(o.kind==='board'||o.kind==='house'&&o.ownerId===resident.id&&o.furniture?.cabinet));
           if(!kind||!resident.supplies?.[kind]||!board||distance(resident.position,board.position)>2.5||!world.camp){fail(world,resident,progress,nextTick,'需带着本人资源走到公告板旁仓储，才能存放。');due.add(resident.id);break;}
-          if(progress.elapsedTicks%10===0){resident.supplies[kind]!--;resident.inventory--;world.camp.stock??={};world.camp.stock[kind]=(world.camp.stock[kind]??0)+1;if(Math.floor(progress.elapsedTicks/10)>=params.amount||!resident.supplies[kind])progress.done=true;}break;
+          if(board.kind==='house'&&!isInside(resident,board)){fail(world,resident,progress,nextTick,'需要进入自己的住房才能存放。');due.add(resident.id);break;}
+          if(board.kind==='house'&&Object.values(board.stored??{}).reduce((n,v)=>n+(v??0),0)>=24){fail(world,resident,progress,nextTick,'个人柜子已满（24份）。');due.add(resident.id);break;}
+          if(progress.elapsedTicks%10===0){resident.supplies[kind]!--;resident.inventory--;const stock=board.kind==='house'?(board.stored??={}):(world.camp.stock??={});stock[kind]=(stock[kind]??0)+1;if(Math.floor(progress.elapsedTicks/10)>=params.amount||!resident.supplies[kind])progress.done=true;}break;
         }
         case 'read_notice':{
           const board=world.objects.find(o=>o.id===knowledge!.entityId&&['board','workbench'].includes(o.kind));
@@ -163,10 +172,12 @@ export function stepActions(world:World,nextTick:number):string[] {
           if(knowledge!.entityId!==`supply-food-${resident.id}`||!(resident.supplies?.food)){fail(world,resident,progress,nextTick,'我没有可食用的自有浆果。');due.add(resident.id);break;}
           if(progress.elapsedTicks%20===0){resident.supplies.food--;resident.inventory--;resident.hunger=Math.max(0,resident.hunger-.16);if(Math.floor(progress.elapsedTicks/20)>=params.amount||!resident.supplies.food)progress.done=true;}break;
         }
-        case 'rest':
-          if(progress.targetPosition&&distance(resident.position,progress.targetPosition)>1.8){fail(world,resident,progress,nextTick,'我还没有到达想休息的地方。');due.add(resident.id);break;}
-          resident.fatigue=Math.max(0,resident.fatigue-(world.objects.some(o=>o.kind==='house'&&distance(resident.position,o.position)<=3)?.0005:.0002));
-          progress.done=progress.elapsedTicks*FIXED_DT_MS>=params.durationSimMs;break;
+        case 'rest':{
+          if(!progress.bedHomeId&&progress.targetPosition&&distance(resident.position,progress.targetPosition)>1.8){fail(world,resident,progress,nextTick,'我还没有到达想休息的地方。');due.add(resident.id);break;}
+          const bedHouse=world.objects.find(h=>h.kind==='house'&&h.furniture?.bed&&h.ownerId===resident.id&&isInside(resident,h));
+          if(bedHouse){const bed={x:bedHouse.position.x-bedHouse.width/2+.82,y:resident.position.y,z:bedHouse.position.z-.13};progress.bedHomeId=bedHouse.id;const d=distance(resident.position,bed),step=Math.min(.07,d);if(d>.01){const next={...resident.position,x:resident.position.x+(bed.x-resident.position.x)/d*step,z:resident.position.z+(bed.z-resident.position.z)/d*step};if(!movementBlocked(world,resident.position,next))resident.position=next;}progress.bedSettled=d<.12;resident.heading=Math.PI/2;}else{delete progress.bedHomeId;progress.bedSettled=false;}
+          resident.fatigue=Math.max(0,resident.fatigue-restRecovery(world,resident));
+          progress.done=progress.elapsedTicks*FIXED_DT_MS>=params.durationSimMs;break;}
         case 'equip_item':case 'unequip_item':{
           if(progress.elapsedTicks*FIXED_DT_MS<1000)break;
           const result=applyEquipmentAction(resident,{type:progress.action.op,itemRef:params.itemRef,...(params.slot?{slot:params.slot}:{})} as any);

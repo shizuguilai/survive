@@ -1,3 +1,4 @@
+import {residentThought,dayClock,moodReasons} from './living.ts';
 import defaults from '../defaults.json' with { type: 'json' };
 import type { CharacterContext, Observation, Vec3 } from '../../contracts/src/types.ts';
 import type { KnowledgeEntry, Resident, SensoryOverlay, SoundFragment, World, WorldObject } from './domain.ts';
@@ -261,7 +262,7 @@ export function buildContext(world: World, resident: Resident): CharacterContext
     ...(buildSpatialContext(resident)?{spatialMemory:buildSpatialContext(resident)}:{}),
     identity: { name: resident.name, background: resident.background, personality: resident.personality, personalGoal: resident.personalGoal },
     experiencedWhen: experiencedWhen(world.tick, DT),
-    body: { hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain')+`；自身生命${Math.round(resident.health??100)}/100${(resident.health??100)<30?'，虚弱，行动缓慢':''}` },
+    body: { ...(world.camp?{mood:`心情${Math.round((resident.mood??.75)*100)}%；${moodReasons(world,resident).join('、')}`.slice(0,120),need:dayClock(world.tick).label+'；自己的心愿：'+residentThought(world,resident)}:{}),hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain')+`；自身生命${Math.round(resident.health??100)}/100${(resident.health??100)<30?'，虚弱，行动缓慢':''}` },
     currentPlan: { goal: ((resident.plan.length&&!resident.plan.some(p=>!p.done)?'（计划已完成，需要考虑后续行动）':'')+resident.goal).slice(0,300), actions: resident.plan.filter(progress=>!progress.done).map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.supplies?`；自己携带：木材${resident.supplies.wood??0}、石料${resident.supplies.stone??0}、浆果${resident.supplies.food??0}，容量30。自身熟练度：采集${skillLevel(resident.skills?.gathering)}级，加工${skillLevel(resident.skills?.crafting)}级，建造${skillLevel(resident.skills?.construction)}级。`:'') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
     observations: observations.map(privateObservation), memories: selectedMemories.map(privateMemory),
     knownTargets: [
@@ -273,7 +274,7 @@ export function buildContext(world: World, resident: Resident): CharacterContext
         lastObservedWhen: experiencedWhen(world.tick, DT),
       })) : []),
     ],
-    allowedActions: [...ALLOWED,...(world.camp?['read_notice','accept_task','decline_task','haul','withdraw','build',...(Object.values(resident.known).some(k=>k.entityId.startsWith('recipe:'))?['craft','exchange']:[]),...(resident.supplies?.food?['eat']:[])]:[])].filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
+    allowedActions: [...ALLOWED,...(world.camp?['home_care','read_notice','accept_task','decline_task','haul','withdraw','build',...(Object.values(resident.known).some(k=>k.entityId.startsWith('recipe:'))?['craft','exchange']:[]),...(resident.supplies?.food?['eat']:[])]:[])].filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
   };
 }
 

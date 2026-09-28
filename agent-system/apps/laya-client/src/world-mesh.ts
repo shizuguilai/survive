@@ -2,7 +2,7 @@ import {resourceRatio,resourceStage} from '../../../packages/sim-core/src/resour
 import type {WorldObject} from '../../../packages/sim-core/src/domain.ts';
 /** All scenery is native Laya geometry; these objects never advance the simulation. */
 export class WorldMesh{
- readonly node:any;private geometries:any[]=[];private materials:any[]=[];private ink:any;private roofs:any[]=[];
+ readonly node:any;private geometries:any[]=[];private materials:any[]=[];private ink:any;private roofs:any[]=[];private lampParts:any[]=[];
  constructor(readonly object:WorldObject){
   const L=(globalThis as any).Laya;this.node=new L.Sprite3D(object.id);this.node.transform.position=new L.Vector3(object.position.x,object.position.y,object.position.z);
   const box=(name:string,w:number,h:number,d:number,x:number,y:number,z:number,c:string)=>this.part(name,L.PrimitiveMesh.createBox(w,h,d),x,y,z,c);
@@ -24,14 +24,27 @@ export class WorldMesh{
     if(object.resources)for(let i=0;i<Math.ceil(ratio*7);i++){const a=i*2.4;ball('ripe berry',.095,Math.cos(a)*.42,.59+(i%3)*.1,Math.sin(a)*.4,'#b74e4b');}break;
    case 'pond':this.part('shore bank',L.PrimitiveMesh.createCylinder(2.72,.025,32),0,-.01,0,'#8d8965');this.part('water',L.PrimitiveMesh.createCylinder(2.5,.035,32),0,.015,0,'#557b78');this.part('deep water',L.PrimitiveMesh.createCylinder(1.92,.012,32),-.17,.04,-.17,'#436c6b');for(let i=0;i<4;i++)box('water glint',.35+i*.11,.008,.025,-.8+i*.42,.055,-.7+i*.4,'#8da8a0');for(let i=0;i<10;i++){const a=i*Math.PI/5;ball('shore stone',.25,Math.cos(a)*2.6,.09,Math.sin(a)*2.6,'#aaa48a',1.3,.45,1);}break;
    case 'plot':case 'house':{
-    const stage=object.buildStage??3;
-    box('building footprint',4.4,.03,3.5,0,.02,0,'#b8ae86');
-    for(const x of [-2,2])for(const z of [-1.5,1.5])box('survey stake',.10,.65,.10,x,.34,z,'#e1cf95');
-    if(stage>=1){box('stone foundation',4.1,.3,3.2,0,.17,0,'#969a8b');box('wood floor',3.9,.09,3,0,.36,0,'#ba9569');for(let i=0;i<8;i++)box('floor seam',.015,.01,3,-1.75+i*.5,.41,0,'#987648');}
-    if(stage>=2){box('back wall',4,2.1,.18,0,1.42,-1.45,'#c2a06c');for(const x of [-1.92,1.92])box('side wall',.16,2.1,3,x,1.42,0,'#c6aa7d');
-     for(const x of [-1.35,1.35])box('front wall',1.3,2.1,.17,x,1.42,1.45,'#bf9c68');box('door lintel',1.45,.36,.2,0,2.3,1.45,'#8f714b');
-     for(let row=0;row<6;row++){for(const x of [-1.35,1.35])box('front horizontal timber seam',1.3,.018,.015,x,.52+row*.31,1.544,'#856b4c');for(const x of [-2.012,2.012])box('side timber seam',.012,.018,3,x,.52+row*.31,0,'#856b4c');}for(const x of [-1.25,1.25]){box('window frame',.67,.77,.10,x,1.55,1.57,'#715638');box('window pane',.51,.6,.035,x,1.55,1.63,'#496b70');box('window crossbar',.04,.6,.04,x,1.55,1.66,'#715638');}}
-    if(stage>=3){for(const side of [-1,1]){const roof=box('sloping roof',2.7,.18,3.75,side*1.08,2.9,0,'#69715b');roof.transform.localRotationEuler=new L.Vector3(0,0,-side*24);}for(const side of [-1,1])for(let row=0;row<8;row++){const seam=box('roof shingle seam',2.72,.025,.028,side*1.08,3.003,-1.65+row*.46,'#35483e');seam.transform.localRotationEuler=new L.Vector3(0,0,-side*24);}box('roof ridge',.19,.2,3.85,0,3.43,0,'#3b483c');box('chimney',.48,1,.5,1.16,3.35,-.85,'#8f9181');box('chimney cap',.58,.13,.6,1.16,3.89,-.85,'#5a6158');box('porch step',1.6,.18,.7,0,.14,1.98,'#9c9b85');box('door shade',.76,1.63,.04,0,1.19,-1.36,'#6c634b');}break;
+    const stage=object.buildStage??3,w=object.width,d=object.depth,hw=w/2,hd=d/2,front=(hw+.7)/2,side=(w-1.4)/2;
+    box('building footprint',w+.4,.03,d+.5,0,.02,0,'#b8ae86');
+    if(stage<3)for(const x of [-hw,hw])for(const z of [-hd,hd])box('survey stake',.10,.65,.10,x,.34,z,'#e1cf95');
+    if(stage>=1){box('stone foundation',w+.1,.3,d+.2,0,.17,0,'#969a8b');box('wood floor',w-.1,.09,d,0,.36,0,'#ba9569');for(let x=-hw+.25;x<hw;x+=.5)box('floor seam',.015,.01,d,x,.41,0,'#987648');}
+    if(stage>=2){
+     box('back wall',w,2.1,.18,0,1.42,-hd+.05,'#c2a06c');for(const x of [-hw+.08,hw-.08])box('side wall',.16,2.1,d,x,1.42,0,'#c6aa7d');
+     for(const x of [-front,front])box('front wall',side,2.1,.17,x,1.42,hd-.05,'#bf9c68');box('door lintel',1.45,.36,.2,0,2.3,hd-.05,'#8f714b');
+     for(let row=0;row<6;row++){for(const x of [-front,front])box('front horizontal timber seam',side,.018,.015,x,.52+row*.31,hd+.044,'#856b4c');for(const x of [-hw-.012,hw+.012])box('side timber seam',.012,.018,d,x,.52+row*.31,0,'#856b4c');}
+     for(const x of [-front,front]){box('window frame',.67,.77,.10,x,1.55,hd+.07,'#715638');box('window pane',.51,.6,.035,x,1.55,hd+.13,'#496b70');box('window crossbar',.04,.6,.04,x,1.55,hd+.16,'#715638');}
+    }
+    if(stage>=3){
+     const peak=2.5+Math.tan(24*Math.PI/180)*hw,roofY=peak-Math.tan(24*Math.PI/180)*(hw/2+.08),roofW=(hw+.5)/Math.cos(24*Math.PI/180);
+     for(const side of [-1,1]){const roof=box('sloping roof',roofW,.18,d+.75,side*(hw/2+.08),roofY,0,'#69715b');roof.transform.localRotationEuler=new L.Vector3(0,0,-side*24);}
+     for(const side of [-1,1])for(let z=-hd-.15;z<hd+.25;z+=.46){const seam=box('roof shingle seam',roofW,.025,.028,side*(hw/2+.08),roofY+.103,z,'#35483e');seam.transform.localRotationEuler=new L.Vector3(0,0,-side*24);}
+     box('roof ridge',.19,.2,d+.85,0,peak+.05,0,'#3b483c');box('chimney',.48,1,.5,hw-.84,peak-.03,-hd+.65,'#8f9181');box('chimney cap',.58,.13,.6,hw-.84,peak+.51,-hd+.65,'#5a6158');box('porch step',1.6,.18,.7,0,.14,hd+.48,'#9c9b85');
+     const f=object.furniture;
+     if(f?.bed){const x=-hw+.82;box('bed frame',1.15,.25,1.95,x,.55,-.13,'#805a3e');box('bed mattress',1.07,.2,1.83,x,.76,-.13,'#d4c7a0');box('bed blanket',1.08,.06,1.25,x,.89,.14,'#75948c');box('bed pillow',.83,.13,.38,x,.91,-.78,'#ede3c8');box('bed headboard',1.2,.73,.1,x,.73,-1.15,'#9f774d');}
+     if(f?.cabinet){box('personal cabinet',.88,1.35,.65,hw-.68,1.08,-hd+.6,'#9e794f');box('cabinet doors',.8,1.13,.04,hw-.68,1.08,-hd+.95,'#bc9560');box('cabinet split',.025,1.05,.04,hw-.68,1.08,-hd+.98,'#795637');ball('cabinet handle',.04,hw-.8,1.1,-hd+1,'#dfc798');}
+     if(f?.lamp){box('lamp stand',.07,1.2,.07,hw-.63,1.05,hd-.54,'#685a42');ball('lamp shade',.23,hw-.63,1.71,hd-.54,'#e8ce80',1,.72,1);this.lampParts.push(ball('lamp glow',.26,hw-.63,1.71,hd-.54,'#fff0ac',1,.7,1));const pool=this.part('lamp pool',L.PrimitiveMesh.createCylinder(Math.min(hw,1.5),.012,24),.2,.423,.1,'#d0bb7d');this.lampParts.push(pool);}
+     if(f?.mop){const handle=box('mop handle',.045,1.25,.045,hw-.29,1.03,.16,'#b49765');handle.transform.localRotationEuler=new L.Vector3(8,0,-7);box('mop head',.30,.08,.16,hw-.35,.44,.23,'#c2c9b8');}
+    }break;
    }
    case 'wall':box('stone wall',object.width,object.height,object.depth,0,object.height/2,0,'#777f73');for(let row=1;row<Math.min(12,object.height/.35);row++)box('mortar seam',object.width+.012,.024,object.depth+.012,0,row*.35,0,'#4e584e');break;
    default:
@@ -42,12 +55,13 @@ export class WorldMesh{
  }
  private part(name:string,geometry:any,x:number,y:number,z:number,color:string):any{
   const L=(globalThis as any).Laya,node=new L.MeshSprite3D(geometry,name),n=parseInt(color.slice(1),16);node.transform.localPosition=new L.Vector3(x,y,z);
-  const flat=/crown|cluster|leaves|shadow|water/.test(name);const material=flat?new L.UnlitMaterial():new L.BlinnPhongMaterial();material.albedoColor=new L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);material.specularColor=new L.Color(0,0,0,1);node.meshRenderer.sharedMaterial=material;this.node.addChild(node);this.geometries.push(geometry);this.materials.push(material);
+  const flat=/crown|cluster|leaves|shadow|water|lamp glow|lamp pool/.test(name);const material=flat?new L.UnlitMaterial():new L.BlinnPhongMaterial();material.albedoColor=new L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);material.specularColor=new L.Color(0,0,0,1);node.meshRenderer.sharedMaterial=material;this.node.addChild(node);this.geometries.push(geometry);this.materials.push(material);
   if(/crown|cluster|leaves|trunk|stone edge|wall$|foundation|roof$|crate$|frame$|workbench top/.test(name)){
    if(!this.ink){this.ink=new L.UnlitMaterial();this.ink.albedoColor=new L.Color(.17,.19,.15,1);this.ink.cull=L.RenderState.CULL_FRONT;this.materials.push(this.ink);}
    const outline=new L.MeshSprite3D(geometry,'ink silhouette');outline.transform.localScale=new L.Vector3(1.026,1.026,1.026);outline.meshRenderer.sharedMaterial=this.ink;node.addChild(outline);
   }if(['house','plot'].includes(this.object.kind)&&/roof|chimney/.test(name))this.roofs.push(node);return node;
  }
+ setNight(night:boolean):void{for(const node of this.lampParts)node.active=night;}
  setRoofVisible(visible:boolean):void{for(const roof of this.roofs)roof.active=visible;}
  dispose():void{this.node.destroy(true);for(const g of this.geometries)g.destroy();for(const m of this.materials)m.destroy();}
 }

@@ -1,4 +1,4 @@
-import type {ResourceKind} from './domain.ts';
+import type {ResourceKind,CampTask} from './domain.ts';
 export type Recipe={id:string;label:string;kind:'craft'|'exchange';cost:Partial<Record<ResourceKind,number>>;item?:'stone_axe'|'stone_hoe';output?:Partial<Record<ResourceKind,number>>;durationMs:number;effect:string};
 export const RECIPES:readonly Recipe[]=[
  {id:'stone_axe',label:'石斧',kind:'craft',cost:{wood:2,stone:3},item:'stone_axe',durationMs:3000,effect:'本人装备到手后，伐木每份由1秒缩短为0.6秒'},
@@ -16,3 +16,9 @@ export const BUILD_SITES=[{id:'east',label:'东侧居住地块',x:7,z:0},{id:'no
 export const materialText=(values:Partial<Record<ResourceKind,number>>)=>Object.entries(values).map(([k,n])=>`${n}${k==='wood'?'木材':k==='stone'?'石料':'浆果'}`).join(' + ');
 export const taskTitle=(task:{kind?:string;resource?:ResourceKind;amount:number;recipeId?:string})=>task.kind==='residential'?'居住区 · 自主安家':task.kind==='house'?'建造一间木石小屋':task.kind==='craft'?`制作${RECIPES.find(r=>r.id===task.recipeId)?.label??'工具'}${task.amount}件`:`采集${task.resource==='wood'?'木材':task.resource==='stone'?'石料':'浆果'}${task.amount}份`;
 export const skillLevel=(xp=0)=>Math.min(5,Math.floor(xp/3));
+
+export function houseSteps(task:Pick<CampTask,'homeLevel'|'renovation'>){
+ const scale=task.homeLevel??1,steps=HOUSE_STEPS.map(s=>({...s,cost:{wood:s.cost.wood*scale,stone:s.cost.stone*scale}}));
+ return task.renovation?[{id:'dismantle',label:'拆旧回收',cost:{wood:0,stone:0},durationMs:4000},...steps]:steps;
+}
+export const houseCost=(level=1)=>({wood:12*level,stone:8*level});

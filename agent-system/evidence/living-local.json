@@ -1,0 +1,309 @@
+{
+  "mode": "LOCAL_ALGORITHM",
+  "finished": true,
+  "tick": 21770,
+  "wallMs": 48283,
+  "remoteCalls": 0,
+  "homes": [
+    {
+      "id": "home-resident-b",
+      "kind": "house",
+      "projectId": "task-6",
+      "zoneId": "zone-1",
+      "ownerId": "resident-b",
+      "homeLevel": 2,
+      "buildStage": 3,
+      "position": {
+        "x": -5.999999999999997,
+        "z": -17.8,
+        "y": 0
+      },
+      "width": 5.5,
+      "height": 3.5,
+      "depth": 4.5,
+      "appearance": "5.5×4.5住宅，南侧门口可进入，屋内可休息、添置家具与打扫",
+      "resources": 0,
+      "completedTick": 21769,
+      "cleanliness": 0.9214351851852357,
+      "furniture": {
+        "bed": true,
+        "lamp": true,
+        "cabinet": true,
+        "mop": true
+      }
+    },
+    {
+      "id": "home-resident-a",
+      "kind": "house",
+      "projectId": "task-5",
+      "zoneId": "zone-1",
+      "ownerId": "resident-a",
+      "homeLevel": 2,
+      "buildStage": 3,
+      "position": {
+        "x": -22.65,
+        "z": -23.05,
+        "y": 0
+      },
+      "width": 5.5,
+      "height": 3.5,
+      "depth": 4.5,
+      "appearance": "5.5×4.5住宅，南侧门口可进入，屋内可休息、添置家具与打扫",
+      "resources": 0,
+      "completedTick": 21433,
+      "cleanliness": 0.9883796296296371,
+      "furniture": {
+        "bed": true,
+        "lamp": true,
+        "cabinet": true,
+        "mop": true
+      }
+    }
+  ],
+  "residents": [
+    {
+      "name": "阿林",
+      "home": "home-resident-a",
+      "goal": "阶段16 · 建造一间木石小屋",
+      "health": 100,
+      "mood": 0.3769249481481257,
+      "hunger": 0.6124000000001952,
+      "fatigue": 0.2307399999998797,
+      "living": {
+        "housingWait": 0,
+        "upgradeWait": 0,
+        "desiredLevel": 2
+      },
+      "feedback": []
+    },
+    {
+      "name": "小禾",
+      "home": "home-resident-b",
+      "goal": "阶段16 · 建造一间木石小屋",
+      "health": 100,
+      "mood": 0.5671877777777176,
+      "hunger": 0.6124000000001952,
+      "fatigue": 0.18293000000000711,
+      "living": {
+        "housingWait": 0,
+        "upgradeWait": 0,
+        "desiredLevel": 2
+      },
+      "feedback": []
+    }
+  ],
+  "lifeEvents": [
+    {
+      "tick": 40,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾在居住区申请了自己的小屋。"
+    },
+    {
+      "tick": 40,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林在居住区申请了自己的小屋。"
+    },
+    {
+      "tick": 947,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾为自己建造的住处的地基，消耗2木材 + 4石料。"
+    },
+    {
+      "tick": 2094,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林为自己建造的住处的地基，消耗2木材 + 4石料。"
+    },
+    {
+      "tick": 3233,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林为自己建造的住处的墙体，消耗8木材 + 2石料。"
+    },
+    {
+      "tick": 4639,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林为自己建造的住处的屋顶，消耗2木材 + 2石料。房屋已建成，可进屋rest或home_care改善生活。"
+    },
+    {
+      "tick": 5515,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾为自己建造的住处的墙体，消耗8木材 + 2石料。"
+    },
+    {
+      "tick": 7324,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾为自己建造的住处的屋顶，消耗2木材 + 2石料。房屋已建成，可进屋rest或home_care改善生活。"
+    },
+    {
+      "tick": 7835,
+      "kind": "home_care",
+      "agentId": "resident-a",
+      "text": "阿林添置了床。"
+    },
+    {
+      "tick": 8751,
+      "kind": "home_care",
+      "agentId": "resident-b",
+      "text": "小禾添置了床。"
+    },
+    {
+      "tick": 8831,
+      "kind": "home_care",
+      "agentId": "resident-b",
+      "text": "小禾添置了灯。"
+    },
+    {
+      "tick": 9895,
+      "kind": "home_care",
+      "agentId": "resident-b",
+      "text": "小禾添置了柜子。"
+    },
+    {
+      "tick": 10128,
+      "kind": "home_care",
+      "agentId": "resident-a",
+      "text": "阿林添置了灯。"
+    },
+    {
+      "tick": 10846,
+      "kind": "home_care",
+      "agentId": "resident-b",
+      "text": "小禾添置了拖把。"
+    },
+    {
+      "tick": 11629,
+      "kind": "home_care",
+      "agentId": "resident-a",
+      "text": "阿林添置了柜子。"
+    },
+    {
+      "tick": 13088,
+      "kind": "home_care",
+      "agentId": "resident-a",
+      "text": "阿林添置了拖把。"
+    },
+    {
+      "tick": 16722,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林自主改建为5.5×4.5住宅；材料已预留，开始拆旧重建。"
+    },
+    {
+      "tick": 16799,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林自主改建为5.5×4.5住宅的拆旧回收，消耗0木材 + 0石料。"
+    },
+    {
+      "tick": 17044,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林自主改建为5.5×4.5住宅的地基，消耗4木材 + 8石料。"
+    },
+    {
+      "tick": 19680,
+      "kind": "home_care",
+      "agentId": "resident-b",
+      "text": "小禾打扫了房间。"
+    },
+    {
+      "tick": 20105,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林自主改建为5.5×4.5住宅的墙体，消耗16木材 + 4石料。"
+    },
+    {
+      "tick": 21274,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾自主改建为5.5×4.5住宅；材料已预留，开始拆旧重建。"
+    },
+    {
+      "tick": 21376,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾自主改建为5.5×4.5住宅的拆旧回收，消耗0木材 + 0石料。"
+    },
+    {
+      "tick": 21433,
+      "kind": "construction",
+      "agentId": "resident-a",
+      "text": "阿林完成阿林自主改建为5.5×4.5住宅的屋顶，消耗4木材 + 4石料。房屋已建成，可进屋rest或home_care改善生活。"
+    },
+    {
+      "tick": 21519,
+      "kind": "home_care",
+      "agentId": "resident-a",
+      "text": "阿林打扫了房间。"
+    },
+    {
+      "tick": 21576,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾自主改建为5.5×4.5住宅的地基，消耗4木材 + 8石料。"
+    },
+    {
+      "tick": 21695,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾自主改建为5.5×4.5住宅的墙体，消耗16木材 + 4石料。"
+    },
+    {
+      "tick": 21769,
+      "kind": "construction",
+      "agentId": "resident-b",
+      "text": "小禾完成小禾自主改建为5.5×4.5住宅的屋顶，消耗4木材 + 4石料。房屋已建成，可进屋rest或home_care改善生活。"
+    }
+  ],
+  "failures": [
+    {
+      "tick": 965,
+      "kind": "action_failed",
+      "agentId": "resident-a",
+      "text": "建筑材料不足：地基需要2木材 + 4石料；先采集并haul存入。"
+    },
+    {
+      "tick": 3355,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "建筑材料不足：墙体需要8木材 + 2石料；先采集并haul存入。"
+    },
+    {
+      "tick": 8966,
+      "kind": "action_failed",
+      "agentId": "resident-a",
+      "text": "家具材料不足：需要2木材 + 2石料，先采集并存入仓储。"
+    },
+    {
+      "tick": 14569,
+      "kind": "action_failed",
+      "agentId": "resident-a",
+      "text": "眼前已没有可取的资源。"
+    },
+    {
+      "tick": 15579,
+      "kind": "action_failed",
+      "agentId": "resident-a",
+      "text": "眼前已没有可取的资源。"
+    },
+    {
+      "tick": 15582,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "眼前已没有可取的资源。"
+    },
+    {
+      "tick": 16828,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "先备齐24木材 + 16石料才会拆旧房。"
+    }
+  ]
+}

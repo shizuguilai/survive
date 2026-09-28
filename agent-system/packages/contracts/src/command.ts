@@ -12,7 +12,7 @@ const str={type:'string',minLength:1,maxLength:500},id={...str,maxLength:160};
 const obj=(properties:any)=>({type:'object',additionalProperties:false,properties,required:Object.keys(properties)});
 const list=(items:any,maxItems:number)=>({type:'array',items,maxItems});
 export function validateCommandRequest(v:unknown):CommandRequest{
- validateSchema(v,obj({requestId:id,runId:id,tick:{type:'integer',minimum:0},phaseUnits:{enum:[4,8]},tasks:list(obj({id,title:str,progress:{type:'integer',minimum:0},amount:{type:'integer',minimum:1}}),6),stock:obj({wood:{type:'integer',minimum:0},stone:{type:'integer',minimum:0},food:{type:'integer',minimum:0}}),reports:{...list(obj({residentId:id,name:str,body:str,working:str,recentResults:list(str,4),knownLandmarks:list(str,16),options:{...list(obj({id,label:str}),12),minItems:1}}),6),minItems:1}}));
+ validateSchema(v,obj({requestId:id,runId:id,tick:{type:'integer',minimum:0},phaseUnits:{enum:[4,8]},tasks:list(obj({id,title:str,progress:{type:'integer',minimum:0},amount:{type:'integer',minimum:1}}),24),stock:obj({wood:{type:'integer',minimum:0},stone:{type:'integer',minimum:0},food:{type:'integer',minimum:0}}),reports:{...list(obj({residentId:id,name:str,body:str,working:str,recentResults:list(str,4),knownLandmarks:list(str,16),options:{...list(obj({id,label:str}),30),minItems:1}}),6),minItems:1}}));
  const r=v as CommandRequest;if(new Set(r.reports.map(x=>x.residentId)).size!==r.reports.length)throw Error('Duplicate resident report');return r;
 }
 export function validateCommandPlan(v:unknown,r:CommandRequest):CommandPlan{
