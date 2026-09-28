@@ -56,6 +56,8 @@ export class ObserverView {
   private labels:Record<string,any>={};private buttons:Record<string,NativeButton>={};
   private residents=new Map<string,CharacterMesh>();private objects=new Map<string,WorldMesh>();private objectSignatures=new Map<string,string>();private placeLabels=new Map<string,any>();
   private nameLabels=new Map<string,any>();private speechLabels=new Map<string,any>();private senseLines:any;private selection:any;
+  private inspector:any;private sidebarCollapsed=true;private modalLayouts:{panel:any;width:number}[]=[];
+  private get sceneLeft():number{return this.sidebarCollapsed?0:SIDE;}
   private controlPanel:any;private controlDraft=controlSettings(null);
   private memoryPanel:any;private memoryMap!:MemoryMapView;
   private planner:any;private taskNote:any;private draftResource:TaskDraft['resource']='wood';private draftAmount=8;private vitality:any;
@@ -72,7 +74,7 @@ export class ObserverView {
     this.camera=new L.Camera(0,.1,160);this.scene.addChild(this.camera);
     this.camera.clearColor=new L.Color(.16,.19,.19,1);this.camera.clearFlag=L.CameraClearFlags.SolidColor;
     this.camera.orthographic=true;this.camera.orthographicVerticalSize=this.zoom;
-    this.camera.normalizedViewport=new L.Viewport(SIDE/WIDTH,TOP/HEIGHT,(WIDTH-SIDE)/WIDTH,(BOTTOM-TOP)/HEIGHT);
+    this.camera.normalizedViewport=new L.Viewport(this.sceneLeft/WIDTH,TOP/HEIGHT,(WIDTH-this.sceneLeft)/WIDTH,(BOTTOM-TOP)/HEIGHT);
     this.camera.enableHDR=false;this.camera.enableBuiltInRenderTexture=true;this.camera.msaa=true;
     this.moveCamera();
     const light=new L.Sprite3D('Daylight');this.scene.addChild(light);
@@ -81,7 +83,7 @@ export class ObserverView {
     this.senseLines=new L.PixelLineSprite3D(1200,'有限感知参考');this.scene.addChild(this.senseLines);
     this.selection=new L.PixelLineSprite3D(72,'selected resident');this.scene.addChild(this.selection);
     this.root=new L.Sprite();this.root.name='Observer UI';L.stage.addChild(this.root);
-    this.buildUI();
+    this.buildUI();this.layoutInspector();
     L.stage.on(L.Event.MOUSE_MOVE,this,()=>this.pointerMove());
     L.stage.on(L.Event.MOUSE_UP,this,()=>this.pointerUp());
     L.stage.on(L.Event.RESIZE,this,()=>this.positionLabels());
@@ -102,8 +104,9 @@ export class ObserverView {
     r.on(L.Event.CLICK,this,click);const b={root:r,label:t,set:(s:string)=>t.text=s};this.buttons[id]=b;return b;
   }
   private buildUI():void{
-    this.panel(this.root,0,0,WIDTH,TOP,palette.paper);this.panel(this.root,0,TOP,SIDE,HEIGHT-TOP,palette.panel);
-    this.panel(this.root,SIDE,BOTTOM,WIDTH-SIDE,HEIGHT-BOTTOM,palette.paper);
+    this.inspector=new L.Sprite();this.inspector.name='Resident inspector';this.inspector.zOrder=10;this.root.addChild(this.inspector);
+    this.panel(this.root,0,0,WIDTH,TOP,palette.paper);this.panel(this.inspector,0,TOP,SIDE,HEIGHT-TOP,palette.panel);
+    this.panel(this.root,0,BOTTOM,WIDTH,HEIGHT-BOTTOM,palette.paper);
     this.panel(this.root,0,TOP-1,WIDTH,1,'#535b58');
     this.text(this.root,'SURVIVE',23,18,27,palette.ink,230).bold=true;
     this.text(this.root,'边境营地 · 生存与建造',25,54,13,'#b4b7a8',240);
@@ -111,7 +114,7 @@ export class ObserverView {
     this.labels.status=this.text(this.root,'世界尚未启动',323,47,12,'#b4b7a8',663);
     this.labels.time=this.text(this.root,'模拟 00:00',1000,21,24,palette.ink,250);this.labels.time.align='right';
     this.button('control','运行设置',1094,50,156,()=>{this.controlDraft=controlSettings(this.state?.control);this.hideModals();this.controlPanel.visible=true;});
-    this.text(this.root,'观察对象',20,104,12,palette.muted);
+    const inspectorStart=this.root.numChildren;
     this.button('nextResident','下一位',187,89,85,()=>this.nextResident());
     this.button('resident0','居民 A',18,129,121,()=>this.selectIndex(this.residentPage()));this.button('resident1','居民 B',151,129,121,()=>this.selectIndex(this.residentPage()+1));
     this.labels.person=this.text(this.root,'选择一名居民',21,186,24,'#f1f4dc',252);this.labels.person.bold=true;
@@ -130,11 +133,13 @@ export class ObserverView {
     this.text(this.root,'青绿：视野 · 金环：无墙无噪声参考\n橙线：听见的方向 · 蓝圈：最后已知',20,617,11,'#95b3a6',254);
     this.labels.equipment=this.text(this.root,'',20,653,10,'#aac2b7',254);this.labels.equipment.height=36;this.labels.equipment.overflow='hidden';
     this.text(this.root,'摄影机可拖动；暂停时仍可观察。',20,685,11,'#95b3a6',254);
-    this.sceneInput=new L.Sprite();this.sceneInput.pos(SIDE,TOP);this.sceneInput.size(WIDTH-SIDE,BOTTOM-TOP);this.sceneInput.mouseEnabled=true;
+    const inspectorNodes=[];for(let i=inspectorStart;i<this.root.numChildren;i++)inspectorNodes.push(this.root.getChildAt(i));for(const node of inspectorNodes)this.inspector.addChild(node);
+    this.sceneInput=new L.Sprite();this.sceneInput.name='World interaction';this.sceneInput.pos(SIDE,TOP);this.sceneInput.size(WIDTH-SIDE,BOTTOM-TOP);this.sceneInput.mouseEnabled=true;
     this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-SIDE,BOTTOM-TOP);this.root.addChild(this.sceneInput);
     this.sceneInput.on(L.Event.MOUSE_DOWN,this,()=>{this.drag={x:L.stage.mouseX,y:L.stage.mouseY,ox:this.offset.x,oz:this.offset.z,moved:false};});
     this.sceneInput.on(L.Event.MOUSE_WHEEL,this,(e:any)=>{this.zoom=Math.max(9,Math.min(48,this.zoom-e.delta));this.camera.orthographicVerticalSize=this.zoom;this.positionLabels();});
     this.markers=new L.Sprite();this.markers.mouseEnabled=false;this.root.addChild(this.markers);
+    this.button('inspectorToggle','居民信息 ›',18,89,158,()=>{this.sidebarCollapsed=!this.sidebarCollapsed;this.layoutInspector();}).root.zOrder=11;
     this.labels.caption=this.text(this.root,'两名居民 · 两棵树 · 一堵墙',315,97,12,'#eee3c4',430);
     this.labels.caption.mouseEnabled=false;
     this.button('zoomOut','−',966,94,38,()=>{this.zoom=Math.min(48,this.zoom+3);this.camera.orthographicVerticalSize=this.zoom;this.positionLabels();});
@@ -143,6 +148,9 @@ export class ObserverView {
     this.button('tasks','规划 / 建房',1064,94,185,()=>{this.hideModals();this.planner.visible=true;},true);
     this.labels.taskSummary=this.text(this.root,'',320,122,12,'#eee3c4',560);this.labels.taskSummary.mouseEnabled=false;
     this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',908);this.labels.error.height=104;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
+    this.button('quickHistory','档案',18,628,77,()=>this.openHistory());
+    this.button('quickMap','地图',105,628,77,()=>{this.hideModals();this.memoryPanel.visible=true;});
+    this.button('quickSenses','感官',192,628,77,()=>this.api.onToggleSenses());
     this.button('start','开始真实认知',315,628,130,()=>this.api.onStart(),true);
     this.button('pause','暂停',455,628,72,()=>{const paused=/PAUS|STOP|暂停/i.test(this.state?.status||'');paused?this.api.onResume():this.api.onPause();});
     this.button('retry','重试',537,628,72,()=>this.api.onRetry());
@@ -160,8 +168,18 @@ export class ObserverView {
     this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();
   }
 
+  private layoutInspector():void{
+    const left=this.sceneLeft;this.inspector.visible=!this.sidebarCollapsed;
+    for(const id of ['quickHistory','quickMap','quickSenses'])this.buttons[id].root.visible=this.sidebarCollapsed;
+    this.camera.normalizedViewport=new L.Viewport(left/WIDTH,TOP/HEIGHT,(WIDTH-left)/WIDTH,(BOTTOM-TOP)/HEIGHT);
+    this.sceneInput.pos(left,TOP);this.sceneInput.size(WIDTH-left,BOTTOM-TOP);this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-left,BOTTOM-TOP);
+    this.labels.caption.x=this.sidebarCollapsed?195:315;this.labels.taskSummary.x=this.sidebarCollapsed?195:320;
+    for(const {panel,width}of this.modalLayouts)panel.x=left+(WIDTH-left-width)/2-320;
+    this.updateInspectorButton();this.drag=null;this.positionLabels();
+  }
+  private updateInspectorButton():void{const r=this.state?.world.residents.find(r=>r.id===this.state?.selectedId);this.buttons.inspectorToggle.set(this.sidebarCollapsed?(r?.name??'居民')+' · 信息 ›':'‹ 收起信息');}
   private hideModals():void{for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel,this.controlPanel])if(panel)panel.visible=false;}
-  private modal(name:string,width=910):any{const p=new L.Sprite();p.name=name;this.root.addChild(p);const background=this.panel(p,320,145,width,450,palette.panel,12);background.mouseEnabled=true;background.hitArea=new L.Rectangle(0,0,width,450);p.visible=false;return p;}
+  private modal(name:string,width=910):any{const p=new L.Sprite();p.name=name;p.zOrder=20;this.root.addChild(p);this.modalLayouts.push({panel:p,width});const background=this.panel(p,320,145,width,450,palette.panel,12);background.mouseEnabled=true;background.hitArea=new L.Rectangle(0,0,width,450);p.visible=false;return p;}
   private modalButton(parent:any,id:string,label:string,x:number,y:number,w:number,fn:()=>void,bright=true):NativeButton{const b=this.button(id,label,x,y,w,fn,bright);parent.addChild(b.root);return b;}
   private buildPlanner():void{
     this.planner=this.modal('Camp planner');
@@ -322,7 +340,7 @@ export class ObserverView {
     for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+1});const d=Math.hypot(p.x-L.stage.mouseX,p.y-L.stage.mouseY);if(d<distance){nearest=r.id;distance=d;}}
     if(nearest)this.api.onSelect(nearest);
   }
-  private moveCamera():void{this.camera.transform.position=new L.Vector3(this.offset.x,28,this.offset.z+18);this.camera.transform.lookAt(new L.Vector3(this.offset.x,0,this.offset.z),new L.Vector3(0,1,0),false,true);}
+  private moveCamera():void{this.camera.transform.position=new L.Vector3(this.offset.x,28,this.offset.z+20);this.camera.transform.lookAt(new L.Vector3(this.offset.x,0,this.offset.z),new L.Vector3(0,1,0),false,true);}
   private mesh(name:string,geometry:any,p:{x:number;y:number;z:number},color:string):any{
     const mesh=new L.MeshSprite3D(geometry,name);mesh.transform.position=new L.Vector3(p.x,p.y,p.z);
     const mat=new L.BlinnPhongMaterial();mat.albedoColor=this.color(color);mat.specularColor=new L.Color(.05,.05,.05,1);mesh.meshRenderer.sharedMaterial=mat;this.scene.addChild(mesh);return mesh;
@@ -347,9 +365,9 @@ export class ObserverView {
     this.positionLabels();
   }
   private project(p:{x:number;y:number;z:number}):{x:number;y:number}{const out=new L.Vector4();this.camera.worldToViewportPoint(new L.Vector3(p.x,p.y,p.z),out);return {x:out.x,y:out.y};}
-  private positionLabels():void{if(!this.state)return;for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>SIDE+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
-    const speech=this.speechLabels.get(r.id);if(speech){const fragments=this.state.world.sounds.filter(s=>s.sourceId===r.id&&this.state!.world.tick-s.emittedTick<3000/defaults.simulation.fixedDtMs);const text=fragments.map(s=>s.text).join('').slice(-55);speech.text=text?`“${text}”`:'';speech.visible=!!text&&t?.visible;const offset=this.state.world.residents.indexOf(r)%2?-5:-225;speech.pos(Math.max(SIDE+12,Math.min(WIDTH-242,p.x+offset)),Math.max(TOP+30,p.y-75));}}
-    for(const object of this.state.world.objects){const label=this.placeLabels.get(object.id);if(!label)continue;const p=this.project({...object.position,y:0,z:object.position.z+(object.kind==='house'||object.kind==='plot'?2.5:object.kind==='pond'?3.1:1)});let captionY=p.y+7;for(const r of this.state.world.residents){const rp=this.project({...r.position,y:1});if(Math.abs(rp.x-p.x)<95&&Math.abs(rp.y-captionY)<42)captionY=Math.max(captionY,rp.y+42);}label.pos(p.x-75,captionY);label.visible=p.x>SIDE+85&&p.x<WIDTH-85&&p.y>TOP+64&&p.y<BOTTOM-30;}
+  private positionLabels():void{if(!this.state)return;for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
+    const speech=this.speechLabels.get(r.id);if(speech){const fragments=this.state.world.sounds.filter(s=>s.sourceId===r.id&&this.state!.world.tick-s.emittedTick<3000/defaults.simulation.fixedDtMs);const text=fragments.map(s=>s.text).join('').slice(-55);speech.text=text?`“${text}”`:'';speech.visible=!!text&&t?.visible;const offset=this.state.world.residents.indexOf(r)%2?-5:-225;speech.pos(Math.max(this.sceneLeft+12,Math.min(WIDTH-242,p.x+offset)),Math.max(TOP+30,p.y-75));}}
+    for(const object of this.state.world.objects){const label=this.placeLabels.get(object.id);if(!label)continue;const p=this.project({...object.position,y:0,z:object.position.z+(object.kind==='house'||object.kind==='plot'?2.5:object.kind==='pond'?3.1:1)});let captionY=p.y+7;for(const r of this.state.world.residents){const rp=this.project({...r.position,y:1});if(Math.abs(rp.x-p.x)<95&&Math.abs(rp.y-captionY)<42)captionY=Math.max(captionY,rp.y+42);}label.pos(p.x-75,captionY);label.visible=p.x>this.sceneLeft+85&&p.x<WIDTH-85&&p.y>TOP+64&&p.y<BOTTOM-30;}
   }
   private drawSenses(state:ViewState):void{
     this.senseLines.clear();this.selection.clear();const r=state.world.residents.find(r=>r.id===state.selectedId);if(r)this.ring(this.selection,r.position,.56,'#f1e3a5');
@@ -363,6 +381,7 @@ export class ObserverView {
   render(state:ViewState):void{
     this.state=state;if(this.memoryPanel?.visible){const remembered=state.world.residents.find(r=>r.id===state.selectedId);if(remembered)this.memoryMap.render(remembered);}
     this.drawWorld(state.world);this.drawSenses(state);
+    this.updateInspectorButton();
     this.labels.gateway.visible=this.token.visible=this.buttons.connect.root.visible=!state.hosted;
     this.labels.hosted.visible=Boolean(state.hosted);
     const r=state.world.residents.find(x=>x.id===state.selectedId)||state.world.residents[0];

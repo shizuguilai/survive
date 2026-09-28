@@ -1,0 +1,25 @@
+✔ cosmetic generation is seed reproducible and does not consume simulation or ambient RNG (3.62791ms)
+✔ residents start dressed and each item has a unique private owner (0.742532ms)
+✔ cannot equip a foreign or invented item and rejection leaves state byte-for-byte unchanged (0.440095ms)
+✔ model references are owner-local, opaque, stable after reorder/removal, and reject global IDs (0.680778ms)
+✔ changing clothes is atomic, conserves every item and preserves the source resident (0.478193ms)
+✔ double handed spear occupies both hands; replacing one hand fully stows it (0.303709ms)
+✔ a single hand item can move hands without duplication, and unsupported slots are rejected (0.375077ms)
+✔ removing an overfull backpack fails without deleting or unequipping anything (0.438011ms)
+✔ changing to a smaller backpack fails atomically if capacity cannot hold belongings (0.357911ms)
+✔ empty backpack can be removed and retained in carried inventory (0.626757ms)
+✔ state validator rejects duplicated ownership, half equipped two hand item and unknown catalog entries (0.217188ms)
+✔ public appearance never reveals hidden bag contents, private item refs or capacities (1.550001ms)
+✔ visible appearance uses concise natural Chinese colors without changing stored render colors (1.995954ms)
+✔ invalid sizes and colors cannot enter character state (0.197578ms)
+✔ native mesh is stable across motion, rebuilds only on visible change, and releases owned resources (1.689162ms)
+✔ pose changes with simulated walk progress, stays frozen across render calls, and seeks identically (4.983487ms)
+✔ queued, unstarted, stationary and dead residents do not walk in place (0.409859ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 134.361524

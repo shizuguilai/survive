@@ -4,7 +4,7 @@
   "targetRepository": "git@github.com:shizuguilai/survive.git",
   "referenceMainCommit": "60f5d7eb33860484065a3f98afc5693e9e69c337",
   "latestBindingDecision": "用户2026-09-25新要求：默认单模型统筹阶段任务，保留独立居民模式，另提供明确标注的本地算法；每人记忆独立。实际认知仍全局冻结，完整批次提交后恢复，不追等待帧。",
-  "statusNote": "美术与高清渲染见ART01；三模式验收见CONTROL01；保留所有历史范围。",
+  "statusNote": "折叠信息栏与模拟步态见ART02；美术见ART01；三模式见CONTROL01；保留历史各项范围。",
   "tasks": [
     {
       "id": "T00",
@@ -2650,6 +2650,44 @@
       "blockers": [
         "Laya IDE、微信构建与真机尚未验收",
         "低端手机高DPI/MSAA长时帧率需真机实测"
+      ]
+    },
+    {
+      "id": "ART02",
+      "title": "默认折叠居民信息、平涂角色与模拟步态",
+      "dependsOn": [
+        "ART01",
+        "CHAR01",
+        "T13",
+        "CONTROL01"
+      ],
+      "status": "code_complete",
+      "codeStatus": "implemented",
+      "verification": {
+        "code": "implemented_native_inspector_and_sim_tick_pose",
+        "static": "passed",
+        "mock": "passed_17_character_and_pose_tests_explicit_browser_fixture",
+        "realModel": "not_run_visual_only",
+        "webBuild": "passed",
+        "layaBuild": "blocked_missing_ide",
+        "browser": "passed_desktop_high_dpi_mobile_fixture_and_local_control_regression",
+        "liveModelBrowser": "not_run",
+        "physicalDevice": "not_run",
+        "publication": "web_public_deployed_v15",
+        "wechatPublication": "not_run"
+      },
+      "evidence": [
+        "docs/implementation/INSPECTOR_AND_GAIT.md",
+        "evidence/inspector-gait-tests.txt",
+        "evidence/inspector-gait-browser.json",
+        "evidence/inspector-control-browser.json",
+        "evidence/web-build.json",
+        "evidence/inspector-deployment.json"
+      ],
+      "scopeNote": "所有姿势只读当前模拟动作进度；扩大相机和交互范围；原生3D平涂外观，不复制游戏资产；无模型调用。",
+      "blockers": [
+        "Laya IDE/微信构建与真机未验收",
+        "低端机长时间帧率尚需真机验证"
       ]
     }
   ],

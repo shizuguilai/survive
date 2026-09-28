@@ -1,5 +1,7 @@
 # Survive · 生存营地与居民
 
+**信息栏与步态更新：左侧默认收起，地图扩展约30%；圆手交替摆动、工具随手运动，暂停与回放遵循模拟时间。** 底部可直接查看档案/地图，画面进一步改为平涂轮廓。见[操作与分项验收](agent-system/docs/implementation/INSPECTOR_AND_GAIT.md)。
+
 **营地美术更新：高清画布、俯视描边小人、分层草地和木石建筑、深色界面。** 保留衣服/发型/胡须/工具/背包；人物和设施标签避让。见[美术改动与分项验收](agent-system/docs/implementation/ART_DIRECTION.md)。
 
 **v0.4.0：三种运行模式。默认由一个glm-4.5-air统筹4名居民，按阶段执行任务；保留独立居民模式，另有免远程的本地算法。** 右上「运行设置」可切换、设置人数/阶段工作量/调用间隔/失败降级；「规划 / 建房」布置任务。真实验证仅3次模型调用完成8木材和整间小屋。见[模式说明与分项验收](agent-system/docs/implementation/CONTROL_MODES.md)。
@@ -58,7 +60,7 @@ Web 打包、浏览器交互、真实模型闭环、Laya IDE 构建、微信真�
 | 项目 | 记录 |
 |---|---|
 | Web 部署地址 | [https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问；无需登录即可启动真实自治） |
-| 当前发布版本 | 高清营地美术已公开发布（v14，模拟v0.4.0）；见 [美术验收](agent-system/docs/implementation/ART_DIRECTION.md)；三模式继续可用 |
+| 当前发布版本 | 折叠信息与模拟步态已公开发布（v15，模拟v0.4.0）；见 [本轮验收](agent-system/docs/implementation/INSPECTOR_AND_GAIT.md)；三模式继续可用 |
 | 前一轮营地真实模型 | 45次独立请求；亲读公告、自主接受、实际采集令目标进度+1；8821次冻结检查无违规，非完整长期营地验收 |
 | 本轮工作台与建房 | [真实模型分场景统计](agent-system/evidence/workshop-real.json)；明确区分准备材料夹具、实际动作和未测的完整自主备料协作 |
 | 本地真实核心闭环 | `glm-4.5-air` 独立请求10次、接受10个决定；2居民双方发声并听见后再决定，2023次冻结检查无变化且不追帧，无Mock |

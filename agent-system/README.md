@@ -1,5 +1,7 @@
 # Survive Agent · 独立居民观察场
 
+最新：左侧居民信息默认折叠，底部保留档案/地图/感官；人物双手、持物和身体起伏由模拟时间驱动，冻结时一起停住。[使用与验收](docs/implementation/INSPECTOR_AND_GAIT.md)。
+
 最新美术：高清画布与抗锯齿、俯视圆头居民、地块/木石材质和深色观察界面。[改动与分项验收](docs/implementation/ART_DIRECTION.md)。
 
 **v0.4.0：三种运行模式。默认由一个glm-4.5-air统筹4名居民，按阶段执行任务；保留独立居民模式，另有免远程的本地算法。** 右上「运行设置」可切换、设置人数/阶段工作量/调用间隔/失败降级；「规划 / 建房」布置任务。真实验证仅3次模型调用完成8木材和整间小屋。见[模式说明与分项验收](docs/implementation/CONTROL_MODES.md)。
@@ -114,7 +116,7 @@ T18 完整存档恢复尚未实现。浏览器写入的提交 checkpoint 不是�
 
 ## 云端发布
 
-已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [art-deployment.json](evidence/art-deployment.json)，早期部署保留为历史。
+已发布：[https://survive-agent.drtdengruiting.chatgpt.site](https://survive-agent.drtdengruiting.chatgpt.site)（公开访问，无需登录即可启动真实自治）。密钥仅保存在服务端，固定使用 `glm-4.5-air`。最新部署记录见 [inspector-deployment.json](evidence/inspector-deployment.json)，早期部署保留为历史。
 
 `services/brain-gateway/src/worker.ts` 仅在服务端明确开启 `SURVIVE_PUBLIC_PLAY` 时接受公开试玩请求；仍校验同源、输入合同及指定模型。`/api/health` 不返回密钥。线上实时模型浏览器验收与本地真实模型验证分开记录，不能用页面可访问代替真实行为验证。
 

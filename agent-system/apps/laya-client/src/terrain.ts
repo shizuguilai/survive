@@ -4,8 +4,8 @@ export function createTerrain(L:any):any{
  const color=(hex:string)=>{const n=parseInt(hex.slice(1),16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1];};
  const quad=(x:number,z:number,w:number,d:number,hex:string,y=0)=>{const base=v.length/10,c=color(hex);for(const [dx,dz]of [[0,0],[w,0],[0,d],[w,d]])v.push(x+dx,y,z+dz,0,1,0,...c);indices.push(base+2,base,base+3,base,base+1,base+3);};
  const rand=(x:number,z:number)=>{const n=Math.sin(x*127.1+z*311.7)*43758.5453;return n-Math.floor(n);};
- const grass=['#737c4b','#788151','#7b8352','#707947','#7e8554'];
- const soil=['#938160','#9a8663','#95825e','#a08b66'];
+ const grass=['#7b8155','#7d8357','#7b8154','#798054','#7e8457'];
+ const soil=['#9b8765','#9d8967','#998562','#a08a68'];
  for(let x=-28;x<28;x++)for(let z=-28;z<28;z++){
   const r=rand(x,z),path=Math.abs(z)<1.4&&Math.abs(x)<13||Math.abs(x)<1.2&&z>-8&&z<9;
   const bare=path||Math.hypot(x*.85,z)<4.2||x>5&&x<10&&z>-3&&z<3;

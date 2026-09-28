@@ -1,0 +1,44 @@
+{
+  "status": "passed",
+  "profiles": [
+    {
+      "viewport": {
+        "width": 1280,
+        "height": 720,
+        "touch": false
+      },
+      "defaultCommander": true,
+      "localActualExecution": true,
+      "localRemoteCalls": 0,
+      "moreResidentsSelectable": true,
+      "ownMapVisible": true,
+      "modeChangePreservesRun": true,
+      "explicitFailureFallback": true,
+      "independentFailurePaused": true,
+      "newCampSixResidents": true,
+      "errors": [],
+      "remoteTransport": "EXPLICIT_MOCK_FAILURE_ONLY",
+      "realModelBrowser": false
+    },
+    {
+      "viewport": {
+        "width": 844,
+        "height": 390,
+        "touch": true
+      },
+      "defaultCommander": true,
+      "localActualExecution": true,
+      "localRemoteCalls": 0,
+      "moreResidentsSelectable": true,
+      "ownMapVisible": true,
+      "modeChangePreservesRun": true,
+      "explicitFailureFallback": true,
+      "independentFailurePaused": true,
+      "newCampSixResidents": true,
+      "errors": [],
+      "remoteTransport": "EXPLICIT_MOCK_FAILURE_ONLY",
+      "realModelBrowser": false
+    }
+  ],
+  "physicalDevice": "not_run"
+}

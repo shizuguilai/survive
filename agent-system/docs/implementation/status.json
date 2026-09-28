@@ -391,5 +391,41 @@
       "physicalDevice": "not_run",
       "wechatPublication": "not_run"
     }
+  },
+  "inspectorAndGait": {
+    "baselineHead": "e5b05faf3b69c554a79d49421c365a752c6dda02",
+    "verification": {
+      "code": "implemented_native_inspector_and_sim_tick_pose",
+      "static": "passed",
+      "mock": "passed_17_character_and_pose_tests_explicit_browser_fixture",
+      "realModel": "not_run_visual_only",
+      "webBuild": "passed",
+      "layaBuild": "blocked_missing_ide",
+      "browser": "passed_desktop_high_dpi_mobile_fixture_and_local_control_regression",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "publication": "web_public_deployed_v15",
+      "wechatPublication": "not_run"
+    },
+    "documentation": "docs/implementation/INSPECTOR_AND_GAIT.md",
+    "deployment": {
+      "status": "succeeded",
+      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
+      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
+      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_b8059bb9b37c8191858b759ae4e46791",
+      "versionNumber": 15,
+      "deploymentId": "appgdep_6aba15a00d388191acb2db87a53260fd",
+      "sourceCommit": "5b73b814def3abddf924762dbeebf1a7fdb43e1d",
+      "envSetRevision": 3,
+      "publishedAt": "2026-09-28T07:22:47.233248+00:00",
+      "access": "public",
+      "code": "native_collapsible_inspector_flat_art_simulated_gait",
+      "mock": "17_character_pose_tests_explicit_render_fixture_and_remote_failure_injection",
+      "realModel": "not_run_visual_only",
+      "browser": "passed_local_desktop_high_dpi_mobile_and_control_regression",
+      "liveModelBrowser": "not_run",
+      "physicalDevice": "not_run",
+      "wechatPublication": "not_run"
+    }
   }
 }

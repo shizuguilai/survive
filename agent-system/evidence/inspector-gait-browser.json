@@ -1,0 +1,50 @@
+{
+  "status": "passed",
+  "mode": "EXPLICIT_RENDER_FIXTURE",
+  "results": [
+    {
+      "profile": {
+        "width": 1440,
+        "height": 900,
+        "dpr": 1
+      },
+      "defaultCollapsed": true,
+      "expandedWorldWidth": 988,
+      "collapsedWorldWidth": 1280,
+      "quickArchiveAndMap": true,
+      "centeredPlanner": true,
+      "observerWorldHashUnchanged": true,
+      "alternatingHands": true,
+      "heldKnifeFollowsHand": true,
+      "twoHandedGripAligned": true,
+      "frozenPose": true,
+      "replayPoseIdentical": true,
+      "idleReturnsToRest": true,
+      "modelCalls": 0,
+      "errors": []
+    },
+    {
+      "profile": {
+        "width": 844,
+        "height": 390,
+        "dpr": 2
+      },
+      "defaultCollapsed": true,
+      "expandedWorldWidth": 988,
+      "collapsedWorldWidth": 1280,
+      "quickArchiveAndMap": true,
+      "centeredPlanner": true,
+      "observerWorldHashUnchanged": true,
+      "alternatingHands": true,
+      "heldKnifeFollowsHand": true,
+      "twoHandedGripAligned": true,
+      "frozenPose": true,
+      "replayPoseIdentical": true,
+      "idleReturnsToRest": true,
+      "modelCalls": 0,
+      "errors": []
+    }
+  ],
+  "realModel": "not_run_visual_only",
+  "physicalDevice": "not_run"
+}

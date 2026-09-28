@@ -34,13 +34,13 @@ export class WorldMesh{
    case 'wall':box('stone wall',object.width,object.height,object.depth,0,object.height/2,0,'#777f73');for(let row=1;row<Math.min(12,object.height/.35);row++)box('mortar seam',object.width+.012,.024,object.depth+.012,0,row*.35,0,'#4e584e');break;
    default:
     this.part('trunk',L.PrimitiveMesh.createCylinder(.21,1.7,10),0,.82,0,'#73573b');
-    if(object.resources){ball('broad crown',1,0,2.05,0,'#465f35',1.15,.72,1);ball('sunlit crown',.75,-.19,2.52,-.07,'#718449',1,.77,1);ball('side crown',.65,-.58,2.08,.3,'#60783e',1,.75,1);ball('leaf cluster',.45,.63,2.24,.16,'#879451',1,.65,1);box('bark line',.026,.68,.025,.03,.76,.21,'#463e2d');}
+    if(object.resources){ball('broad crown',1,0,2.05,0,'#4b6338',1.15,.72,1);ball('sunlit crown',.75,-.19,2.52,-.07,'#7c8c52',1,.77,1);ball('side crown',.65,-.58,2.08,.3,'#667e43',1,.75,1);ball('leaf cluster',.45,.63,2.24,.16,'#8e9c5e',1,.65,1);box('bark line',.026,.68,.025,.03,.76,.21,'#463e2d');}
     else this.node.transform.localScale=new L.Vector3(1,.2,1);
   }
  }
  private part(name:string,geometry:any,x:number,y:number,z:number,color:string):any{
   const L=(globalThis as any).Laya,node=new L.MeshSprite3D(geometry,name),n=parseInt(color.slice(1),16);node.transform.localPosition=new L.Vector3(x,y,z);
-  const material=new L.BlinnPhongMaterial();material.albedoColor=new L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);material.specularColor=new L.Color(0,0,0,1);node.meshRenderer.sharedMaterial=material;this.node.addChild(node);this.geometries.push(geometry);this.materials.push(material);
+  const flat=/crown|cluster|leaves|shadow|water/.test(name);const material=flat?new L.UnlitMaterial():new L.BlinnPhongMaterial();material.albedoColor=new L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);material.specularColor=new L.Color(0,0,0,1);node.meshRenderer.sharedMaterial=material;this.node.addChild(node);this.geometries.push(geometry);this.materials.push(material);
   if(/crown|cluster|leaves|trunk|stone edge|wall$|foundation|roof$|crate$|frame$|workbench top/.test(name)){
    if(!this.ink){this.ink=new L.UnlitMaterial();this.ink.albedoColor=new L.Color(.17,.19,.15,1);this.ink.cull=L.RenderState.CULL_FRONT;this.materials.push(this.ink);}
    const outline=new L.MeshSprite3D(geometry,'ink silhouette');outline.transform.localScale=new L.Vector3(1.026,1.026,1.026);outline.meshRenderer.sharedMaterial=this.ink;node.addChild(outline);

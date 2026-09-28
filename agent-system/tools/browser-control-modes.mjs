@@ -17,6 +17,7 @@ try{
   const text=()=>page.evaluate(()=>{const walk=n=>n.visible===false?[]:[n,...(n._children??[]).flatMap(walk)];return walk(Laya.stage).filter(n=>typeof n.text==='string').map(n=>n.text);});
   const waitText=async(value)=>page.waitForFunction(value=>{const walk=n=>n.visible===false?[]:[n,...(n._children??[]).flatMap(walk)];return walk(Laya.stage).some(n=>typeof n.text==='string'&&n.text.includes(value));},value,{timeout:15000});
   const click=async(x,y)=>{const s=Math.min(profile.width/1280,profile.height/720),px=(profile.width-1280*s)/2+x*s,py=(profile.height-720*s)/2+y*s;profile.touch?await page.touchscreen.tap(px,py):await page.mouse.click(px,py);await page.waitForTimeout(500);};
+  await click(90,106); // Expand the inspector explicitly; default is the unobstructed world.
   await click(1170,67);await waitText('运行设置 ·');assert.ok((await text()).includes('模型统筹（默认）'));await click(1060,236);await waitText('完全本地任务算法');await click(480,561);await click(380,645);
   await page.waitForFunction(()=>{const raw=localStorage.getItem('survive_agent_commit_v1');return raw&&JSON.parse(raw).world.tick>=40;},null,{timeout:20000});assert.equal(commandCalls,0);assert.equal(independentCalls,0);
   const baseline=await page.evaluate(()=>{const w=JSON.parse(localStorage.getItem('survive_agent_commit_v1')).world;return {run:w.runId,count:w.residents.length,tick:w.tick};});assert.equal(baseline.count,4);
