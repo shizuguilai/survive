@@ -97,7 +97,7 @@ export async function boot():Promise<void>{
     onControl:(next,newCamp)=>{void configure(next,newCamp).catch(e=>{diagnostic=e.message;});},onRemoteRetry:()=>{colony?.retryRemote();},
     onSummarize:request=>{void summarize(request);},
     onPause:pause,onResume:resume,onRetry:()=>{void health().then(()=>sim.retry());},
-    onTask:draft=>{try{sim.queueTask(draft);diagnostic='目标已排队，将在下一模拟步写入公告板。';}catch(e){diagnostic=(e as Error).message;}},
+    onTask:draft=>{try{sim.queueTask(draft);diagnostic='规划已排队，将在下一模拟步写入公告板。';return true;}catch(e){diagnostic=(e as Error).message;return false;}},
     onStop:()=>{sim.stop();saveJournal();},
     onSelect:id=>{selectedId=id;},onToggleSenses:()=>{showSenses=!showSenses;},
     onStart:()=>{void start().catch(e=>{diagnostic=e.message;});},

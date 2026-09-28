@@ -1,6 +1,7 @@
 import type {BrainProvider,BrainRequest,BrainResponse,Decision,Action,CharacterContext} from '../../contracts/src/types.ts';
 import {validateCommandPlan,type CommandProvider,type ControlSettings,type CommandRequest,type CommandPlan} from '../../contracts/src/command.ts';
 import type {World,Resident,KnowledgeEntry,ResourceKind} from './domain.ts';
+import {homeSites} from './housing.ts';
 import {HOUSE_STEPS,RECIPES,taskTitle} from './recipes.ts';
 import {hashCanonical} from '../../contracts/src/canonical.ts';
 
@@ -19,11 +20,11 @@ export class ColonyProvider implements BrainProvider{
  retryRemote():void{this.fallbackActive=false;this.nextRemoteTick=0;this.orders.clear();this.notice='下个执行节点重新尝试统筹模型';}
  private report(world:World):CommandRequest{
   const tasks=(world.camp?.tasks??[]).filter(t=>t.status==='open');
-  return {requestId:`command-${world.runId}-${this.phase+1}-${world.tick}`,runId:world.runId,tick:world.tick,phaseUnits:this.settings.phaseUnits,tasks:tasks.map(t=>({id:t.id,title:taskTitle(t),progress:t.progress,amount:t.amount})),stock:{wood:world.camp?.stock?.wood??0,stone:world.camp?.stock?.stone??0,food:world.camp?.stock?.food??0},reports:world.residents.filter(r=>(r.health??100)>0).map(r=>({residentId:r.id,name:r.name,body:`饥饿${Math.round(r.hunger*100)}% 疲劳${Math.round(r.fatigue*100)}% 生命${r.health??100}`,working:r.goal||'暂无安排',recentResults:r.memories.filter(m=>m.ref.startsWith('memory_action_')||m.ref.startsWith('memory_task_')).slice(-4).map(m=>m.text.slice(0,500)),knownLandmarks:Object.values(r.known).filter(k=>k.descriptionSeenTick!==undefined).slice(-16).map(k=>k.description.slice(0,160)),options:[...tasks.map(t=>({id:t.id,label:taskTitle(t)})),{id:'stock-wood',label:'采集并入库木材'},{id:'stock-stone',label:'采集并入库石料'},{id:'stock-food',label:'采集并入库口粮'},{id:'rest',label:'休息恢复'},{id:'explore',label:'观察附近、探索已知方向'}]}))};
+  return {requestId:`command-${world.runId}-${this.phase+1}-${world.tick}`,runId:world.runId,tick:world.tick,phaseUnits:this.settings.phaseUnits,tasks:tasks.map(t=>({id:t.id,title:t.ownerId?(world.residents.find(r=>r.id===t.ownerId)?.name+'的住处 · '+taskTitle(t)):taskTitle(t),progress:t.progress,amount:t.amount})),stock:{wood:world.camp?.stock?.wood??0,stone:world.camp?.stock?.stone??0,food:world.camp?.stock?.food??0},reports:world.residents.filter(r=>(r.health??100)>0).map(r=>({residentId:r.id,name:r.name,body:`饥饿${Math.round(r.hunger*100)}% 疲劳${Math.round(r.fatigue*100)}% 生命${r.health??100}`,working:r.goal||'暂无安排',recentResults:r.memories.filter(m=>m.ref.startsWith('memory_action_')||m.ref.startsWith('memory_task_')).slice(-4).map(m=>m.text.slice(0,500)),knownLandmarks:Object.values(r.known).filter(k=>k.descriptionSeenTick!==undefined).slice(-16).map(k=>k.description.slice(0,160)),options:[...tasks.filter(t=>t.kind!=='residential'||(!r.homeId&&!world.camp?.tasks.some(h=>h.ownerId===r.id)&&!!world.camp?.zones?.some(z=>z.id===t.zoneId&&homeSites(world,z.bounds).length))).map(t=>({id:t.id,label:taskTitle(t)})),{id:'stock-wood',label:'采集并入库木材'},{id:'stock-stone',label:'采集并入库石料'},{id:'stock-food',label:'采集并入库口粮'},{id:'rest',label:'休息恢复'},{id:'explore',label:'观察附近、探索已知方向'}]}))};
  }
  private localPlan(r:CommandRequest):CommandPlan{
   const tasks=[...r.tasks].reverse();
-  return {summary:'本地算法：优先新任务，按缺料补给、实际加工与施工执行',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:tasks[0]?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
+  return {summary:'本地算法：优先新任务，按缺料补给、实际加工与施工执行',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:tasks.find(t=>t.title.includes(p.name+'的住处'))?.id??tasks.find(t=>p.options.some(o=>o.id===t.id))?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
  }
  async decideBatch(requests:BrainRequest[],world:World,signal?:AbortSignal):Promise<BrainResponse[]>{
   signal?.throwIfAborted();this.lastTick=world.tick;
@@ -42,6 +43,12 @@ export class ColonyProvider implements BrainProvider{
     catch(e){signal?.throwIfAborted();if(!this.settings.fallback)throw e;this.fallbackActive=true;this.notice='远程不可用，已转本地算法；点击设置可恢复远程。原因：'+(e as Error).message.slice(0,100);plan=this.localPlan(report);}
    }else plan=this.localPlan(report);
    signal?.throwIfAborted();this.phase++;this.phaseTick=world.tick;this.nextRemoteTick=world.tick+this.settings.reviewSeconds*20;this.sequence=world.camp?.sequence??0;this.summary=plan.summary;
+   if(this.settings.mode==='local'||this.fallbackActive)for(const a of plan.assignments){
+    const person=world.residents.find(r=>r.id===a.residentId)!;
+    const own=world.camp?.tasks.find(t=>t.ownerId===person.id&&t.status==='open');
+    if(own)a.objective=own.id;
+    else if(person.homeId&&world.camp?.tasks.find(t=>t.id===a.objective)?.kind==='residential')a.objective='stock-wood';
+   }
    this.orders=new Map(plan.assignments.map(a=>[a.residentId,{objective:a.objective,startProgress:world.camp?.tasks.find(t=>t.id===a.objective)?.progress??0,startTick:world.tick,done:false,failures:0,blocked:new Set<string>()}]));
   }
   this.localBatches++;
@@ -75,12 +82,13 @@ export class ColonyProvider implements BrainProvider{
   };
   const deposit=(kind:ResourceKind):Action[]=>{const k=supply(kind);if(!board)return explore();if(!k||!r.supplies?.[kind])return gather(kind,this.settings.phaseUnits);return at(board,action('haul',{sourceRef:k.ref,destinationRef:board.ref,amount:Math.min(r.supplies[kind]!,this.settings.phaseUnits)}));};
   if(r.hunger>.62){const food=supply('food');if(food&&r.supplies?.food)return [action('eat',{foodRef:food.ref,amount:Math.min(r.supplies.food,3)})];return gather('food',3);}
-  if(r.fatigue>.75||o.objective==='rest'){const k=known.find(near);return k?[action('rest',{placeRef:k.ref,durationSimMs:30000})]:[action('survey',{durationSimMs:2000})];}
+  if(r.fatigue>.75||o.objective==='rest'){const home=r.homeId?find(r.homeId)??known.find(k=>w.objects.some(x=>x.id===r.homeId&&x.projectId===k.entityId)):undefined;const k=home??known.find(near);return k?at(k,action('rest',{placeRef:k.ref,durationSimMs:30000})):[action('survey',{durationSimMs:2000})];}
   if(o.done)return [wait()];
   if(r.inventory>=26){const kind=(['wood','stone','food'] as const).find(k=>r.supplies?.[k]);if(kind)return deposit(kind);}
   if(o.objective.startsWith('stock-')){const kind=o.objective.slice(6) as ResourceKind;return (r.supplies?.[kind]??0)>=this.settings.phaseUnits?deposit(kind):gather(kind,this.settings.phaseUnits-(r.supplies?.[kind]??0));}
   const task=w.camp?.tasks.find(t=>t.id===o.objective);
   if(!task)return explore();
+  if(task.kind==='residential'&&(r.homeId||w.camp?.tasks.some(t=>t.ownerId===r.id))){o.done=true;return [wait()];}
   const tk=find(task.id);
   if(!tk){if(!board)return explore();return at(board,action('read_notice',{noticeRef:board.ref}));}
   if(!task.acceptedBy.includes(r.id)){const evidence=context.observations.filter(x=>x.detail.knownRef===tk.ref).slice(-1).map(x=>x.obsRef);if(!evidence.length)return board?at(board,action('read_notice',{noticeRef:board.ref})):explore();return [action('accept_task',{taskRef:tk.ref,evidenceRefs:evidence})];}

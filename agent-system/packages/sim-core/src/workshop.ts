@@ -1,4 +1,5 @@
 import type {Resident,World,WorldObject,ResourceKind} from './domain.ts';
+import {clearNewWalls} from './navigation.ts';
 import {grantKnown,ownReceipt,updateBoard} from './camp.ts';
 import {RECIPES,HOUSE_STEPS,materialText,taskTitle,skillLevel} from './recipes.ts';
 import {validateCharacterState,equippedItem} from './character.ts';
@@ -50,7 +51,8 @@ export function finishBuild(world:World,r:Resident,projectRef:string,stepRef:str
  for(const [kind,count]of Object.entries(step.cost))if((world.camp!.stock?.[kind as ResourceKind]??0)<count)return `公共仓储材料不足：${step.label}需要${materialText(step.cost)}；先采集并haul存入。`;
  for(const [kind,count]of Object.entries(step.cost))world.camp!.stock![kind as ResourceKind]!-=count;
  task.progress++;plot!.buildStage=task.progress;plot!.appearance=`木石小屋：${task.progress}/3阶段完成，刚完成${step.label}`;
- if(task.progress===HOUSE_STEPS.length){task.status='done';plot!.kind='house';plot!.height=3.5;plot!.appearance='已经建成的木石小屋，门廊可避风休息';}
+ if(task.progress===HOUSE_STEPS.length){task.status='done';plot!.kind='house';plot!.height=3.5;plot!.appearance='已经建成的木石小屋，南侧门口可进入，屋内可休息';if(task.ownerId){const owner=world.residents.find(x=>x.id===task.ownerId);if(owner)owner.homeId=plot!.id;const zone=world.camp?.tasks.find(t=>t.kind==='residential'&&t.zoneId===task.zoneId);if(zone)zone.progress++;}}
+ clearNewWalls(world,plot!);
  addSkill(r,'construction');updateBoard(world);
  const text=`${r.name}完成${taskTitle(task)}的${step.label}，实际扣除仓储${materialText(step.cost)}。${task.status==='done'?'小屋已建成，可到门廊rest休息。':''}`;
  ownReceipt(r,world,text);world.events.push({tick:world.tick,kind:'construction',agentId:r.id,text});

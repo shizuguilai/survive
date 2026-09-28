@@ -2,7 +2,7 @@ import type {Action,Decision,Memory,Observation,Vec3} from '../../contracts/src/
 import type {SpatialMemory} from './spatial-memory.ts';
 import type {CharacterState} from './character.ts';
 export type KnowledgeEntry = {ref:string;entityId:string;description:string;descriptionSeenTick?:number;visualLevel?:'detected'|'described'|'recognized';lastPosition:Vec3;lastSeenTick:number;visible:boolean;recognizedName:string|null};
-export type ActionProgress = {action:Action;elapsedTicks:number;startedTick:number|null;emittedChars:number;done:boolean;producedUnits?:number;targetPosition?:Vec3};
+export type ActionProgress = {action:Action;elapsedTicks:number;startedTick:number|null;emittedChars:number;done:boolean;producedUnits?:number;targetPosition?:Vec3;waypoints?:Vec3[];navigationKey?:string};
 export type Resident = {
   spatialMemory?:SpatialMemory;
   heardUtteranceKeys?:string[];
@@ -10,7 +10,7 @@ export type Resident = {
   skills?:{gathering:number;crafting:number;construction:number};
   supplies?:Partial<Record<ResourceKind,number>>;
   id:string;name:string;background:string;personality:string;personalGoal:string;position:Vec3;heading:number;
-  health?:number;
+  health?:number;mood?:number;homeId?:string;
   hunger:number;fatigue:number;pain:number;inventory:number;
   known:Record<string,KnowledgeEntry>;familiar:Record<string,string>;observations:Observation[];memories:Memory[];
   observationSequence:number;knowledgeSequence:number;consumedObservationRefs:string[];
@@ -18,8 +18,10 @@ export type Resident = {
   bodyBands:Record<string,string>;visualSignature:string;actionFeedback:string[];
 };
 export type ResourceKind='wood'|'stone'|'food';
-export type CampTask={kind?:'gather'|'craft'|'house';recipeId?:string;siteId?:string;id:string;resource:ResourceKind;amount:number;progress:number;note:string;acceptedBy:string[];status:'open'|'done';postedTick:number};
-export type WorldObject = {id:string;kind:'tree'|'wall'|'rock'|'berry'|'board'|'pond'|'workbench'|'plot'|'house';projectId?:string;buildStage?:number;resourceKind?:ResourceKind;position:Vec3;width:number;height:number;depth:number;appearance:string;resources:number};
+export type CampTask={kind?:'gather'|'craft'|'house'|'residential';ownerId?:string;zoneId?:string;recipeId?:string;siteId?:string;id:string;resource:ResourceKind;amount:number;progress:number;note:string;acceptedBy:string[];status:'open'|'done';postedTick:number};
+export type WorldObject = {id:string;kind:'tree'|'wall'|'rock'|'berry'|'board'|'pond'|'workbench'|'plot'|'house';projectId?:string;ownerId?:string;zoneId?:string;maxResources?:number;buildStage?:number;resourceKind?:ResourceKind;position:Vec3;width:number;height:number;depth:number;appearance:string;resources:number};
+export type ResidentialBounds={minX:number;maxX:number;minZ:number;maxZ:number};
+export type ResidentialZone={id:string;taskId:string;bounds:ResidentialBounds};
 export type SoundFragment = {id:string;utteranceId?:string;final?:boolean;sourceId:string;position:Vec3;heading:number;text:string;volume:'whisper'|'normal'|'shout';emittedTick:number;deliveredTo:string[]};
-export type World = {camp?:{stock?:Partial<Record<ResourceKind,number>>;sequence:number;noticeVersion:number;tasks:CampTask[]};schemaVersion:'1.0.0';runId:string;tick:number;revision:number;seed:number;rngState:number;residents:Resident[];objects:WorldObject[];sounds:SoundFragment[];daylight:number;weatherProgress:number;events:{tick:number;kind:string;agentId:string;text:string;source?:'REAL_MODEL'|'MOCK_TEST'|'MODEL_DIRECTED'|'LOCAL_ALGORITHM'}[]};
+export type World = {camp?:{zones?:ResidentialZone[];stock?:Partial<Record<ResourceKind,number>>;sequence:number;noticeVersion:number;tasks:CampTask[]};schemaVersion:'1.0.0';runId:string;tick:number;revision:number;seed:number;rngState:number;residents:Resident[];objects:WorldObject[];sounds:SoundFragment[];daylight:number;weatherProgress:number;events:{tick:number;kind:string;agentId:string;text:string;source?:'REAL_MODEL'|'MOCK_TEST'|'MODEL_DIRECTED'|'LOCAL_ALGORITHM'}[]};
 export type SensoryOverlay = {agentId:string;tick:number;eye:Vec3;heading:number;visionRange:number;fovDegrees:number;visionPolygon:Vec3[];hearingRadii:{label:string;radius:number}[];visibleRefs:string[];lastKnown:{ref:string;position:Vec3;tick:number;description:string}[];observations:Observation[]};

@@ -1,4 +1,4 @@
-import {pawnPose} from './pawn-pose.ts';
+import {pawnPose,workPose} from './pawn-pose.ts';
 import type { Resident } from '../../../packages/sim-core/src/domain.ts';
 import {createCharacterState,equippedItem} from '../../../packages/sim-core/src/character.ts';
 import type {CharacterState,EquipmentSlot} from '../../../packages/sim-core/src/character.ts';
@@ -27,8 +27,9 @@ export class CharacterMesh {
     this.node.transform.rotationEuler=new L.Vector3(0,90-resident.heading*180/Math.PI,(resident.health??100)<=0?90:0);
     const pose=pawnPose(resident);this.visuals.transform.localPosition=new L.Vector3(0,pose.bob,0);
     this.shadow.transform.localPosition=new L.Vector3(.07,.015-pose.bob,-.04);
-    for(const h of this.hands){const swing=pose.stride*(this.twoHanded?.045:h.side*.26);h.node.transform.localPosition=new L.Vector3(h.x,h.y+(this.twoHanded?0:Math.abs(pose.stride)*.045),h.z+swing);h.node.transform.localRotationEuler=new L.Vector3(this.twoHanded?0:pose.stride*h.side*14,0,0);}
-    if(this.sharedGrip)this.sharedGrip.transform.localPosition=new L.Vector3(0,0,pose.stride*.045);
+    const work=workPose(resident);this.visuals.transform.localRotationEuler=new L.Vector3(work.lean,0,0);
+    for(const h of this.hands){const lift=work.active?(this.twoHanded||h.side>0?work.right:work.left):0;const swing=pose.stride*(this.twoHanded?.045:h.side*.26);h.node.transform.localPosition=new L.Vector3(h.x,h.y+(this.twoHanded?0:Math.abs(pose.stride)*.045)+lift,h.z+swing+(work.active?.24-lift*.3:0));h.node.transform.localRotationEuler=new L.Vector3(work.active?-25-lift*100:this.twoHanded?0:pose.stride*h.side*14,0,0);}
+    if(this.sharedGrip)this.sharedGrip.transform.localPosition=new L.Vector3(0,work.active?work.right:0,pose.stride*.045+(work.active?.18:0));
   }
   private color(hex:string):any{const n=parseInt(hex.slice(1),16);return new this.L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);}
   private part(name:string,geometry:any,color:string,x:number,y:number,z:number,sx=1,sy=1,sz=1,parent=this.visuals):any{

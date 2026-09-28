@@ -1,0 +1,99 @@
+{
+  "mode": "LOCAL_ALGORITHM",
+  "tick": 6802,
+  "wallMs": 9576,
+  "remoteCalls": 0,
+  "homes": 2,
+  "residents": [
+    {
+      "name": "阿林",
+      "home": "home-resident-a",
+      "goal": "阶段4 · 建造一间木石小屋",
+      "feedback": []
+    },
+    {
+      "name": "小禾",
+      "home": "home-resident-b",
+      "goal": "阶段4 · 建造一间木石小屋",
+      "feedback": []
+    }
+  ],
+  "tasks": [
+    {
+      "kind": "gather",
+      "id": "task-1",
+      "resource": "wood",
+      "amount": 8,
+      "progress": 0,
+      "note": "为营地准备第一批材料。可自由选择是否参与，完成后再读新目标。",
+      "acceptedBy": [],
+      "status": "open",
+      "postedTick": 0
+    },
+    {
+      "id": "task-2",
+      "kind": "residential",
+      "zoneId": "zone-1",
+      "resource": "wood",
+      "amount": 2,
+      "progress": 2,
+      "note": "没有住房的居民可自愿申请自己的小屋，已有住处不重复申请。",
+      "acceptedBy": [
+        "resident-b",
+        "resident-a"
+      ],
+      "status": "open",
+      "postedTick": 0
+    },
+    {
+      "id": "task-3",
+      "kind": "house",
+      "zoneId": "zone-1",
+      "ownerId": "resident-b",
+      "resource": "wood",
+      "amount": 3,
+      "progress": 3,
+      "note": "小禾为自己建造的住处",
+      "acceptedBy": [
+        "resident-b"
+      ],
+      "status": "done",
+      "postedTick": 40
+    },
+    {
+      "id": "task-4",
+      "kind": "house",
+      "zoneId": "zone-1",
+      "ownerId": "resident-a",
+      "resource": "wood",
+      "amount": 3,
+      "progress": 3,
+      "note": "阿林为自己建造的住处",
+      "acceptedBy": [
+        "resident-a"
+      ],
+      "status": "done",
+      "postedTick": 40
+    }
+  ],
+  "failures": [
+    {
+      "tick": 1051,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "公共仓储材料不足：地基需要2木材 + 4石料；先采集并haul存入。"
+    },
+    {
+      "tick": 3435,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "公共仓储材料不足：墙体需要8木材 + 2石料；先采集并haul存入。"
+    },
+    {
+      "tick": 5663,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "公共仓储材料不足：屋顶需要2木材 + 2石料；先采集并haul存入。"
+    }
+  ]
+}

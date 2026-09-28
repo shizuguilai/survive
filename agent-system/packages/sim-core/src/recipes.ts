@@ -14,5 +14,5 @@ export const HOUSE_STEPS=[
 ] as const;
 export const BUILD_SITES=[{id:'east',label:'东侧居住地块',x:7,z:0},{id:'north',label:'北侧居住地块',x:0,z:-8},{id:'west',label:'西侧居住地块',x:-7,z:0}] as const;
 export const materialText=(values:Partial<Record<ResourceKind,number>>)=>Object.entries(values).map(([k,n])=>`${n}${k==='wood'?'木材':k==='stone'?'石料':'浆果'}`).join(' + ');
-export const taskTitle=(task:{kind?:string;resource?:ResourceKind;amount:number;recipeId?:string})=>task.kind==='house'?'建造一间木石小屋':task.kind==='craft'?`制作${RECIPES.find(r=>r.id===task.recipeId)?.label??'工具'}${task.amount}件`:`采集${task.resource==='wood'?'木材':task.resource==='stone'?'石料':'浆果'}${task.amount}份`;
+export const taskTitle=(task:{kind?:string;resource?:ResourceKind;amount:number;recipeId?:string})=>task.kind==='residential'?'居住区 · 自主安家':task.kind==='house'?'建造一间木石小屋':task.kind==='craft'?`制作${RECIPES.find(r=>r.id===task.recipeId)?.label??'工具'}${task.amount}件`:`采集${task.resource==='wood'?'木材':task.resource==='stone'?'石料':'浆果'}${task.amount}份`;
 export const skillLevel=(xp=0)=>Math.min(5,Math.floor(xp/3));

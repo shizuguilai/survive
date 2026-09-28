@@ -1,11 +1,13 @@
+import {resourceRatio,resourceStage} from '../../../packages/sim-core/src/resources.ts';
 import type {WorldObject} from '../../../packages/sim-core/src/domain.ts';
 /** All scenery is native Laya geometry; these objects never advance the simulation. */
 export class WorldMesh{
- readonly node:any;private geometries:any[]=[];private materials:any[]=[];private ink:any;
+ readonly node:any;private geometries:any[]=[];private materials:any[]=[];private ink:any;private roofs:any[]=[];
  constructor(readonly object:WorldObject){
   const L=(globalThis as any).Laya;this.node=new L.Sprite3D(object.id);this.node.transform.position=new L.Vector3(object.position.x,object.position.y,object.position.z);
   const box=(name:string,w:number,h:number,d:number,x:number,y:number,z:number,c:string)=>this.part(name,L.PrimitiveMesh.createBox(w,h,d),x,y,z,c);
   const ball=(name:string,r:number,x:number,y:number,z:number,c:string,sx=1,sy=1,sz=1)=>{const p=this.part(name,L.PrimitiveMesh.createSphere(r,10,12),x,y,z,c);p.transform.localScale=new L.Vector3(sx,sy,sz);return p;};
+  const ratio=resourceRatio(object),stage=resourceStage(object);
   const shadowR=object.kind==='pond'?2.75:object.kind==='house'||object.kind==='plot'?2.7:object.kind==='tree'?1.15:.83;
   const shadow=this.part('contact shadow',L.PrimitiveMesh.createCylinder(shadowR,.018,20),.13,-.022,.12,'#4d5539');shadow.transform.localScale=new L.Vector3(1,1,.78);
   switch(object.kind){
@@ -16,10 +18,10 @@ export class WorldMesh{
    case 'workbench':
     box('workbench top',2,.17,.95,0,1.08,0,'#c5a276');for(const x of [-.75,.75])for(const z of [-.3,.3])box('bench leg',.16,1,.16,x,.5,z,'#84613f');
     for(let i=0;i<4;i++)box('bench plank seam',1.96,.012,.018,0,1.17,-.34+i*.23,'#71553a');box('bench brace',1.6,.12,.12,0,.38,0,'#9c794e');ball('anvil stone',.25,.35,1.32,0,'#8c9791',1.3,.6,1);box('hammer handle',.45,.07,.08,-.55,1.22,.13,'#785336');box('hammer head',.15,.15,.24,-.38,1.29,.13,'#818c87');break;
-   case 'rock':{ball('stone cluster',.73,0,.43,0,'#747c78',1.25,.68,1);ball('stone edge',.43,.55,.24,.19,'#969a8b',1,.7,1);const facet=box('stone top facet',.65,.035,.44,-.12,.89,-.06,'#a8aa99');facet.transform.localRotationEuler=new L.Vector3(0,18,-7);box('rock fissure',.38,.025,.045,.12,.9,.01,'#555e57');break;}
+   case 'rock':{const scale=stage===0?.15:stage===1?.43:stage===2?.65:stage===3?.85:1;this.node.transform.localScale=new L.Vector3(scale,scale,scale);ball('stone cluster',.73,0,.43,0,'#747c78',1.25,.68,1);ball('stone edge',.43,.55,.24,.19,'#969a8b',1,.7,1);const facet=box('stone top facet',.65,.035,.44,-.12,.89,-.06,'#a8aa99');facet.transform.localRotationEuler=new L.Vector3(0,18,-7);box('rock fissure',.38,.025,.045,.12,.9,.01,'#555e57');break;}
    case 'berry':
     ball('berry leaves',.64,0,.45,0,object.resources?'#4d6638':'#858052',1,.72,1);
-    if(object.resources)for(let i=0;i<7;i++){const a=i*2.4;ball('ripe berry',.095,Math.cos(a)*.42,.59+(i%3)*.1,Math.sin(a)*.4,'#b74e4b');}break;
+    if(object.resources)for(let i=0;i<Math.ceil(ratio*7);i++){const a=i*2.4;ball('ripe berry',.095,Math.cos(a)*.42,.59+(i%3)*.1,Math.sin(a)*.4,'#b74e4b');}break;
    case 'pond':this.part('shore bank',L.PrimitiveMesh.createCylinder(2.72,.025,32),0,-.01,0,'#8d8965');this.part('water',L.PrimitiveMesh.createCylinder(2.5,.035,32),0,.015,0,'#557b78');this.part('deep water',L.PrimitiveMesh.createCylinder(1.92,.012,32),-.17,.04,-.17,'#436c6b');for(let i=0;i<4;i++)box('water glint',.35+i*.11,.008,.025,-.8+i*.42,.055,-.7+i*.4,'#8da8a0');for(let i=0;i<10;i++){const a=i*Math.PI/5;ball('shore stone',.25,Math.cos(a)*2.6,.09,Math.sin(a)*2.6,'#aaa48a',1.3,.45,1);}break;
    case 'plot':case 'house':{
     const stage=object.buildStage??3;
@@ -34,7 +36,7 @@ export class WorldMesh{
    case 'wall':box('stone wall',object.width,object.height,object.depth,0,object.height/2,0,'#777f73');for(let row=1;row<Math.min(12,object.height/.35);row++)box('mortar seam',object.width+.012,.024,object.depth+.012,0,row*.35,0,'#4e584e');break;
    default:
     this.part('trunk',L.PrimitiveMesh.createCylinder(.21,1.7,10),0,.82,0,'#73573b');
-    if(object.resources){ball('broad crown',1,0,2.05,0,'#4b6338',1.15,.72,1);ball('sunlit crown',.75,-.19,2.52,-.07,'#7c8c52',1,.77,1);ball('side crown',.65,-.58,2.08,.3,'#667e43',1,.75,1);ball('leaf cluster',.45,.63,2.24,.16,'#8e9c5e',1,.65,1);box('bark line',.026,.68,.025,.03,.76,.21,'#463e2d');}
+    if(object.resources){if(stage<=2)this.node.transform.localRotationEuler=new L.Vector3(0,0,stage===1?16:8);ball('broad crown',1,0,2.05,0,'#4b6338',1.15,.72,1);if(stage>=3)ball('sunlit crown',.75,-.19,2.52,-.07,'#7c8c52',1,.77,1);if(stage>=2)ball('side crown',.65,-.58,2.08,.3,'#667e43',1,.75,1);if(stage>=4)ball('leaf cluster',.45,.63,2.24,.16,'#8e9c5e',1,.65,1);if(stage<=2)box('cut in trunk',.27,.15,.22,.15,.62,.14,'#d6b78c');box('bark line',.026,.68,.025,.03,.76,.21,'#463e2d');}
     else this.node.transform.localScale=new L.Vector3(1,.2,1);
   }
  }
@@ -44,7 +46,8 @@ export class WorldMesh{
   if(/crown|cluster|leaves|trunk|stone edge|wall$|foundation|roof$|crate$|frame$|workbench top/.test(name)){
    if(!this.ink){this.ink=new L.UnlitMaterial();this.ink.albedoColor=new L.Color(.17,.19,.15,1);this.ink.cull=L.RenderState.CULL_FRONT;this.materials.push(this.ink);}
    const outline=new L.MeshSprite3D(geometry,'ink silhouette');outline.transform.localScale=new L.Vector3(1.026,1.026,1.026);outline.meshRenderer.sharedMaterial=this.ink;node.addChild(outline);
-  }return node;
+  }if(['house','plot'].includes(this.object.kind)&&/roof|chimney/.test(name))this.roofs.push(node);return node;
  }
+ setRoofVisible(visible:boolean):void{for(const roof of this.roofs)roof.active=visible;}
  dispose():void{this.node.destroy(true);for(const g of this.geometries)g.destroy();for(const m of this.materials)m.destroy();}
 }

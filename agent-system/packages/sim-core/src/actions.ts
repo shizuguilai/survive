@@ -3,7 +3,8 @@ import type { ActionProgress, Resident, World } from './domain.ts';
 import { FIXED_DT_MS } from './clock.ts';
 import {readWorkbench,finishRecipe,findRecipe,finishBuild,withdraw,skillDuration,gatherPeriod,addSkill} from './workshop.ts';
 import {HOUSE_STEPS,taskTitle} from './recipes.ts';
-import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS} from './camp.ts';
+import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS,claimHome} from './camp.ts';
+import {navigationPath,movementBlocked,floorHeight} from './navigation.ts';
 import {rememberMapCell} from './spatial-memory.ts';
 import { applyEquipmentAction } from './character.ts';
 export const IMPLEMENTED_ACTIONS = ['survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
@@ -70,14 +71,18 @@ export function stepActions(world:World,nextTick:number):string[] {
           const target=progress.targetPosition!;const remaining=distance(resident.position,target);
           if(remaining<=0.80001){fail(world,resident,progress,nextTick,'我已在该目标最后已知位置附近，本次没有移动，不能算作新的移动进展。应根据已有感官决定下一步；目标当前状态不明时先观察。');due.add(resident.id);break;}
           const speed=(params.gait==='run'?2.6:1.4)*((resident.health??100)<30?.5:1);
-          const step=Math.min(speed*FIXED_DT_MS/1000,remaining-0.8);
-          const heading=Math.atan2(target.z-resident.position.z,target.x-resident.position.x);
+          const key=world.objects.filter(o=>['plot','house'].includes(o.kind)).map(o=>o.id+':'+o.buildStage).join('|');
+          if(!progress.waypoints||progress.navigationKey!==key){progress.waypoints=navigationPath(world,resident,target);progress.navigationKey=key;}
+          while(progress.waypoints.length>1&&distance(resident.position,progress.waypoints[0])<.025)progress.waypoints.shift();
+          const waypoint=progress.waypoints[0]??target,wayDistance=distance(resident.position,waypoint);
+          const step=Math.min(speed*FIXED_DT_MS/1000,progress.waypoints.length>1?wayDistance:Math.max(0,wayDistance-.8));
+          const heading=Math.atan2(waypoint.z-resident.position.z,waypoint.x-resident.position.x);
           const next={...resident.position,x:resident.position.x+Math.cos(heading)*step,z:resident.position.z+Math.sin(heading)*step};
-          const blocked=world.objects.some(o=>o.kind==='wall'&&Math.abs(next.x-o.position.x)<o.width/2+0.22&&Math.abs(next.z-o.position.z)<o.depth/2+0.22);
+          const blocked=movementBlocked(world,resident.position,next);
           resident.heading=heading;
           if(blocked){rememberMapCell(resident,next,nextTick,true);resident.pain=Math.min(1,resident.pain+0.02);fail(world,resident,progress,nextTick,'前方受阻，身体感到轻微碰撞。');due.add(resident.id);break;}
-          resident.position=next;resident.fatigue=Math.min(1,resident.fatigue+0.00003);
-          if(distance(resident.position,target)<=0.80001)progress.done=true;
+          next.y=floorHeight(world,next);resident.position=next;resident.fatigue=Math.min(1,resident.fatigue+0.00003);
+          if(progress.waypoints.length<=1&&distance(resident.position,target)<=0.80001)progress.done=true;
           break;
         }
         case 'survey':{resident.heading+=Math.PI*2*FIXED_DT_MS/params.durationSimMs;progress.done=progress.elapsedTicks*FIXED_DT_MS>=params.durationSimMs;break;}
@@ -110,7 +115,7 @@ export function stepActions(world:World,nextTick:number):string[] {
           if(progress.elapsedTicks%period===0){
             if(object.resources<=0){fail(world,resident,progress,nextTick,'眼前已没有可取的资源。');due.add(resident.id);break;}
             if(resident.supplies&&resident.inventory>=30){fail(world,resident,progress,nextTick,'采集袋已满（30份），需要先消耗食物或停止采集。');due.add(resident.id);break;}
-            object.resources--;resident.inventory++;progress.producedUnits=(progress.producedUnits??0)+1;addSkill(resident,'gathering');
+            object.maxResources??=object.resources;object.resources--;resident.inventory++;progress.producedUnits=(progress.producedUnits??0)+1;addSkill(resident,'gathering');
             const kind=object.resourceKind??'wood';if(resident.supplies){resident.supplies[kind]=(resident.supplies[kind]??0)+1;creditGather(world,resident,kind);}resident.fatigue=Math.min(1,resident.fatigue+0.005);
             if(progress.producedUnits>=params.amount)progress.done=true;
           }
@@ -130,6 +135,8 @@ export function stepActions(world:World,nextTick:number):string[] {
         case 'build':{
           const step=HOUSE_STEPS.find(s=>resident.known[params.stepRef]?.entityId.endsWith(':'+s.id));
           if(!step){fail(world,resident,progress,nextTick,'尚未知晓这个施工步骤。');due.add(resident.id);break;}
+          const project=world.objects.find(o=>o.projectId===resident.known[params.projectRef]?.entityId);
+          if(project)resident.heading=Math.atan2(project.position.z-resident.position.z,project.position.x-resident.position.x);
           if(progress.elapsedTicks*FIXED_DT_MS>=skillDuration(resident,'construction',step.durationMs)){const error=finishBuild(world,resident,params.projectRef,params.stepRef);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;}break;
         }
         case 'haul':{
@@ -148,7 +155,7 @@ export function stepActions(world:World,nextTick:number):string[] {
         case 'accept_task':case 'decline_task':{
           const task=world.camp?.tasks.find(t=>t.id===knowledge!.entityId);
           if(!task||task.status!=='open'){fail(world,resident,progress,nextTick,'这项已读目标当前不可接取或已经完成。');due.add(resident.id);break;}
-          if(progress.action.op==='accept_task'){if(!task.acceptedBy.includes(resident.id))task.acceptedBy.push(resident.id);ownReceipt(resident,world,`我已自愿接受${taskTitle(task)}。接下来准备材料、完成实际工作，空口问候不推进目标。`);}
+          if(progress.action.op==='accept_task'){if(task.kind==='residential'){const error=claimHome(world,resident,task);if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);}else progress.done=true;break;}if(!task.acceptedBy.includes(resident.id))task.acceptedBy.push(resident.id);ownReceipt(resident,world,`我已自愿接受${taskTitle(task)}。接下来准备材料、完成实际工作，空口问候不推进目标。`);}
           else{task.acceptedBy=task.acceptedBy.filter(id=>id!==resident.id);ownReceipt(resident,world,`我拒绝了这项公告目标，理由：${params.reason}`);}
           progress.done=true;break;
         }

@@ -3,6 +3,7 @@ import type { CharacterContext, Observation, Vec3 } from '../../contracts/src/ty
 import type { KnowledgeEntry, Resident, SensoryOverlay, SoundFragment, World, WorldObject } from './domain.ts';
 import { experiencedWhen, privateAction, privateMemory, privateObservation, rememberObservation } from './knowledge.ts';
 import {rememberFootstep,rememberMapCell,rememberLandmark,rememberedCellCenter,buildSpatialContext} from './spatial-memory.ts';
+import {solidWalls} from './navigation.ts';
 import {skillLevel} from './recipes.ts';
 import { listOwnEquipment, publicCharacterSummary } from './character.ts';
 
@@ -45,7 +46,7 @@ function intersectsBox(start: Vec3, end: Vec3, object: WorldObject): number | nu
 }
 
 function wallHits(world: World, start: Vec3, end: Vec3, exceptId?: string): WorldObject[] {
-  return world.objects.filter(object => object.kind === 'wall' && object.id !== exceptId && intersectsBox(start, end, object) !== null);
+  const hits:WorldObject[]=[];for(const object of world.objects)if(object.id!==exceptId)for(const wall of solidWalls(object))if(intersectsBox(start,end,wall)!==null)hits.push(wall);return hits;
 }
 
 type VisualCandidate = { id: string; position: Vec3; height: number; appearance: string; kind: import('./spatial-memory.ts').MapKind; depleted:boolean; resident: boolean };
