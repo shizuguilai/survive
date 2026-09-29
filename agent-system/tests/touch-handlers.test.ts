@@ -15,8 +15,8 @@ function viewFixture(){
 test('A complete two-finger pinch and release never becomes a character tap',()=>{
  const v=viewFixture(),a={touchId:11,began:true,pos:{x:500,y:350},downTargets:[v.sceneInput]},b={touchId:12,began:true,pos:{x:600,y:350},downTargets:[v.sceneInput]};
  v.pointerDown({touchId:11,touches:[a],stageX:500,stageY:350});v.pointerDown({touchId:12,touches:[a,b],stageX:600,stageY:350});
- b.pos.x=700;v.pointerMove({touchId:12,touches:[a,b],stageX:700,stageY:350});assert.equal(v.zoom,9);
- v.pointerUp({touchId:12,touches:[a,b],stageX:700,stageY:350});assert.ok(v.drag.moved);
+ b.pos.x=700;v.pointerMove({touchId:12,touches:[a,b],stageX:700,stageY:350});v.flushPinch();assert.ok(v.zoom>=9&&v.zoom<10);
+ v.pointerUp({touchId:12,touches:[a,b],stageX:700,stageY:350});assert.equal(v.drag,null);
  v.pointerUp({touchId:11,touches:[a],stageX:600,stageY:330});assert.equal(v.state.selectedId,'resident-a');assert.equal(v.suppressTap,false);assert.equal(v.drag,null);
 });
 test('Repeated scene taps cycle overlapping people, open details, and slow drags do not select',()=>{

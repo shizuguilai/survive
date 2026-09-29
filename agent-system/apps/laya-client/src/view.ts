@@ -1,7 +1,11 @@
+import {Minimap} from './minimap.ts';
+import {ThoughtCadence} from './thought-cadence.ts';
+import {SpeechBubble} from './speech-bubble.ts';
+import {clampMapCamera,groundAtScreen,projectToStage,beginMapPinch,moveMapPinch,cameraFootprint,type MapPinch,type MapTouch} from './map-camera.ts';
 import {NativeTextScroll} from './native-scroll.ts';
 import {dayClock,residentThought,moodReasons,ownHouse,onBreak,FURNITURE,homeSize} from '../../../packages/sim-core/src/living.ts';
 import {drawIcon} from './hud-icons.ts';
-import {pinchZoom,boundedZoom,cycleHit} from './interaction.ts';
+import {boundedZoom,cycleHit} from './interaction.ts';
 import {zoneBounds,validateZone,homeSites} from '../../../packages/sim-core/src/housing.ts';
 import {resourceCapacity,resourceStage} from '../../../packages/sim-core/src/resources.ts';
 import type {Resident,WorldObject,ResidentialBounds} from '../../../packages/sim-core/src/domain.ts';
@@ -62,7 +66,7 @@ export class ObserverView {
   readonly root:any; readonly scene:any; readonly camera:any;
   private labels:Record<string,any>={};private buttons:Record<string,NativeButton>={};
   private residents=new Map<string,CharacterMesh>();private objects=new Map<string,WorldMesh>();private objectSignatures=new Map<string,string>();private placeLabels=new Map<string,any>();
-  private nameLabels=new Map<string,any>();private speechLabels=new Map<string,any>();private senseLines:any;private selection:any;
+  private nameLabels=new Map<string,any>();private speechLabels=new Map<string,SpeechBubble>();private thoughts=new ThoughtCadence();private senseLines:any;private selection:any;
   private inspector:any;private sidebarCollapsed=true;private modalLayouts:{panel:any;width:number}[]=[];
   private get sceneLeft():number{return this.sidebarCollapsed?0:SIDE;}
   private controlPanel:any;private controlDraft=controlSettings(null);
@@ -73,13 +77,13 @@ export class ObserverView {
   private historyRows:any[]=[];private displayedHistory:HistoryRow[]=[];private historySnapshot:JournalEntry[]|null=null;private historySnapshotScope='';private historySummaryRunId='';private historyCache='';
   private state:ViewState|null=null;private token:any;
   private worldRevision='';private senseRevision='';private hudRevision='';private mapRevision='';private hudDirty=true;private highQuality=false;
-  private offset={x:0,z:0};private drag:{x:number;y:number;ox:number;oz:number;moved:boolean;travel?:number}|null=null;
+  private offset={x:0,z:0};private drag:{id?:number;x:number;y:number;ox:number;oz:number;moved:boolean;travel?:number}|null=null;
   private residentDetails:any;private objectDetails:any;private inventoryPanel:any;
   private statBars:any[]=[];private statValues:any[]=[];private selectedObject:string|null=null;
   private nightShade:any;private daylightLight:any;private lifePanel:any;private statusPanel:any;private inventoryScroll:NativeTextScroll|null=null;private lifeScroll:NativeTextScroll|null=null;private statusScroll:NativeTextScroll|null=null;
   private resourceRail:any;private resourceExpanded=true;private showRoofs=true;
   private zoneLines:any;private zoneDrawing=false;private zoneStart:{x:number;z:number}|null=null;private zoneDraft:ResidentialBounds|null=null;private zoneRevision='';
-  private pinch:{distance:number;zoom:number;anchor:{x:number;z:number}}|null=null;private suppressTap=false;
+  private pinch:MapPinch|null=null;private pendingPinch:MapTouch[]|null=null;private suppressTap=false;private minimap:Minimap|null=null;
   private markers:any;private sceneInput:any;private zoom=18;
 
   constructor(private api:ViewCallbacks){
@@ -106,7 +110,8 @@ export class ObserverView {
     L.InputManager.multiTouchEnabled=true;
     L.stage.on(L.Event.MOUSE_MOVE,this,(e:any)=>this.pointerMove(e));
     L.stage.on(L.Event.MOUSE_UP,this,(e:any)=>this.pointerUp(e));
-    L.stage.on(L.Event.RESIZE,this,()=>this.positionLabels());
+    L.stage.on(L.Event.RESIZE,this,()=>{this.resetMapGesture();this.moveCamera();this.positionLabels();});
+    const wx=(globalThis as any).wx;if(wx?.onHide)wx.onHide(()=>this.resetMapGesture());else globalThis.addEventListener?.('blur',()=>this.resetMapGesture());
   }
 
   private color(hex:string,alpha=1):any{const h=parseInt(hex.slice(1),16);return new L.Color((h>>16&255)/255,(h>>8&255)/255,(h&255)/255,alpha);}
@@ -174,7 +179,7 @@ export class ObserverView {
     this.button('zoneCancel','取消圈地',759,147,120,()=>this.cancelZone()).root.visible=false;
     this.labels.zoneHint=this.text(this.root,'',320,151,14,palette.amber,280);this.labels.zoneHint.visible=false;
     this.labels.taskSummary=this.text(this.root,'',320,122,12,'#eee3c4',560);this.labels.taskSummary.mouseEnabled=false;
-    this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',908);this.labels.error.height=104;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
+    this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',682);this.labels.error.height=148;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
     this.button('quickHistory','档案',18,670,77,()=>this.openHistory());
     this.button('quickMap','地图',105,670,77,()=>{this.hideModals();this.memoryPanel.visible=true;});
     this.button('quickSenses','感官',192,670,77,()=>this.api.onToggleSenses());
@@ -189,6 +194,7 @@ export class ObserverView {
     this.button('connect','连接',1170,670,86,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
     this.text(this.root,'居民档案自动保存 · 可切换流畅 / 精细画面',315,710,9,'#a6afa7',650);
     this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();this.buildInventory();this.buildLifeDetails();
+    this.minimap=new Minimap(this.root,p=>{this.resetMapGesture();this.offset={...p};this.moveCamera();this.positionLabels();},()=>this.focusCamp());
   }
 
   private buildResourceRail():void{
@@ -291,7 +297,7 @@ export class ObserverView {
     this.sceneInput.pos(left,TOP);this.sceneInput.size(WIDTH-left,BOTTOM-TOP);this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-left,BOTTOM-TOP);
     this.labels.caption.x=this.sidebarCollapsed?195:315;this.labels.taskSummary.x=this.sidebarCollapsed?195:320;
     for(const {panel,width}of this.modalLayouts)panel.x=left+(WIDTH-left-width)/2-320;
-    this.applyQuality();this.updateInspectorButton();if(this.nightShade){this.nightShade.graphics.clear();this.nightShade.graphics.drawRect(this.sceneLeft,TOP,WIDTH-this.sceneLeft,BOTTOM-TOP,'#0c1734');}this.drag=null;this.positionLabels();
+    this.applyQuality();this.updateInspectorButton();if(this.nightShade){this.nightShade.graphics.clear();this.nightShade.graphics.drawRect(this.sceneLeft,TOP,WIDTH-this.sceneLeft,BOTTOM-TOP,'#0c1734');}this.resetMapGesture();this.moveCamera();this.positionLabels();
   }
   private updateInspectorButton():void{const r=this.state?.world.residents.find(r=>r.id===this.state?.selectedId);this.buttons.inspectorToggle.set(this.sidebarCollapsed?(this.selectedObject?'物体':r?.name??'居民')+' · 信息 ›':'‹ 收起信息');}
   private hideModals():void{this.hudDirty=true;for(const panel of [this.planner,this.workshopPanel,this.historyPanel,this.memoryPanel,this.controlPanel,this.inventoryPanel,this.lifePanel,this.statusPanel])if(panel)panel.visible=false;}
@@ -442,32 +448,40 @@ export class ObserverView {
     for(const [id,enabled]of [['historyNewer',!!this.historyDetail||this.historyPage>0],['historyOlder',!!this.historyDetail||this.historyPage<pages-1]] as const){this.buttons[id].root.mouseEnabled=enabled;this.buttons[id].root.alpha=enabled?1:.4;}
   }
   private selectIndex(index:number):void{const id=this.state?.world.residents[index]?.id;if(id){this.selectedObject=null;this.hudDirty=true;this.api.onSelect(id);}}
-  private setZoom(value:number):void{this.zoom=boundedZoom(value);this.camera.orthographicVerticalSize=this.zoom;this.positionLabels();}
-  private groundAt(x:number,y:number):{x:number;z:number}{
-    const a=this.project({x:0,y:0,z:0}),b=this.project({x:1,y:0,z:0}),c=this.project({x:0,y:0,z:1});
-    const bx=b.x-a.x,by=b.y-a.y,cx=c.x-a.x,cy=c.y-a.y,d=bx*cy-by*cx;
-    return {x:((x-a.x)*cy-(y-a.y)*cx)/d,z:((y-a.y)*bx-(x-a.x)*by)/d};
-  }
+  private mapViewport(){return {x:this.sceneLeft,y:TOP,width:WIDTH-this.sceneLeft,height:BOTTOM-TOP};}
+  private mapCamera(){return {x:this.offset.x,z:this.offset.z,zoom:this.zoom};}
+  private resetMapGesture():void{this.pinch=null;this.pendingPinch=null;this.drag=null;this.suppressTap=false;this.zoneStart=null;}
+  private focusCamp():void{const p=this.state?.world.objects.find(o=>o.kind==='board')?.position;this.resetMapGesture();this.offset={x:p?.x??0,z:p?.z??0};this.zoom=18;this.moveCamera();this.positionLabels();}
+  private drawMinimap():void{if(this.state)this.minimap?.render(this.state.world,this.state.selectedId,cameraFootprint(this.mapCamera(),this.mapViewport()));}
+  private setZoom(value:number):void{this.flushPinch();this.zoom=boundedZoom(value);this.moveCamera();this.positionLabels();}
+  private groundAt(x:number,y:number):{x:number;z:number}{return groundAtScreen({x,y},this.mapCamera(),this.mapViewport());}
   private touches(e:any):any[]{return (e?.touches??[]).filter((t:any)=>t.began&&t.downTargets?.includes(this.sceneInput));}
+  private touchPoints(ts:any[]):MapTouch[]{return ts.map(t=>({id:t.touchId,pos:{x:t.pos.x,y:t.pos.y}}));}
+  private flushPinch():void{
+    const samples=this.pendingPinch;this.pendingPinch=null;if(!samples||!this.pinch)return;
+    const c=moveMapPinch(this.pinch,samples,this.mapViewport());if(!c)return;
+    this.offset={x:c.x,z:c.z};this.zoom=c.zoom;this.moveCamera();this.positionLabels();
+  }
   private pointerDown(e:any):void{
-    const ts=this.touches(e);if(ts.length>=2){const [a,b]=ts;this.pinch={distance:Math.hypot(a.pos.x-b.pos.x,a.pos.y-b.pos.y),zoom:this.zoom,anchor:this.groundAt((a.pos.x+b.pos.x)/2,(a.pos.y+b.pos.y)/2)};this.suppressTap=true;this.drag=null;this.zoneStart=null;return;}
+    const ts=this.touches(e);if(this.suppressTap&&!this.pinch)return;
+    if(ts.length>=2){if(!this.pinch){const [a,b]=this.touchPoints(ts);this.pinch=beginMapPinch(a,b,this.mapCamera(),this.mapViewport());this.pendingPinch=null;}this.suppressTap=true;this.drag=null;this.zoneStart=null;return;}
     if(this.pinch)return;this.suppressTap=false;
     const x=e?.stageX??L.stage.mouseX,y=e?.stageY??L.stage.mouseY;
-    this.drag={x,y,ox:this.offset.x,oz:this.offset.z,moved:false};if(this.zoneDrawing){this.zoneStart=this.groundAt(x,y);this.zoneDraft=null;}
+    this.drag={id:e?.touchId,x,y,ox:this.offset.x,oz:this.offset.z,moved:false};if(this.zoneDrawing){this.zoneStart=this.groundAt(x,y);this.zoneDraft=null;}
   }
   private pointerMove(e:any):void{
-    const ts=this.touches(e);if(ts.length>=2){if(!this.pinch)this.pointerDown(e);if(!this.pinch)return;const [a,b]=ts;
-      this.setZoom(pinchZoom(this.pinch.zoom,this.pinch.distance,Math.hypot(a.pos.x-b.pos.x,a.pos.y-b.pos.y)));
-      const point=this.groundAt((a.pos.x+b.pos.x)/2,(a.pos.y+b.pos.y)/2);this.offset.x+=this.pinch.anchor.x-point.x;this.offset.z+=this.pinch.anchor.z-point.z;this.moveCamera();this.positionLabels();return;
-    }
-    if(!this.drag)return;const x=e?.stageX??L.stage.mouseX,y=e?.stageY??L.stage.mouseY,dx=x-this.drag.x,dy=y-this.drag.y;
+    if(this.pinch){this.pendingPinch=this.touchPoints(this.touches(e));return;}
+    if(this.suppressTap||!this.drag||(this.drag.id!==undefined&&e.touchId!==this.drag.id))return;
+    const x=e?.stageX??L.stage.mouseX,y=e?.stageY??L.stage.mouseY,dx=x-this.drag.x,dy=y-this.drag.y;
     this.drag.travel=(this.drag.travel??0)+Math.hypot(dx,dy);if(this.drag.travel>7)this.drag.moved=true;
     if(this.zoneDrawing&&this.zoneStart){this.zoneDraft=zoneBounds(this.zoneStart,this.groundAt(x,y));this.drawZones();this.updateZoneHint();return;}
     const from=this.groundAt(this.drag.x,this.drag.y),to=this.groundAt(x,y);this.offset.x+=from.x-to.x;this.offset.z+=from.z-to.z;this.drag.x=x;this.drag.y=y;this.moveCamera();this.positionLabels();
   }
   private pointerUp(e:any):void{
     const ts=this.touches(e).filter((t:any)=>t.touchId!==e.touchId);
-    if(this.pinch||this.suppressTap){this.pinch=null;this.drag=null;if(ts.length===1)this.drag={x:ts[0].pos.x,y:ts[0].pos.y,ox:this.offset.x,oz:this.offset.z,moved:true};if(!ts.length)this.suppressTap=false;return;}
+    if(this.pinch){if(e.touchId!==undefined&&!this.pinch.ids.includes(e.touchId))return;this.pendingPinch=this.touchPoints(e.touches??[]);this.flushPinch();this.pinch=null;this.pendingPinch=null;this.drag=null;this.zoneStart=null;this.suppressTap=ts.length>0;return;}
+    if(this.suppressTap){if(!ts.length)this.suppressTap=false;this.drag=null;return;}
+    if(this.drag?.id!==undefined&&e.touchId!==this.drag.id)return;
     const drag=this.drag;this.drag=null;if(!drag||!this.state)return;
     if(e?.nativeEvent?.type==='touchcancel'){this.zoneStart=null;return;}
     if(this.zoneDrawing){this.zoneStart=null;this.updateZoneHint();return;}if(drag.moved)return;
@@ -481,7 +495,7 @@ export class ObserverView {
     const anchor=this.groundAt(x,y);this.sidebarCollapsed=false;this.hudDirty=true;this.senseRevision='';this.layoutInspector();
     if(x>SIDE+10){const shifted=this.groundAt(x,y);this.offset.x+=anchor.x-shifted.x;this.offset.z+=anchor.z-shifted.z;this.moveCamera();this.positionLabels();}
   }
-  private moveCamera():void{this.camera.transform.position=new L.Vector3(this.offset.x,28,this.offset.z+20);this.camera.transform.lookAt(new L.Vector3(this.offset.x,0,this.offset.z),new L.Vector3(0,1,0),false,true);}
+  private moveCamera():void{const c=clampMapCamera(this.mapCamera(),this.mapViewport());this.offset={x:c.x,z:c.z};this.zoom=c.zoom;this.camera.orthographicVerticalSize=c.zoom;this.camera.transform.position=new L.Vector3(this.offset.x,28,this.offset.z+20);this.camera.transform.lookAt(new L.Vector3(this.offset.x,0,this.offset.z),new L.Vector3(0,1,0),false,true);}
   private mesh(name:string,geometry:any,p:{x:number;y:number;z:number},color:string):any{
     const mesh=new L.MeshSprite3D(geometry,name);mesh.transform.position=new L.Vector3(p.x,p.y,p.z);
     const mat=new L.BlinnPhongMaterial();mat.albedoColor=this.color(color);mat.specularColor=new L.Color(.05,.05,.05,1);mesh.meshRenderer.sharedMaterial=mat;this.scene.addChild(mesh);return mesh;
@@ -496,7 +510,7 @@ export class ObserverView {
     for(const [id,node]of this.residents){if(!liveIds.has(id)){node.dispose();this.residents.delete(id);this.nameLabels.get(id)?.destroy();this.nameLabels.delete(id);this.speechLabels.get(id)?.destroy();this.speechLabels.delete(id);}}
     for(const r of world.residents){
       let node=this.residents.get(r.id);
-      if(!node){node=new CharacterMesh(r);this.scene.addChild(node.node);this.residents.set(r.id,node);const t=this.text(this.markers,r.name,0,0,13,palette.ink,120);t.align='center';t.bold=true;t.stroke=2;t.strokeColor='#252c24';t.color='#fff4d8';t.mouseEnabled=false;this.nameLabels.set(r.id,t);const speech=this.text(this.markers,'',0,0,14,palette.ink,230);speech.bgColor='#e7dfc8';speech.color='#28332a';speech.padding=[7,9,7,9];speech.align='center';speech.mouseEnabled=false;this.speechLabels.set(r.id,speech);}
+      if(!node){node=new CharacterMesh(r);this.scene.addChild(node.node);this.residents.set(r.id,node);const t=this.text(this.markers,r.name,0,0,13,palette.ink,120);t.align='center';t.bold=true;t.stroke=2;t.strokeColor='#252c24';t.color='#fff4d8';t.mouseEnabled=false;this.nameLabels.set(r.id,t);this.speechLabels.set(r.id,new SpeechBubble(this.markers));}
       node.update(r);
     }
     const ids=new Set(world.objects.map(o=>o.id));
@@ -506,10 +520,24 @@ export class ObserverView {
     }
     this.drawZones();this.positionLabels();
   }
-  private project(p:{x:number;y:number;z:number}):{x:number;y:number}{const out=new L.Vector4();this.camera.worldToViewportPoint(new L.Vector3(p.x,p.y,p.z),out);return {x:out.x,y:out.y};}
-  private positionLabels():void{if(!this.state)return;for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
-    const speech=this.speechLabels.get(r.id);if(speech){const fragments=this.state.world.sounds.filter(s=>s.sourceId===r.id&&this.state!.world.tick-s.emittedTick<3000/defaults.simulation.fixedDtMs);const text=fragments.map(s=>s.text).join('').slice(-55);const thought=this.state.world.camp?residentThought(this.state.world,r):'';const cycle=Math.floor(this.state.world.tick/100)%Math.max(1,this.state.world.residents.length);const showThought=r.id===this.state.selectedId||cycle===this.state.world.residents.indexOf(r);speech.text=text?`“${text}”`:'心愿 · '+thought;speech.fontSize=text?14:12;speech.bgColor=text?'#e7dfc8':'#dce6cf';speech.visible=!!(text||thought&&showThought)&&t?.visible;const offset=this.state.world.residents.indexOf(r)%2?-5:-225;speech.pos(Math.max(this.sceneLeft+12,Math.min(WIDTH-242,p.x+offset)),Math.max(TOP+30,p.y-75));}}
+  private project(p:{x:number;y:number;z:number}):{x:number;y:number}{return projectToStage(p,this.mapCamera(),this.mapViewport());}
+  private positionLabels():void{if(!this.state)return;this.drawMinimap();for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
+    }this.positionBubbles();
     for(const object of this.state.world.objects){const label=this.placeLabels.get(object.id);if(!label)continue;const p=this.project({...object.position,y:0,z:object.position.z+(object.kind==='house'||object.kind==='plot'?object.depth/2+1:object.kind==='pond'?3.1:1)});let captionY=p.y+7;for(const r of this.state.world.residents){const rp=this.project({...r.position,y:1});if(Math.abs(rp.x-p.x)<95&&Math.abs(rp.y-captionY)<42)captionY=Math.max(captionY,rp.y+42);}label.pos(p.x-75,captionY);label.visible=p.x>this.sceneLeft+85&&p.x<WIDTH-85&&p.y>TOP+64&&p.y<BOTTOM-30;}
+  }
+  private positionBubbles():void{
+    if(!this.state)return;const w=this.state.world;
+    const visible=w.residents.filter(r=>this.nameLabels.get(r.id)?.visible);
+    const spoken=new Map(visible.map(r=>[r.id,w.sounds.filter(s=>s.sourceId===r.id&&w.tick-s.emittedTick<3000/defaults.simulation.fixedDtMs).map(s=>s.text).join('').slice(-55)]));
+    const candidates=w.camp?visible.map(r=>({id:r.id,text:residentThought(w,r)})):[];
+    const thought=this.thoughts.update(w.runId,performance.now(),candidates,[...spoken.values()].some(Boolean));
+    for(const r of w.residents){const bubble=this.speechLabels.get(r.id);if(!bubble)continue;
+      const words=spoken.get(r.id),wish=thought?.id===r.id?thought:null;
+      if(!words&&!wish){bubble.hide();continue;}
+      bubble.show(words?`“${words}”`:wish!.text,!words,words?1:wish!.alpha);
+      const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});
+      bubble.root.pos(Math.max(this.sceneLeft+12,Math.min(WIDTH-bubble.width-12,p.x-bubble.width/2)),Math.max(TOP+12,p.y-bubble.height-26));
+    }
   }
   private drawSenses(state:ViewState):void{
     this.senseLines.clear();this.selection.clear();const r=state.world.residents.find(r=>r.id===state.selectedId),object=state.world.objects.find(o=>o.id===this.selectedObject);if(object)this.ring(this.selection,object.position,Math.max(.6,object.width/2),'#f1e3a5');else if(r)this.ring(this.selection,r.position,.56,'#f1e3a5');
@@ -522,8 +550,8 @@ export class ObserverView {
   }
   render(state:ViewState):void{
     if(this.state&&this.state.world.runId!==state.world.runId){this.selectedObject=null;this.cancelZone();}
-    this.state=state;const worldKey=[state.world.runId,state.world.revision,state.world.tick].join(':');
-    if(worldKey!==this.worldRevision){this.drawWorld(state.world);this.worldRevision=worldKey;}
+    this.state=state;this.flushPinch();this.drawMinimap();const worldKey=[state.world.runId,state.world.revision,state.world.tick].join(':');
+    if(worldKey!==this.worldRevision){this.drawWorld(state.world);this.worldRevision=worldKey;}else this.positionBubbles();
     const senseKey=[worldKey,state.selectedId,state.showSenses].join('|');if(senseKey!==this.senseRevision){this.drawSenses(state);this.senseRevision=senseKey;}
     const mapKey=worldKey+'|'+state.selectedId;if(this.memoryPanel?.visible&&(this.hudDirty||this.mapRevision!==mapKey)){const remembered=state.world.residents.find(r=>r.id===state.selectedId);if(remembered)this.memoryMap.render(remembered);this.mapRevision=mapKey;}
     const hudKey=[worldKey,state.selectedId,state.showSenses,state.status,state.mode,state.error,state.hosted,state.cognitionDetail,state.controlDetail,state.controlNotice,state.fallbackActive,state.historyVersion,state.historyWarning,state.summaryVersion,state.summaryBusy,state.summaryError,state.pendingTasks].join('|');
@@ -544,13 +572,13 @@ export class ObserverView {
     this.buttons.senses.set(`感官 ${state.showSenses?'开':'关'}`);this.buttons.quickSenses.set(`感官 ${state.showSenses?'开':'关'}`);
     this.buttons.pause.set(/PAUS|STOP|暂停/i.test(state.status)?'继续':'暂停');
     this.labels.error.text=state.controlNotice?state.controlNotice:state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
-    this.labels.caption.text=this.zoneDrawing?'圈选居住区 · 单指拖出范围，双指调整地图':state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'双指缩放 · 单指拖动 · 点击查看 · 重叠再点切换':'两名居民 · 两棵树 · 一堵墙';
+    this.labels.caption.text=this.zoneDrawing?'圈选居住区 · 单指拖出范围，双指调整地图':state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'双指平移 · 捏合缩放 · 小地图定位':'两名居民 · 两棵树 · 一堵墙';
     const tasks=state.world.camp?.tasks??[],recipe=RECIPES.find(r=>r.id===this.draftRecipe)!;
     this.buttons.publishTask.set(this.draftKind==='residential'?'到地图圈选居住区':this.draftKind==='craft'?`发布${recipe.label}制作目标`:`发布${RESOURCE_LABELS[this.draftResource]}目标`);
     for(const kind of ['gather','craft','residential'])this.buttons['kind-'+kind].label.color=kind===this.draftKind?'#14271b':'#314030';
     for(const resource of ['wood','stone','food']){this.buttons['task-'+resource].root.visible=this.draftKind==='gather';this.buttons['task-'+resource].set((this.draftResource===resource?'● ':'')+RESOURCE_LABELS[resource as TaskDraft['resource']]);}
     for(const entry of RECIPES.filter(r=>r.kind==='craft')){this.buttons['recipe-'+entry.id].root.visible=this.draftKind==='craft';this.buttons['recipe-'+entry.id].set((this.draftRecipe===entry.id?'● ':'')+entry.label);}
-    this.labels.zonePlanner.visible=this.draftKind==='residential';this.labels.zonePlanner.text='单指拖出矩形区域 · 自由选择位置和大小\n双指仍可缩放、移动地图';
+    this.labels.zonePlanner.visible=this.draftKind==='residential';this.labels.zonePlanner.text='单指拖出矩形区域 · 自由选择位置和大小\n双指同向平移 · 张合缩放地图';
     this.buttons.amount.root.visible=this.draftKind!=='residential';this.buttons.amount.set('数量 '+(this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount));
     this.labels.draftTitle.text=this.draftKind==='residential'?'居住区 · 居民按需申请自己的住处':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
     this.labels.requirements.pos(this.draftKind==='residential'?344:469,379);this.labels.requirements.width=this.draftKind==='residential'?374:250;
