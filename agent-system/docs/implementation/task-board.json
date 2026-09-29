@@ -1991,7 +1991,7 @@
         "T12",
         "T16"
       ],
-      "status": "not_started",
+      "status": "partial",
       "proposedFiles": [
         "packages/sim-core/src/save/",
         "packages/sim-core/src/migrations/"
@@ -2004,26 +2004,26 @@
       ],
       "definitionOfDone": "原始档备份、prepare/commit事务、随机状态与队列恢复、密钥排除。",
       "verification": {
-        "static": "not_run",
-        "mock": "not_run",
+        "static": "passed",
+        "mock": "passed",
         "realModel": "not_run",
-        "webBuild": "not_run",
+        "webBuild": "see_save_homes_build_evidence",
         "layaBuild": "not_run",
         "browser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "not_published"
+        "publication": "see_site_version_history"
       },
       "configurationStatus": "MODEL_KEY_CONFIGURED; PROVIDER_AUTH_RESOLVED_LOCAL_REAL_CORE_PASSED; IDE_UNAVAILABLE; wx_appid_empty; web_https_gateway_deployed_private; wechat_auth_not_configured",
-      "changedFiles": [],
-      "commandsRun": [],
-      "evidence": [],
+      "changedFiles": ["apps/laya-client/src/camp-save.ts", "apps/laya-client/src/controller.ts", "packages/sim-core/src/cognition.ts", "tests/camp-save.test.ts", "tests/camp-controller.test.ts", "tools/verify-save-homes.ts"],
+      "commandsRun": ["npm run typecheck", "npm test", "node tools/verify-save-homes.ts", "npm run build"],
+      "evidence": ["docs/implementation/SAVE_AND_PERSONAL_HOMES.md", "evidence/save-homes-unit-tests.txt", "evidence/save-homes-local.json", "evidence/save-homes-build.txt"],
       "commit": null,
       "blockers": [
-        "按用户顺序等待T14剩余实时浏览器与完整验收完成；本地核心闭环已通过但T14仍为partial，不提前扩展区域协作/人口"
+        "真实浏览器崩溃、微信真机、实时远程模型恢复和更早项目格式转换尚未验收；本轮只验证本机存档、旧决策检查点和本地恢复闭环"
       ],
-      "codeStatus": "not_started",
-      "scopeNote": "尚未实施，不能从已有模块测试推导本任务完成。",
-      "blockerCode": "pending_T14_remaining_acceptance"
+      "codeStatus": "implemented",
+      "scopeNote": "按用户追加要求接入本机双份自动存档、启动恢复、手动保存读取、未提交批次重启、部分动作进度继续和旧决策检查点迁移；不包含跨设备云存档及更早项目格式迁移。T18完整验收仍为partial。",
+      "blockerCode": "browser_device_and_older_format_acceptance_pending"
     },
     {
       "id": "T19",
@@ -2711,7 +2711,7 @@
         "browser": "passed_local_desktop_touch_controls_archive_quality_and_static_render_perf",
         "liveModelBrowser": "not_run",
         "physicalDevice": "not_run",
-        "publication": "web_public_deployed_v16",
+        "publication": "pending_v16",
         "wechatPublication": "not_run"
       },
       "evidence": [
@@ -2725,8 +2725,7 @@
         "evidence/performance-control-browser.json",
         "evidence/performance-inspector-browser.json",
         "evidence/web-build.json",
-        "evidence/performance-archive-browser.json",
-        "evidence/performance-deployment.json"
+        "evidence/performance-archive-browser.json"
       ],
       "scopeNote": "用户新要求覆盖T12在线回放界面要求，离线回放工具与历史证据仍保留。性能是Node/浏览器微测，不是真机FPS；居民私人状态没有删减。",
       "blockers": [
@@ -3033,44 +3032,6 @@
       "browser": "passed_desktop_and_touch_explicit_mock_transport",
       "liveModelBrowser": "not_run",
       "physicalDevice": "not_run"
-    }
-  },
-  "performanceMilestone": {
-    "baselineHead": "b4b86c2da26f0931cecf47dd5185826484783e4e",
-    "verification": {
-      "code": "implemented_no_live_recording_compact_atomic_checkpoint_revision_caches",
-      "static": "passed",
-      "mock": "passed_130_tests_1_long_wall_clock_test_skipped",
-      "localAlgorithm": "passed_8000_ticks_zero_remote_calls_equal_world_hashes_at_common_ticks",
-      "realModel": "not_run_performance_only",
-      "webBuild": "passed",
-      "layaBuild": "blocked_missing_ide",
-      "browser": "passed_local_desktop_touch_controls_archive_quality_and_static_render_perf",
-      "liveModelBrowser": "not_run",
-      "physicalDevice": "not_run",
-      "publication": "web_public_deployed_v16",
-      "wechatPublication": "not_run"
-    },
-    "documentation": "docs/implementation/LIVE_PERFORMANCE.md",
-    "deployment": {
-      "status": "succeeded",
-      "url": "https://survive-agent.drtdengruiting.chatgpt.site",
-      "projectId": "appgprj_6ab48dc223e081918869ba05be1b88ed",
-      "versionId": "appgprj_6ab48dc223e081918869ba05be1b88ed~appgver_3302e99bc7008191bbdebe1996aebf07",
-      "versionNumber": 16,
-      "deploymentId": "appgdep_6aba70fd73dc81918e604fb1116cdf3c",
-      "sourceCommit": "0b0aea8506489ece6b19792199a0adf8e252cd1d",
-      "envSetRevision": 3,
-      "publishedAt": "2026-09-28T13:52:40.565550+00:00",
-      "access": "public",
-      "code": "no_live_replay_compact_atomic_checkpoint_revision_caches_render_quality",
-      "mock": "130_tests_passed_1_long_wall_clock_test_skipped_explicit_render_and_transport_fixtures",
-      "localAlgorithm": "8000_ticks_zero_remote_calls_matching_world_hashes",
-      "realModel": "not_run_performance_only",
-      "browser": "passed_local_desktop_touch_controls_archive_gait_and_static_render_perf",
-      "liveModelBrowser": "not_run",
-      "physicalDevice": "not_run",
-      "wechatPublication": "not_run"
     }
   }
 }

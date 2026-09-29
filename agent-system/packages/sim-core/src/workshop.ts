@@ -1,5 +1,6 @@
 import type {Resident,World,WorldObject,ResourceKind} from './domain.ts';
 import {homeSize,isInside} from './living.ts';
+import {homeDesign,homeHeight} from './home-design.ts';
 import {clearNewWalls} from './navigation.ts';
 import {grantKnown,ownReceipt,updateBoard,learnHouse} from './camp.ts';
 import {RECIPES,HOUSE_STEPS,houseSteps,materialText,taskTitle,skillLevel} from './recipes.ts';
@@ -53,13 +54,13 @@ export function finishBuild(world:World,r:Resident,projectRef:string,stepRef:str
  for(const [kind,count]of Object.entries(step.cost))stock[kind as ResourceKind]=(stock[kind as ResourceKind]??0)-count;
  task.progress++;
  if(step.id==='dismantle'){
-  const oldLevel=plot!.homeLevel??1;world.camp!.stock??={};world.camp!.stock.wood=(world.camp!.stock.wood??0)+6*oldLevel;world.camp!.stock.stone=(world.camp!.stock.stone??0)+4*oldLevel;
-  plot!.position={...task.targetPosition!};Object.assign(plot!,homeSize(task.homeLevel));plot!.homeLevel=task.homeLevel;plot!.zoneId=task.zoneId;plot!.kind='plot';
+  const oldCost=houseSteps({homeLevel:plot!.homeLevel,homeDesign:plot!.homeDesign}).reduce((n,s)=>({wood:n.wood+s.cost.wood,stone:n.stone+s.cost.stone}),{wood:0,stone:0});world.camp!.stock??={};world.camp!.stock.wood=(world.camp!.stock.wood??0)+Math.floor(oldCost.wood/2);world.camp!.stock.stone=(world.camp!.stock.stone??0)+Math.floor(oldCost.stone/2);
+  plot!.position={...task.targetPosition!};Object.assign(plot!,homeSize(task.homeLevel,task.homeDesign));plot!.homeLevel=task.homeLevel;plot!.zoneId=task.zoneId;plot!.kind='plot';
  }
  plot!.buildStage=task.progress-(task.renovation?1:0);plot!.appearance=`住宅施工：${task.progress}/${task.amount}，刚完成${step.label}`;
  if(task.progress===steps.length){
-  task.status='done';plot!.kind='house';plot!.height=3.5;plot!.homeLevel=task.homeLevel??1;plot!.completedTick=world.tick;plot!.cleanliness??=1;
-  plot!.appearance=`${plot!.width}×${plot!.depth}住宅，南侧门口可进入，屋内可休息、添置家具与打扫`;
+  task.status='done';plot!.kind='house';plot!.height=homeHeight(plot!);plot!.homeLevel=task.homeLevel??1;plot!.completedTick=world.tick;plot!.cleanliness??=1;
+  plot!.appearance=`${plot!.width}×${plot!.depth}${homeDesign(plot!.homeDesign,plot!.ownerId).name}，南侧门口可进入，屋内可休息、添置家具与打扫`;
   const owner=world.residents.find(x=>x.id===task.ownerId);if(owner){owner.homeId=plot!.id;if(owner.living){owner.living.housingWait=0;owner.living.upgradeWait=0;owner.living.desiredLevel=plot!.homeLevel;}if(owner.id===r.id)grantKnown(owner,plot!.id,plot!.appearance+'；自己的住处，可使用home_care改善生活。',plot!.position,world.tick);}
   if(task.ownerId&&!task.renovation){const zone=world.camp?.tasks.find(t=>t.kind==='residential'&&t.zoneId===task.zoneId);if(zone)zone.progress++;}
  }

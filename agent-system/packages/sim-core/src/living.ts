@@ -1,8 +1,9 @@
 import type {Resident,World,WorldObject,FurnitureKind,ResourceKind} from './domain.ts';
+import {designedHomeSize} from './home-design.ts';
 
 /** All life timers use simulation ticks. Model waits and manual pauses freeze them. */
 export const DAY_TICKS=7200;
-export const homeSize=(level=1)=>({width:4+(level-1)*1.5,depth:3+(level-1)*1.5});
+export const homeSize=designedHomeSize;
 export function dayClock(tick:number){const hours=(8+tick/DAY_TICKS*24)%24;return {day:1+Math.floor((tick+DAY_TICKS/3)/DAY_TICKS),hours,night:hours<6||hours>=20,label:`第${1+Math.floor((tick+DAY_TICKS/3)/DAY_TICKS)}天 ${Math.floor(hours).toString().padStart(2,'0')}:${Math.floor(hours%1*60).toString().padStart(2,'0')}`};}
 export function daylightAt(tick:number):number{return .12+.88*Math.max(0,Math.sin((dayClock(tick).hours-6)/12*Math.PI));}
 export const ownHouse=(w:World,r:Resident)=>w.objects.find(o=>o.id===r.homeId&&o.ownerId===r.id&&o.kind==='house');

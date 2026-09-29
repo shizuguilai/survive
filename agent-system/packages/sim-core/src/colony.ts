@@ -92,7 +92,7 @@ export class ColonyProvider implements BrainProvider{
   if(home&&homeObject?.furniture?.cabinet&&isInside(r,homeObject)&&(r.supplies?.food??0)>3&&Object.values(homeObject.stored??{}).reduce((n,v)=>n+(v??0),0)<24)return [action('haul',{sourceRef:supply('food')!.ref,destinationRef:home.ref,amount:Math.min(3,r.supplies!.food!-3)})];
   if(o.objective==='home-care'){
    const care=nextHomeCare(w,r);if(!care){o.done=true;return [wait()];}if(!home)return board?at(board,action('read_notice',{noticeRef:board.ref})):explore();
-   const cost=care==='expand'?houseCost((homeObject!.homeLevel??1)+1):care==='clean'?{}:FURNITURE[care].cost;
+   const cost=care==='expand'?houseCost((homeObject!.homeLevel??1)+1,homeObject!.homeDesign):care==='clean'?{}:FURNITURE[care].cost;
    const missing=(['wood','stone'] as const).find(k=>(w.camp?.stock?.[k]??0)<(cost[k]??0));
    if(missing)return r.supplies?.[missing]?deposit(missing):gather(missing,Math.min(this.settings.phaseUnits,(cost[missing]??0)-(w.camp?.stock?.[missing]??0)));
    return atHome(home,action('home_care',{homeRef:home.ref,improvement:care}));

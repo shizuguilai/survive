@@ -2,6 +2,7 @@ import type { Action, Decision, Vec3 } from '../../contracts/src/types.ts';
 import type { ActionProgress, Resident, World } from './domain.ts';
 import { FIXED_DT_MS } from './clock.ts';
 import {readWorkbench,finishRecipe,findRecipe,finishBuild,withdraw,skillDuration,gatherPeriod,addSkill} from './workshop.ts';
+import {homeLayout} from './home-design.ts';
 import {finishHomeCare} from './home-care.ts';
 import {onBreak,isInside,restRecovery} from './living.ts';
 import {HOUSE_STEPS,houseSteps,taskTitle} from './recipes.ts';
@@ -175,7 +176,7 @@ export function stepActions(world:World,nextTick:number):string[] {
         case 'rest':{
           if(!progress.bedHomeId&&progress.targetPosition&&distance(resident.position,progress.targetPosition)>1.8){fail(world,resident,progress,nextTick,'我还没有到达想休息的地方。');due.add(resident.id);break;}
           const bedHouse=world.objects.find(h=>h.kind==='house'&&h.furniture?.bed&&h.ownerId===resident.id&&isInside(resident,h));
-          if(bedHouse){const bed={x:bedHouse.position.x-bedHouse.width/2+.82,y:resident.position.y,z:bedHouse.position.z-.13};progress.bedHomeId=bedHouse.id;const d=distance(resident.position,bed),step=Math.min(.07,d);if(d>.01){const next={...resident.position,x:resident.position.x+(bed.x-resident.position.x)/d*step,z:resident.position.z+(bed.z-resident.position.z)/d*step};if(!movementBlocked(world,resident.position,next))resident.position=next;}progress.bedSettled=d<.12;resident.heading=Math.PI/2;}else{delete progress.bedHomeId;progress.bedSettled=false;}
+          if(bedHouse){const layout=homeLayout(bedHouse),bed={x:bedHouse.position.x+layout.bed.x,y:resident.position.y,z:bedHouse.position.z+layout.bed.z};progress.bedHomeId=bedHouse.id;const d=distance(resident.position,bed),step=Math.min(.07,d);if(d>.01){const next={...resident.position,x:resident.position.x+(bed.x-resident.position.x)/d*step,z:resident.position.z+(bed.z-resident.position.z)/d*step};if(!movementBlocked(world,resident.position,next))resident.position=next;}progress.bedSettled=d<.12;resident.heading=Math.PI/2;}else{delete progress.bedHomeId;progress.bedSettled=false;}
           resident.fatigue=Math.max(0,resident.fatigue-restRecovery(world,resident));
           progress.done=progress.elapsedTicks*FIXED_DT_MS>=params.durationSimMs;break;}
         case 'equip_item':case 'unequip_item':{

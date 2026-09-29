@@ -4,7 +4,7 @@ import {createCrewWorld,advanceEnvironment} from '../packages/sim-core/src/world
 import {postTask,readBoard,claimHome,grantKnown} from '../packages/sim-core/src/camp.ts';
 import {zoneBounds,homeSites} from '../packages/sim-core/src/housing.ts';
 import {finishBuild} from '../packages/sim-core/src/workshop.ts';
-import {HOUSE_STEPS} from '../packages/sim-core/src/recipes.ts';
+import {houseSteps,houseCost} from '../packages/sim-core/src/recipes.ts';
 import {applyDecision,stepActions} from '../packages/sim-core/src/actions.ts';
 import {movementBlocked,floorHeight,solidWalls} from '../packages/sim-core/src/navigation.ts';
 import {samplePerception,buildContext} from '../packages/sim-core/src/perception.ts';
@@ -30,8 +30,8 @@ test('One residential zone supports distinct voluntary homes, avoids occupied lo
  const projects=w.camp!.tasks.filter(t=>t.kind==='house');assert.equal(projects.length,3);assert.equal(new Set(projects.map(t=>t.ownerId)).size,3);
  assert.equal(new Set(w.objects.filter(o=>o.ownerId).map(o=>`${o.position.x},${o.position.z}`)).size,3);
  const before=hashCanonical(w);assert.ok(claimHome(w,w.residents[0],zone));assert.equal(hashCanonical(w),before);
- w.camp!.stock={wood:36,stone:24};
- for(const task of projects){const r=w.residents.find(r=>r.id===task.ownerId)!,plot=w.objects.find(o=>o.projectId===task.id)!;r.position={...plot.position};for(const step of HOUSE_STEPS)assert.equal(finishBuild(w,r,ref(r,task.id),ref(r,task.id+':'+step.id)),null);assert.equal(r.homeId,plot.id);}
+ w.camp!.stock=projects.reduce((n,t)=>{const cost=houseCost(t.homeLevel,t.homeDesign);return {wood:n.wood+cost.wood,stone:n.stone+cost.stone};},{wood:0,stone:0});
+ for(const task of projects){const r=w.residents.find(r=>r.id===task.ownerId)!,plot=w.objects.find(o=>o.projectId===task.id)!;r.position={...plot.position};for(const step of houseSteps(task))assert.equal(finishBuild(w,r,ref(r,task.id),ref(r,task.id+':'+step.id)),null);assert.equal(r.homeId,plot.id);}
  assert.deepEqual(w.camp!.stock,{wood:0,stone:0});assert.equal(zone.progress,3);assert.equal(zone.status,'open');
 });
 test('Housing plans stay private until read; observer zoning adds no free private knowledge',()=>{

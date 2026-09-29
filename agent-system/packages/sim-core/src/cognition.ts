@@ -44,7 +44,7 @@ export class Simulation {
   private applyPlannerInbox():void{for(const draft of this.plannerInbox)postTask(this.world,draft);this.plannerInbox=[];}
   private controllers=new Set<AbortController>();
   constructor(provider:BrainProvider,options:SimulationOptions={}){
-    this.provider=provider;this.options=options;this.world=options.world?cloneWorld(options.world):createWorld(options);
+    this.provider=provider;this.options=options;this.world=options.world?cloneWorld(options.world):createWorld(options);this.sequence=this.world.revision;
     this.clock.acquire('BOOTSTRAP');
   }
   get pauseTokens():ReadonlySet<string>{return this.clock.pauseTokens;}
@@ -74,11 +74,13 @@ export class Simulation {
     }else if(alive.length)this.begin(alive);
     return true;
   }
-  bootstrap():Promise<void>{
+  bootstrap(resumePlans=false):Promise<void>{
     if(this.bootstrapped||this.status==='STOPPED')return this.active;
-    this.bootstrapped=true;this.applyPlannerInbox();samplePerception(this.world);this.emit('initial');
-    this.begin(this.world.residents.map(r=>r.id));
+    this.bootstrapped=true;const newTasks=this.plannerInbox.length>0;this.applyPlannerInbox();const sensed=samplePerception(this.world);this.emit('initial');
+    const due=this.world.residents.filter(r=>!resumePlans||newTasks||sensed.includes(r.id)||r.nextReviewTick<=this.world.tick||r.actionFeedback.length>0).map(r=>r.id);
+    if(due.length)this.begin(this.options.controlMode&&this.options.controlMode!=='independent'?this.world.residents.map(r=>r.id):due);
     this.clock.release('BOOTSTRAP');
+    if(!due.length)this.setStatus(this.clock.paused?'READY':'RUNNING');
     return this.active;
   }
   retry():Promise<void>{

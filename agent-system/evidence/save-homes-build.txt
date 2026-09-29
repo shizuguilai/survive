@@ -1,3 +1,8 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> survive-agent@0.1.0 build
+> node tools/build-auto.mjs
+
 {
   "status": "passed",
   "kind": "web-bundle",
@@ -7,3 +12,4 @@
   "wechatBuild": "not_run",
   "appSha256": "d276645c371aeaaff9a37e24f7141adb7eb5866355630bdefed3b56ad0653fec"
 }
+Laya client and authenticated model Worker built.

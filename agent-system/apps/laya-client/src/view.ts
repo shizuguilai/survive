@@ -1,6 +1,7 @@
 import {Minimap} from './minimap.ts';
 import {ThoughtCadence} from './thought-cadence.ts';
 import {SpeechBubble} from './speech-bubble.ts';
+import {homeDesign,preferredHome} from '../../../packages/sim-core/src/home-design.ts';
 import {clampMapCamera,groundAtScreen,projectToStage,beginMapPinch,moveMapPinch,cameraFootprint,cameraEye,normalizedYaw,type MapPinch,type MapTouch} from './map-camera.ts';
 import {NativeTextScroll} from './native-scroll.ts';
 import {dayClock,residentThought,moodReasons,ownHouse,onBreak,FURNITURE,homeSize} from '../../../packages/sim-core/src/living.ts';
@@ -16,7 +17,7 @@ import {RESOURCE_LABELS,type TaskDraft} from '../../../packages/sim-core/src/cam
 import {MemoryMapView} from './memory-map.ts';
 import {CharacterMesh} from './character-mesh.ts';
 import {WorldMesh} from './world-mesh.ts';
-import {RECIPES,HOUSE_STEPS,houseSteps,materialText,taskTitle} from '../../../packages/sim-core/src/recipes.ts';
+import {RECIPES,HOUSE_STEPS,houseSteps,houseCost,materialText,taskTitle} from '../../../packages/sim-core/src/recipes.ts';
 import {selectJournal,journalTime,JOURNAL_LABELS,readableAction,type JournalEntry,type JournalCategory} from './journal.ts';
 import {summaryInput,latestSummary} from './journal-summary.ts';
 import type {SummaryRequest,SavedSummary} from '../../../packages/contracts/src/journal-summary.ts';
@@ -24,6 +25,7 @@ import {publicCharacterSummary,listOwnEquipment} from '../../../packages/sim-cor
 import defaults from '../../../packages/sim-core/defaults.json' with {type:'json'};
 
 export type ViewCallbacks = {
+  onSave?():void;onLoad?():void;
   onControl?(settings:ControlSettings,newCamp?:boolean):void;onRemoteRetry?():void;
   onSummarize?(request:SummaryRequest):void;
   onTask(draft:TaskDraft):boolean|void;
@@ -32,6 +34,7 @@ export type ViewCallbacks = {
   onSeek?(tick:number):void; onSpeed?(value:number):void; onStart():void; onConnect(token:string):void;
 };
 export type ViewState = {
+  saveStatus?:string;resumeReady?:boolean;
   control?:ControlSettings;controlDetail?:string;controlNotice?:string;fallbackActive?:boolean;
   summaries?:SavedSummary[];summaryBusy?:boolean;summaryError?:string;summaryVersion?:number;
   cognitionDetail?:string;
@@ -195,7 +198,7 @@ export class ObserverView {
     this.labels.hosted=this.text(this.root,'云端模型 · 密钥由服务端保管',936,681,12,'#b4b7a8',315);this.labels.hosted.visible=false;
     this.token=new L.Input();this.token.pos(1007,671);this.token.size(152,33);this.token.fontSize=14;this.token.color='#26352c';this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
     this.button('connect','连接',1170,670,86,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
-    this.text(this.root,'居民档案自动保存 · 可切换流畅 / 精细画面',315,710,9,'#a6afa7',650);
+    this.labels.saveStatus=this.text(this.root,'本机自动存档 · 运行设置中可手动保存与读取',315,707,11,'#a6afa7',650);
     this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();this.buildInventory();this.buildLifeDetails();
     this.minimap=new Minimap(this.root,p=>{this.resetMapGesture();this.offset={...p};this.moveCamera();this.positionLabels();},()=>this.focusCamp());
   }
@@ -221,7 +224,7 @@ export class ObserverView {
   private renderObject(state:ViewState):void{
     const o=state.world.objects.find(o=>o.id===this.selectedObject);this.objectDetails.visible=!!o;this.residentDetails.visible=!o;if(!o)return;
     const names:Record<string,string>={tree:'树木',rock:'岩石',berry:'浆果丛',house:'木石小屋',plot:'住宅工地',board:'公告板 / 仓储',pond:'池塘',workbench:'工作台',wall:'石墙'};
-    this.labels.objectName.text=names[o.kind];this.labels.objectType.text=o.ownerId?(state.world.residents.find(r=>r.id===o.ownerId)?.name??'居民')+'的住处':'地图物体';
+    this.labels.objectName.text=['house','plot'].includes(o.kind)?homeDesign(o.homeDesign,o.ownerId).name:names[o.kind];this.labels.objectType.text=o.ownerId?(state.world.residents.find(r=>r.id===o.ownerId)?.name??'居民')+'的住处':'地图物体';
     if(['tree','rock','berry'].includes(o.kind)){
       const capacity=resourceCapacity(o),resource=o.resourceKind??(o.kind==='tree'?'wood':o.kind==='rock'?'stone':'food');
       this.labels.objectStock.text=`${RESOURCE_LABELS[resource]}剩余 ${o.resources} / ${capacity}`;
@@ -272,9 +275,10 @@ export class ObserverView {
   }
   private renderLifeDetails(r:Resident,state:ViewState):void{
     const w=state.world,h=ownHouse(w,r),project=w.camp?.tasks.find(t=>t.ownerId===r.id&&t.status==='open'),level=r.living?.desiredLevel??1;
+    const design=homeDesign(h?.homeDesign,r.id),targetSize=homeSize(level,h?h.homeDesign:preferredHome(r.id).id);
     this.labels.lifeTitle.text=r.name+' · 生活与心愿';
     const furniture=h?(Object.entries(FURNITURE).map(([k,v])=>`${h.furniture?.[k as keyof typeof FURNITURE]?'✓':'○'} ${v.label} · ${v.effect}`).join('\n')):'';
-    const body=`现在的心愿\n${residentThought(w,r)}\n\n身体与心情（100%最好）\n饱腹感 ${Math.round((1-r.hunger)*100)}%    精力 ${Math.round((1-r.fatigue)*100)}%    心情 ${Math.round((r.mood??.75)*100)}%\n${onBreak(w,r)?`正在${r.living?.breakKind==='tantrum'?'冷静':'罢工'} · 还需${Math.ceil(((r.living?.breakUntil??0)-w.tick)/20)}模拟秒\n`:''}\n心情的原因\n${moodReasons(w,r).map(s=>'· '+s).join('\n')}\n\n自己的住处\n${h?`${h.width}×${h.depth} · ${h.homeLevel??1}级住宅 · 整洁度${Math.round((h.cleanliness??1)*100)}%\n${furniture}\n\n个人柜子（24份容量）\n${materialText(h.stored??{})||'暂无存放物资'}`:project?`正在施工 ${project.progress}/${project.amount} · ${houseSteps(project)[project.progress]?.label??''}`:'还没有自己的住处。请在「规划 / 居住区」圈出可用空地。'}\n\n下一步生活\n${h&&level>(h.homeLevel??1)?`希望改建到${homeSize(level).width}×${homeSize(level).depth}，先备足${12*level}木材、${8*level}石料并检查居住区空地。`:(h?.homeLevel===3?'目前已是宽敞住宅，继续照料家具与整洁。':'居民会逐步添置家具；住满一个模拟日后可能想扩建。')}\n夜间与精力不足时优先休息，床能加快恢复。长期缺少住房、食物和休息会降低心情；归零会短暂罢工，或在自家发脾气损坏家具。\n\n当前安排\n${r.goal}`;
+    const body=`现在的心愿\n${residentThought(w,r)}\n住房喜好：${design.name}\n\n身体与心情（100%最好）\n饱腹感 ${Math.round((1-r.hunger)*100)}%    精力 ${Math.round((1-r.fatigue)*100)}%    心情 ${Math.round((r.mood??.75)*100)}%\n${onBreak(w,r)?`正在${r.living?.breakKind==='tantrum'?'冷静':'罢工'} · 还需${Math.ceil(((r.living?.breakUntil??0)-w.tick)/20)}模拟秒\n`:''}\n心情的原因\n${moodReasons(w,r).map(s=>'· '+s).join('\n')}\n\n自己的住处\n${h?`${h.width}×${h.depth} · ${h.homeLevel??1}级住宅 · 整洁度${Math.round((h.cleanliness??1)*100)}%\n${furniture}\n\n个人柜子（24份容量）\n${materialText(h.stored??{})||'暂无存放物资'}`:project?`正在施工 ${project.progress}/${project.amount} · ${houseSteps(project)[project.progress]?.label??''}`:'还没有自己的住处。请在「规划 / 居住区」圈出可用空地。'}\n\n下一步生活\n${h&&level>(h.homeLevel??1)?`希望改建到${targetSize.width}×${targetSize.depth}，先备足${materialText(houseCost(level,h.homeDesign))}并检查居住区空地。`:(h?.homeLevel===3?'目前已是宽敞住宅，继续照料家具与整洁。':'居民会逐步添置家具；住满一个模拟日后可能想扩建。')}\n夜间与精力不足时优先休息，床能加快恢复。长期缺少住房、食物和休息会降低心情；归零会短暂罢工，或在自家发脾气损坏家具。\n\n当前安排\n${r.goal}`;
     if(this.labels.lifeBody.text!==body){const y=this.labels.lifeBody.scrollY;this.labels.lifeBody.text=body;this.lifeScroll?.set(y);}
   }
   private beginZone():void{this.hideModals();this.zoneDrawing=true;this.zoneDraft=null;this.zoneStart=null;this.drag=null;this.updateZoneHint();}
@@ -284,7 +288,7 @@ export class ObserverView {
     this.buttons.zoneCancel.root.visible=this.zoneDrawing;this.buttons.zoneConfirm.root.visible=this.zoneDrawing;this.labels.zoneHint.visible=this.zoneDrawing;
     if(!this.zoneDrawing)return;const error=this.zoneDraft?validateZone(this.zoneDraft):'单指拖出范围，再确认';
     this.buttons.zoneConfirm.root.mouseEnabled=!!this.zoneDraft&&!error;this.buttons.zoneConfirm.root.alpha=error ? .45 : 1;
-    this.labels.zoneHint.text=error??`${this.zoneDraft!.maxX-this.zoneDraft!.minX}×${this.zoneDraft!.maxZ-this.zoneDraft!.minZ}格 · 当前空地可容纳${this.state?homeSites(this.state.world,this.zoneDraft!).length:0}间`;
+    this.labels.zoneHint.text=error??`${this.zoneDraft!.maxX-this.zoneDraft!.minX}×${this.zoneDraft!.maxZ-this.zoneDraft!.minZ}格 · 约${this.state?homeSites(this.state.world,this.zoneDraft!).length:0}间基础小屋`;
   }
   private drawZones():void{
     const zones=this.state?.world.camp?.zones??[],key=JSON.stringify([zones,this.zoneDraft]);if(key===this.zoneRevision)return;this.zoneRevision=key;this.zoneLines.clear();
@@ -354,6 +358,9 @@ export class ObserverView {
     this.modalButton(this.controlPanel,'localFallback','',344,416,420,()=>{this.controlDraft.fallback=!this.controlDraft.fallback;});
     this.modalButton(this.controlPanel,'remoteRetry','重新尝试远程统筹',790,416,413,()=>{this.api.onRemoteRetry?.();});
     this.text(this.controlPanel,'应用设置保留现场与私人记忆；人数仅在“新营地”生效。新营地会重置当前世界。',344,476,13,palette.amber,850);
+    this.modalButton(this.controlPanel,'saveCamp','保存进度',344,500,125,()=>this.api.onSave?.());
+    this.modalButton(this.controlPanel,'loadCamp','读取存档',482,500,125,()=>{this.api.onLoad?.();this.controlPanel.visible=false;});
+    this.labels.saveDetail=this.text(this.controlPanel,'',626,498,12,palette.mint,578);this.labels.saveDetail.height=40;
     this.modalButton(this.controlPanel,'applyControl','应用设置',344,545,265,()=>{this.api.onControl?.(this.controlDraft);this.controlPanel.visible=false;});
     this.modalButton(this.controlPanel,'newCamp','新营地（重置）',631,545,285,()=>{this.api.onControl?.(this.controlDraft,true);this.controlPanel.visible=false;});
     this.modalButton(this.controlPanel,'closeControl','返回观察',936,545,266,()=>{this.controlPanel.visible=false;});
@@ -524,7 +531,7 @@ export class ObserverView {
     }
     const ids=new Set(world.objects.map(o=>o.id));
     for(const [id,node]of this.objects)if(!ids.has(id)){node.dispose();this.objects.delete(id);this.objectSignatures.delete(id);this.placeLabels.get(id)?.destroy();this.placeLabels.delete(id);}
-    for(const o of world.objects){const signature=[o.kind,o.buildStage,o.width,o.depth,o.position.x,o.position.z,JSON.stringify(o.furniture),resourceStage(o)].join(':');if(this.objectSignatures.get(o.id)!==signature){this.objects.get(o.id)?.dispose();const node=new WorldMesh(o);this.scene.addChild(node.node);node.setRoofVisible(this.showRoofs);this.objects.set(o.id,node);this.objectSignatures.set(o.id,signature);}this.objects.get(o.id)?.setNight(dayClock(world.tick).night);
+    for(const o of world.objects){const signature=[o.kind,o.buildStage,o.width,o.depth,o.homeDesign,o.position.x,o.position.z,JSON.stringify(o.furniture),resourceStage(o)].join(':');if(this.objectSignatures.get(o.id)!==signature){this.objects.get(o.id)?.dispose();const node=new WorldMesh(o);this.scene.addChild(node.node);node.setRoofVisible(this.showRoofs);this.objects.set(o.id,node);this.objectSignatures.set(o.id,signature);}this.objects.get(o.id)?.setNight(dayClock(world.tick).night);
       if(['board','workbench','plot','house','pond'].includes(o.kind)){let label=this.placeLabels.get(o.id);if(!label){label=this.text(this.markers,'',0,0,12,'#365346',168);label.align='center';label.color='#e7ddbf';label.stroke=2;label.strokeColor='#30382b';label.width=150;label.padding=[3,5,3,5];this.placeLabels.set(o.id,label);}label.text=o.kind==='board'?'公告板 · 仓储':o.kind==='workbench'?'工作台':o.kind==='pond'?'池塘':o.kind==='house'?(world.residents.find(r=>r.id===o.ownerId)?.name??'公共')+'的小屋':`小屋施工 · ${o.buildStage??0}/3`;}
     }
     this.drawZones();this.positionLabels();
@@ -563,7 +570,7 @@ export class ObserverView {
     if(worldKey!==this.worldRevision){this.drawWorld(state.world);this.worldRevision=worldKey;}else this.positionBubbles();
     const senseKey=[worldKey,state.selectedId,state.showSenses].join('|');if(senseKey!==this.senseRevision){this.drawSenses(state);this.senseRevision=senseKey;}
     const mapKey=worldKey+'|'+state.selectedId;if(this.memoryPanel?.visible&&(this.hudDirty||this.mapRevision!==mapKey)){const remembered=state.world.residents.find(r=>r.id===state.selectedId);if(remembered)this.memoryMap.render(remembered);this.mapRevision=mapKey;}
-    const hudKey=[worldKey,state.selectedId,state.showSenses,state.status,state.mode,state.error,state.hosted,state.cognitionDetail,state.controlDetail,state.controlNotice,state.fallbackActive,state.historyVersion,state.historyWarning,state.summaryVersion,state.summaryBusy,state.summaryError,state.pendingTasks].join('|');
+    const hudKey=[worldKey,state.selectedId,state.showSenses,state.status,state.mode,state.error,state.hosted,state.cognitionDetail,state.controlDetail,state.controlNotice,state.fallbackActive,state.historyVersion,state.historyWarning,state.summaryVersion,state.summaryBusy,state.summaryError,state.pendingTasks,state.saveStatus,state.resumeReady].join('|');
     if(!this.hudDirty&&this.hudRevision===hudKey)return;this.hudDirty=false;this.hudRevision=hudKey;
     this.updateInspectorButton();
     this.labels.gateway.visible=this.token.visible=this.buttons.connect.root.visible=!state.hosted;
@@ -572,7 +579,7 @@ export class ObserverView {
     const control=state.control??{...DEFAULT_CONTROL,mode:'independent' as const};
     const mode=state.mode==='LOCAL_ALGORITHM'?'本地算法 · 无远程模型':state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':control.mode==='commander'?'模型统筹 · 阶段执行':'真实模型 · 独立居民';
     this.labels.mode.text=mode;const statusText=(state.controlDetail&&!['THINKING','ERROR_PAUSED'].includes(state.status)?state.controlDetail:this.humanStatus(state.status)+(state.cognitionDetail?' · '+state.cognitionDetail:''));this.labels.status.text=statusText.length>82?statusText.slice(0,76)+'… 点此展开':statusText+' · 点此展开';this.labels.statusDetails.text=mode+'\n\n'+statusText+(state.controlNotice?'\n\n'+state.controlNotice:'')+(state.error?'\n\n'+state.error:'');this.statusScroll?.refresh();
-    this.buttons.start.set('开始运行');
+    this.buttons.start.set(state.resumeReady?'继续营地':'开始运行');this.labels.saveStatus.text=state.saveStatus??'本机自动存档';this.labels.saveDetail.text=(state.saveStatus??'本机自动存档')+'\n存于此设备此浏览器，换设备不会同步。';
     if(this.controlPanel.visible){const d=this.controlDraft;for(const m of ['commander','independent','local']){const t=this.buttons['mode-'+m].label;t.color=m===d.mode?'#14271b':'#314030';t.bold=m===d.mode;t.underline=m===d.mode;}this.labels.controlHelp.text=d.mode==='commander'?'一个glm-4.5-air统筹阶段目标；执行器持续完成走路、采集、搬运和施工。每人记忆独立。阶段结束、新任务或持续受阻时汇总复查；最短间隔按模拟时间计算。':d.mode==='independent'?'每名居民独立调用真实模型，只读自己的感官与记忆。保留原有认知触发；模型失败保持暂停，可手动切换本地模式。':'完全本地任务算法，免密钥、免远程请求；不是大模型。根据任务和有限感知执行采集、备料、制作与分步建房。';this.buttons.phaseSize.set('阶段工作量：'+d.phaseUnits+'份');this.buttons.reviewGap.set('模型最短间隔：'+d.reviewSeconds+'秒');this.buttons.crewCount.set('新营地人数：'+d.residents);this.buttons.localFallback.set('统筹失败自动转本地：'+(d.fallback?'开':'关'));}
     const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
     const seconds=Math.floor(state.world.tick*defaults.simulation.fixedDtMs/1000);this.labels.time.fontSize=21;this.labels.time.text=(dayClock(state.world.tick).night?'夜 · ':'日 · ')+dayClock(state.world.tick).label;
@@ -591,7 +598,7 @@ export class ObserverView {
     this.buttons.amount.root.visible=this.draftKind!=='residential';this.buttons.amount.set('数量 '+(this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount));
     this.labels.draftTitle.text=this.draftKind==='residential'?'居住区 · 居民按需申请自己的住处':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
     this.labels.requirements.pos(this.draftKind==='residential'?344:469,379);this.labels.requirements.width=this.draftKind==='residential'?374:250;
-    this.labels.requirements.text=this.draftKind==='residential'?'每间需12木材 + 8石料 · 区域至少6×6格':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
+    this.labels.requirements.text=this.draftKind==='residential'?'住处大小和用料因人而异 · 区域至少6×6格':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
     this.labels.draftHelp.text=this.draftKind==='residential'?'划区后确认，居民阅读公告后自主申请、备料与建房。区域可容纳多间房；树石、池塘及已有建筑会被避开。':this.draftKind==='craft'?'先读工作台配方；消耗自己的随身材料。成品归制作者，需要自行持握。':'采集计入目标，入库由居民自主搬运。';
     this.labels.taskSummary.text=`营地目标 ${tasks.filter(t=>t.status==='done').length}/${tasks.filter(t=>t.kind!=='residential').length} 已完成 · 居住区${state.world.camp?.zones?.length??0}${state.pendingTasks?` · ${state.pendingTasks}项待写入公告`:''}`;
     this.renderTaskList(state);

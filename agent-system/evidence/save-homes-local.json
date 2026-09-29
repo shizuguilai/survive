@@ -1,0 +1,44 @@
+{
+  "mode": "LOCAL_ALGORITHM",
+  "remoteCalls": 0,
+  "tick": 8637,
+  "restartTick": 915,
+  "restoredHash": "fnv1a64:e6da7a89a3ff1b20",
+  "finalHash": "fnv1a64:7b7351e92d454789",
+  "wallMs": 13331,
+  "checkpoints": 99,
+  "saveBytes": [
+    707445,
+    703754
+  ],
+  "houses": [
+    {
+      "id": "home-resident-b",
+      "owner": "resident-b",
+      "design": "ochre",
+      "width": 4.8,
+      "depth": 3.6
+    },
+    {
+      "id": "home-resident-a",
+      "owner": "resident-a",
+      "design": "cedar",
+      "width": 4,
+      "depth": 3
+    }
+  ],
+  "failures": [
+    {
+      "tick": 2144,
+      "kind": "action_failed",
+      "agentId": "resident-a",
+      "text": "建筑材料不足：墙体需要8木材 + 2石料；先采集并haul存入。"
+    },
+    {
+      "tick": 7739,
+      "kind": "action_failed",
+      "agentId": "resident-b",
+      "text": "建筑材料不足：屋顶需要3木材 + 3石料；先采集并haul存入。"
+    }
+  ]
+}
