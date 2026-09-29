@@ -3,11 +3,12 @@ import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {createCrewWorld} from '../packages/sim-core/src/world.ts';
 import {hashCanonical} from '../packages/contracts/src/canonical.ts';
+import {cameraFootprint} from '../apps/laya-client/src/map-camera.ts';
 const bundle=await build({entryPoints:['apps/laya-client/src/minimap.ts'],bundle:true,write:false,format:'esm',platform:'browser',target:'es2022'});
 const {Minimap}=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
 class Node{
  name='';text='';x=0;y=0;width=0;height=0;visible=true;displayedInStage=true;parent:Node|null=null;children:Node[]=[];handlers=new Map<string,Function[]>();
- graphics={clear(){},drawRoundRect(){},drawRect(){},drawLine(){},drawCircle(){}};
+ polygons:number[][]=[];graphics={clear(){},drawRoundRect(){},drawRect(){},drawLine(){},drawCircle(){},drawPoly:(_x:number,_y:number,points:number[])=>this.polygons.push([...points])};
  pos(x:number,y:number){this.x=x;this.y=y;}size(w:number,h:number){this.width=w;this.height=h;}addChild(n:Node){this.children.push(n);n.parent=this;return n;}
  globalToLocal(p:{x:number;y:number}){let n:Node|null=this;while(n){p.x-=n.x;p.y-=n.y;n=n.parent;}return p;}
  on(event:string,owner:object,fn:Function){this.handlers.set(event,[...(this.handlers.get(event)??[]),fn.bind(owner)]);}emit(event:string,e:any){for(const f of this.handlers.get(event)??[])f(e);}
@@ -25,4 +26,7 @@ test('Native minimap navigates with its owning finger, releases cleanly, returns
  const toggle=root.children.find(n=>n.children.some(t=>t.text==='−'))!;toggle.emit('click',{});assert.equal(contents.visible,false);toggle.emit('click',{});assert.equal(contents.visible,true);
  map.emit('down',{touchId:7,stageX:1139,stageY:524});stage.emit('resize',{});stage.emit('move',{touchId:7,stageX:1000,stageY:400});assert.equal(positions.length,3);
  mini.render(world,'resident-b',{minX:3,maxX:15,minZ:-10,maxZ:10});assert.equal(hashCanonical(world),before);
+ const viewport={x:0,y:84,width:1280,height:570},layer=map.children[2];
+ mini.render(world,'resident-b',cameraFootprint({x:0,z:0,zoom:18,yaw:Math.PI/4},viewport));const first=layer.polygons.at(-1)!;assert.ok(Math.abs(first[1]-first[3])>1);
+ mini.render(world,'resident-b',cameraFootprint({x:0,z:0,zoom:18,yaw:-Math.PI/4},viewport));assert.notDeepEqual(layer.polygons.at(-1),first);
 });

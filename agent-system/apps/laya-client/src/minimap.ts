@@ -1,6 +1,6 @@
 import type {World} from '../../../packages/sim-core/src/domain.ts';
 import {resourceStage} from '../../../packages/sim-core/src/resources.ts';
-import {worldToMinimap,minimapToWorld,type MapPoint} from './map-camera.ts';
+import {worldToMinimap,minimapToWorld,type MapPoint,type MapFootprint} from './map-camera.ts';
 
 /** Observer-only navigation. This map never feeds a resident's private spatial memory. */
 export class Minimap{
@@ -27,7 +27,7 @@ export class Minimap{
   this.background();
  }
  private background():void{const L=(globalThis as any).Laya,h=this.expanded?254:38;this.root.graphics.clear();this.root.graphics.drawRoundRect(0,0,220,h,6,6,6,6,'#2c3437','#617069',1);this.root.hitArea=new L.Rectangle(0,0,220,h);}
- render(w:World,selected:string,view:{minX:number;maxX:number;minZ:number;maxZ:number}):void{
+ render(w:World,selected:string,view:MapFootprint):void{
   if(!this.expanded)return;
   const point=(p:MapPoint)=>worldToMinimap(p,this.size),scale=this.size/56;
   const key=w.runId+'|'+JSON.stringify(w.camp?.zones??[])+'|'+w.objects.map(o=>[o.id,o.kind,o.position.x,o.position.z,o.width,o.depth,o.buildStage,resourceStage(o)].join(',')).join(';');
@@ -45,6 +45,6 @@ export class Minimap{
   }
   const peopleKey=w.runId+'|'+w.tick+'|'+selected;
   if(peopleKey!==this.peopleKey){this.peopleKey=peopleKey;const g=this.people.graphics;g.clear();for(const r of w.residents){const p=point(r.position);if(r.id===selected)g.drawCircle(p.x,p.y,5,null,'#f8f4de',1.5);g.drawCircle(p.x,p.y,2.8,r.id===selected?'#81c8e4':'#f0cd76','#273837',1);}}
-  const viewKey=Object.values(view).join(',');if(viewKey!==this.viewKey){this.viewKey=viewKey;const a=point({x:view.minX,z:view.minZ}),b=point({x:view.maxX,z:view.maxZ}),g=this.viewport.graphics;g.clear();g.drawRect(a.x,a.y,b.x-a.x,b.y-a.y,'rgba(244,224,164,0.07)','#fff0bd',1.5);const x=(a.x+b.x)/2,y=(a.y+b.y)/2;g.drawLine(x-3,y,x+3,y,'#fff0bd',1);g.drawLine(x,y-3,x,y+3,'#fff0bd',1);}
+  const viewKey=JSON.stringify(view);if(viewKey!==this.viewKey){this.viewKey=viewKey;const corners=(view.corners??[{x:view.minX,z:view.minZ},{x:view.maxX,z:view.minZ},{x:view.maxX,z:view.maxZ},{x:view.minX,z:view.maxZ}]).map(point),g=this.viewport.graphics;g.clear();g.drawPoly(0,0,corners.flatMap(p=>[p.x,p.y]),'rgba(244,224,164,0.07)','#fff0bd',1.5);const x=corners.reduce((s,p)=>s+p.x,0)/4,y=corners.reduce((s,p)=>s+p.y,0)/4,top={x:(corners[0].x+corners[1].x)/2,y:(corners[0].y+corners[1].y)/2},dx=top.x-x,dy=top.y-y,d=Math.hypot(dx,dy);g.drawLine(x,y,x+dx/d*9,y+dy/d*9,'#fff0bd',2);g.drawCircle(x,y,2,'#fff0bd');}
  }
 }

@@ -7,25 +7,28 @@ import {clampMapCamera,groundAtScreen,projectToStage,cameraFootprint,beginMapPin
 const viewport={x:0,y:84,width:1280,height:570};
 const approx=(a:number,b:number)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 test('Map projection is exact between input events without a refreshed renderer, for both sidebar layouts',()=>{
- for(const left of [0,292])for(const zoom of [9,18,24]){
-  const v={...viewport,x:left,width:1280-left},c={x:2,z:-7,zoom};
+ for(const yaw of Array.from({length:8},(_,i)=>i*Math.PI/4))for(const left of [0,292])for(const zoom of [9,18,24]){
+  const v={...viewport,x:left,width:1280-left},c={x:2,z:-7,zoom,yaw};
   for(const p of [{x:0,z:0},{x:-12.3,z:5.9},{x:13.7,z:-16.2}]){const screen=projectToStage({...p,y:0},c,v),q=groundAtScreen(screen,c,v);approx(q.x,p.x);approx(q.z,p.z);}
   const focus=projectToStage({x:2,y:0,z:-7},c,v);approx(focus.x,left+(1280-left)/2);approx(focus.y,369);
   const raised=projectToStage({x:2,y:2,z:-7},c,v);assert.ok(raised.y<focus.y);
  }
 });
 test('All pan and zoom limits keep the entire visible ground within the terrain, including malformed values',()=>{
- for(const left of [0,292])for(const zoom of [NaN,Infinity,1,9,18,48,1000])for(const x of [-1e6,0,1e6])for(const z of [-1e6,0,1e6]){
-  const v={...viewport,x:left,width:1280-left},c=clampMapCamera({x,z,zoom},v),b=cameraFootprint(c,v);
+ for(const yaw of [NaN,...Array.from({length:8},(_,i)=>i*Math.PI/4)])for(const left of [0,292])for(const zoom of [NaN,Infinity,1,9,18,48,1000])for(const x of [-1e6,0,1e6])for(const z of [-1e6,0,1e6]){
+  const v={...viewport,x:left,width:1280-left},c=clampMapCamera({x,z,zoom,yaw},v),b=cameraFootprint(c,v);
   assert.ok(Object.values(c).every(Number.isFinite));assert.ok(b.minX>=-27.50001&&b.maxX<=27.50001&&b.minZ>=-27.50001&&b.maxZ<=27.50001);
+  for(const p of b.corners!){assert.ok(Math.abs(p.x)<=27.50001&&Math.abs(p.z)<=27.50001);}
  }
 });
 test('Two-finger translation keeps scale, spacing jitter is ignored, and real pinching preserves the point under the fingers',()=>{
- const c={x:0,z:0,zoom:18},a={id:1,pos:{x:450,y:350}},b={id:2,pos:{x:650,y:350}},p=beginMapPinch(a,b,c,viewport);
+ for(const yaw of Array.from({length:8},(_,i)=>i*Math.PI/4)){
+ const c={x:0,z:0,zoom:18,yaw},a={id:1,pos:{x:450,y:350}},b={id:2,pos:{x:650,y:350}},p=beginMapPinch(a,b,c,viewport);
  const moved=moveMapPinch(p,[{...a,pos:{x:500,y:380}},{...b,pos:{x:702,y:380}}],viewport)!;assert.equal(moved.zoom,18);
  const mid={x:601,y:380},anchor=groundAtScreen(mid,moved,viewport);approx(anchor.x,p.anchor.x);approx(anchor.z,p.anchor.z);
  const enlarged=moveMapPinch(p,[{...a,pos:{x:400,y:350}},{...b,pos:{x:700,y:350}}],viewport)!;assert.ok(enlarged.zoom<18);const point=groundAtScreen({x:550,y:350},enlarged,viewport);approx(point.x,p.anchor.x);approx(point.z,p.anchor.z);
  const shrunk=moveMapPinch(p,[{...a,pos:{x:490,y:350}},{...b,pos:{x:610,y:350}}],viewport)!;assert.ok(shrunk.zoom>18);
+ }
 });
 test('At the map boundary the camera responds immediately to a reversed drag',()=>{
  const a={id:1,pos:{x:450,y:350}},b={id:2,pos:{x:650,y:350}},p=beginMapPinch(a,b,{x:0,z:0,zoom:18},viewport);
@@ -65,4 +68,20 @@ test('A touch starting on another UI control cannot move or release a single-fin
  v.pointerMove({touchId:2,touches:[a],stageX:1100,stageY:550});v.pointerUp({touchId:2,touches:[a]});
  assert.deepEqual(v.offset,{x:0,z:0});assert.ok(v.drag);
  v.pointerMove({touchId:1,touches:[a],stageX:520,stageY:350});assert.ok(v.offset.x<0);
+});
+test('Rotating the actual view orbits the camera and preserves screen-relative drag without changing the world',()=>{
+ const v=view(),before=hashCanonical(v.state.world);v.setYaw(Math.PI/2);
+ approx(v.camera.transform.position.x,20);approx(v.camera.transform.position.z,0);
+ const ground={x:2,y:0,z:-3},p=v.project(ground),q=v.groundAt(p.x,p.y);approx(q.x,2);approx(q.z,-3);
+ v.pointerDown({stageX:600,stageY:350});v.pointerMove({stageX:620,stageY:350});approx(v.offset.x,0);approx(v.offset.z,20*9/570);
+ v.setYaw(0);approx(v.yaw,0);assert.equal(hashCanonical(v.state.world),before);
+});
+test('Landmark labels stay fixed when a resident walks through them, and published tasks retain every entry and scroll offset',()=>{
+ const v=view(),w=v.state.world,board=w.objects.find((o:any)=>o.kind==='board'),label:any={pos(x:number,y:number){this.x=x;this.y=y;}};
+ Object.assign(v,{residents:new Map(),nameLabels:new Map(),placeLabels:new Map([[board.id,label]]),drawMinimap(){},positionBubbles(){}});
+ ObserverView.prototype.positionLabels.call(v);const location={x:label.x,y:label.y};w.residents[0].position={...board.position,z:board.position.z+1};ObserverView.prototype.positionLabels.call(v);assert.deepEqual({x:label.x,y:label.y},location);
+ const seed=w.camp.tasks[0];w.camp.tasks=Array.from({length:20},(_,i)=>({...seed,id:'target-'+i,note:'目标说明'+i+'，完整说明不应被截断。'.repeat(5)}));
+ const body={text:'',scrollY:85};Object.assign(v,{labels:{taskList:body},taskScroll:{set(y:number){body.scrollY=y;}}});v.renderTaskList(v.state);
+ assert.ok(body.text.includes('目标说明0，'));assert.ok(body.text.includes('目标说明19，'));assert.equal(body.scrollY,85);
+ const text=body.text;w.camp.tasks[0].progress++;v.renderTaskList(v.state);assert.notEqual(body.text,text);assert.equal(body.scrollY,85);
 });
