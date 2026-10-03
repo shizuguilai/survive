@@ -7,6 +7,7 @@ import {rememberFootstep,rememberMapCell,rememberLandmark,rememberedCellCenter,b
 import {solidWalls,walkDestination} from './navigation.ts';
 import {skillLevel} from './recipes.ts';
 import { listOwnEquipment, publicCharacterSummary } from './character.ts';
+import {selectContextKnowledge} from './context-selection.ts';
 
 const DT = defaults.simulation.fixedDtMs;
 const VISION = defaults.vision;
@@ -246,35 +247,34 @@ export function samplePerception(world: World): string[] {
 
 /** Whitelist construction is deliberate: do not stringify/filter World. */
 export function buildContext(world: World, resident: Resident): CharacterContext {
-  const observations = resident.observations.slice(-24);
-  const recentActions=resident.memories.filter(m=>m.ref.startsWith('memory_spoken_')||m.ref.startsWith('memory_action_')||m.ref.startsWith('memory_task_')).slice(-10);
-  const selectedMemories = [...new Map([...resident.memories.slice(-24),...recentActions].map(m=>[m.ref,m])).values()];
-  // Preserve source chains for summaries; do not turn absent evidence into facts.
-  const selectedRefs = new Set(selectedMemories.map(memory => memory.ref));
-  for (let index = 0; index < selectedMemories.length; index++) {
-    for (const sourceRef of selectedMemories[index].evidenceRefs) {
-      const source = resident.memories.find(memory => memory.ref === sourceRef);
-      if (source && !selectedRefs.has(source.ref)) { selectedMemories.push(source); selectedRefs.add(source.ref); }
-      const observation = resident.observations.find(item => item.obsRef === sourceRef);
-      if (observation && !observations.some(item => item.obsRef === sourceRef)) observations.push(observation);
-    }
-  }
+  const equipment=resident.character?listOwnEquipment(resident.character,resident.id):[];
+  const selected=selectContextKnowledge(resident,equipment.map(item=>item.itemRef));
+  const known=Object.values(resident.known).filter(entry=>selected.refs.has(entry.ref));
+  const spatialMemory=buildSpatialContext(resident);
+  if(spatialMemory)spatialMemory.landmarks=spatialMemory.landmarks.filter(l=>selected.refs.has(l.knownRef));
   return {
     schemaVersion: '1.0.0',
-    ...(buildSpatialContext(resident)?{spatialMemory:buildSpatialContext(resident)}:{}),
+    ...(spatialMemory?{spatialMemory}:{}),
     identity: { name: resident.name, background: resident.background, personality: resident.personality, personalGoal: resident.personalGoal },
     experiencedWhen: experiencedWhen(world.tick, DT),
     body: { ...(world.camp?{mood:`心情${Math.round((resident.mood??.75)*100)}%；${moodReasons(world,resident).join('、')}`.slice(0,120),need:dayClock(world.tick).label+'；携水'+(resident.water??0)+'/6份，池塘岸边fetch_water取水，farm浇水每次耗1份；自己的心愿：'+residentThought(world,resident)}:{}),hunger: bodyBand(resident.hunger, 'hunger'), fatigue: bodyBand(resident.fatigue, 'fatigue'), pain: bodyBand(resident.pain, 'pain')+`；自身生命${Math.round(resident.health??100)}/100${(resident.health??100)<30?'，虚弱，行动缓慢':''}` },
     currentPlan: { goal: ((resident.plan.length&&!resident.plan.some(p=>!p.done)?'（计划已完成，需要考虑后续行动）':'')+resident.goal).slice(0,300), actions: resident.plan.filter(progress=>!progress.done).map(progress => privateAction(progress.action)), progress: (resident.plan.length ? `${resident.plan.filter(progress => progress.done).length}/${resident.plan.length}项行动完成` : '尚无行动计划') + (resident.supplies?`；自己携带：木材${resident.supplies.wood??0}、石料${resident.supplies.stone??0}、食物${resident.supplies.food??0}，容量30。自身熟练度：采集${skillLevel(resident.skills?.gathering)}级，加工${skillLevel(resident.skills?.crafting)}级，建造${skillLevel(resident.skills?.construction)}级。`:'') + (resident.actionFeedback.length ? `；最近自身行动反馈：${resident.actionFeedback.slice(-3).join('；')}` : '') },
-    observations: observations.map(privateObservation), memories: selectedMemories.map(privateMemory),
+    observations: selected.observations.map(privateObservation), memories: selected.memories.map(privateMemory),
     knownTargets: [
-      ...Object.values(resident.known).filter(entry=>!entry.entityId.startsWith('supply-')).map(entry => ({ ref: entry.ref, atLastKnownPosition:planarDistance(resident.position,walkDestination(world,resident,entry.lastPosition))<=0.80001, description: `${entry.descriptionSeenTick!==undefined?'曾亲眼辨认（'+experiencedWhen(entry.descriptionSeenTick,DT)+'）：':''}${entry.description}；距其最后已知位置约${planarDistance(resident.position,entry.lastPosition).toFixed(1)}米；${planarDistance(resident.position,walkDestination(world,resident,entry.lastPosition))<=0.80001?'已到该最后已知位置附近，再walk不会移动；':''}${entry.visible ? entry.visualLevel==='detected'?'当前仅见模糊轮廓，沿用先前辨识，不能据此确认最新状态':'目前可见' : '仅最后已知，当前位置未知'}`, lastObservedWhen: experiencedWhen(entry.lastSeenTick, DT) })),
-      ...Object.values(resident.known).filter(entry=>(['wood','stone','food'] as const).some(kind=>entry.entityId===`supply-${kind}-${resident.id}`&&resident.supplies?.[kind])).map(entry=>({ref:entry.ref,description:entry.description,lastObservedWhen:experiencedWhen(world.tick,DT)})),
-      ...(resident.character ? listOwnEquipment(resident.character, resident.id).map(item => ({
+      ...known.filter(entry=>!entry.entityId.startsWith('supply-')).map(entry => {
+        const atLastKnownPosition=planarDistance(resident.position,walkDestination(world,resident,entry.lastPosition))<=0.80001;
+        return {ref:entry.ref,atLastKnownPosition,description:`${entry.descriptionSeenTick!==undefined?'曾亲眼辨认（'+experiencedWhen(entry.descriptionSeenTick,DT)+'）：':''}${entry.description}；距其最后已知位置约${planarDistance(resident.position,entry.lastPosition).toFixed(1)}米；${atLastKnownPosition?'已到该最后已知位置附近，再walk不会移动；':''}${entry.visible?entry.visualLevel==='detected'?'当前仅见模糊轮廓，沿用先前辨识，不能据此确认最新状态':'目前可见':'仅最后已知，当前位置未知'}`,lastObservedWhen:experiencedWhen(entry.lastSeenTick,DT)};
+      }),
+      ...known.flatMap(entry=>{
+        const kind=(['wood','stone','food'] as const).find(kind=>entry.entityId===`supply-${kind}-${resident.id}`);
+        if(!kind)return [];
+        return [{ref:entry.ref,description:resident.supplies?.[kind]?entry.description:`自己先前携带的${kind==='wood'?'木材':kind==='stone'?'石料':'食物'}，目前剩余0份，已经用完或搬出。`,lastObservedWhen:experiencedWhen(world.tick,DT)}];
+      }),
+      ...equipment.filter(item=>selected.refs.has(item.itemRef)).map(item => ({
         ref: item.itemRef,
         description: `自己持有：${item.label}；${item.equippedSlots.length ? `当前穿戴/持握于 ${item.equippedSlots.join('、')}` : '目前收纳，未装备'}；可装备位置 ${item.allowedSlots.join('、')}；需要${item.hands}只手。`,
         lastObservedWhen: experiencedWhen(world.tick, DT),
-      })) : []),
+      })),
     ],
     allowedActions: [...ALLOWED,...(world.camp?['farm','fetch_water','home_care','read_notice','accept_task','decline_task','haul','withdraw','build',...(Object.values(resident.known).some(k=>k.entityId.startsWith('recipe:'))?['craft','exchange']:[]),...(resident.supplies?.food?['eat']:[])]:[])].filter(action => resident.character || !['equip_item', 'unequip_item'].includes(action)),
   };

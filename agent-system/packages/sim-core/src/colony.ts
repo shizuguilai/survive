@@ -8,6 +8,9 @@ import {pondApproachPoint} from './navigation.ts';
 import {HOUSE_STEPS,houseSteps,houseCost,RECIPES,taskTitle} from './recipes.ts';
 import {hashCanonical} from '../../contracts/src/canonical.ts';
 
+export type LocalPlanningContext={agentId:string;context:CharacterContext};
+export type LocalPlannedDecision={agentId:string;decision:Decision};
+
 type Order={objective:string;startProgress:number;startTick:number;done:boolean;failures:number;blocked:Set<string>};
 const dist=(r:Resident,k:KnowledgeEntry)=>Math.hypot(r.position.x-k.lastPosition.x,r.position.z-k.lastPosition.z);
 const action=(op:string,params:Record<string,any>={}):Action=>({op,params,stage:0});
@@ -30,23 +33,19 @@ export class ColonyProvider implements BrainProvider{
   const farmerCount=farms.length?(r.reports.length===1?(this.phase%2===0||!otherTasks.length?1:0):Math.ceil(r.reports.length/2)):0;
   return {summary:'本地算法：分配农田照料，同时保留备料、加工与施工人手',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:i<farmerCount?farms[(Math.floor(this.phase/2)+i)%farms.length].id:p.knownLandmarks.some(k=>k.includes('已成熟')&&k.includes('收割'))&&r.stock.food<24?'stock-food':otherTasks.find(t=>t.title.includes(p.name+'的住处'))?.id??p.options.find(o=>o.id==='home-care')?.id??otherTasks.find(t=>p.options.some(o=>o.id===t.id))?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
  }
- async decideBatch(requests:BrainRequest[],world:World,signal?:AbortSignal):Promise<BrainResponse[]>{
-  signal?.throwIfAborted();this.lastTick=world.tick;
+ private phaseNeeded(world:World):boolean{
+  this.lastTick=world.tick;
   for(const r of world.residents){const o=this.orders.get(r.id);if(!o)continue;const task=world.camp?.tasks.find(t=>t.id===o.objective);
    if(task&&task.kind!=='planting'&&(task.status==='done'||task.progress>=o.startProgress+(task.kind==='house'||task.kind==='craft'?1:this.settings.phaseUnits)))o.done=true;
-   if(world.events.some(e=>e.agentId===r.id&&e.tick>o.startTick&&e.kind==='action_completed'&&(e.text==='haul'&&o.objective.startsWith('stock-')||e.text==='rest'&&o.objective==='rest')))o.done=true;
+   for(let i=world.events.length-1;i>=0&&world.events[i].tick>o.startTick;i--){const e=world.events[i];if(e.agentId===r.id&&e.kind==='action_completed'&&(e.text==='haul'&&o.objective.startsWith('stock-')||e.text==='rest'&&o.objective==='rest')){o.done=true;break;}}
    if(world.tick-o.startTick>=2400||o.failures>=5)o.done=true;
   }
   const changed=(world.camp?.sequence??0)!==this.sequence;
   const finished=world.residents.filter(r=>(r.health??100)>0).every(r=>this.orders.get(r.id)?.done);
-  const want=!this.orders.size||changed||finished;
-  if(want&&(this.settings.mode==='local'||this.fallbackActive||world.tick>=this.nextRemoteTick)){
-   const report=this.report(world);let plan:CommandPlan;
-   if(this.settings.mode==='commander'&&!this.fallbackActive){
-    try{this.remoteCalls++;const response=await this.remote.plan(report,signal);signal?.throwIfAborted();if(response.source!=='REAL_MODEL'||response.model!=='glm-4.5-air'||response.requestId!==report.requestId)throw Error('统筹响应来源或请求不匹配');plan=validateCommandPlan(response.plan,report);this.notice='';}
-    catch(e){signal?.throwIfAborted();if(!this.settings.fallback)throw e;this.fallbackActive=true;this.notice='远程不可用，已转本地算法；点击设置可恢复远程。原因：'+(e as Error).message.slice(0,100);plan=this.localPlan(report);}
-   }else plan=this.localPlan(report);
-   signal?.throwIfAborted();this.phase++;this.phaseTick=world.tick;this.nextRemoteTick=world.tick+this.settings.reviewSeconds*20;this.sequence=world.camp?.sequence??0;this.summary=plan.summary;
+  return !this.orders.size||changed||finished;
+ }
+ private installPhase(world:World,plan:CommandPlan):void{
+  this.phase++;this.phaseTick=world.tick;this.nextRemoteTick=world.tick+this.settings.reviewSeconds*20;this.sequence=world.camp?.sequence??0;this.summary=plan.summary;
    if(this.settings.mode==='local'||this.fallbackActive)for(const a of plan.assignments){
     const person=world.residents.find(r=>r.id===a.residentId)!;
     const own=world.camp?.tasks.find(t=>t.ownerId===person.id&&t.status==='open');
@@ -55,20 +54,41 @@ export class ColonyProvider implements BrainProvider{
     else if(person.homeId&&world.camp?.tasks.find(t=>t.id===a.objective)?.kind==='residential')a.objective='stock-wood';
    }
    this.orders=new Map(plan.assignments.map(a=>[a.residentId,{objective:a.objective,startProgress:world.camp?.tasks.find(t=>t.id===a.objective)?.progress??0,startTick:world.tick,done:false,failures:0,blocked:new Set<string>()}]));
-  }
+ }
+ private decisions(contexts:LocalPlanningContext[],world:World):LocalPlannedDecision[]{
   this.localBatches++;
-  return requests.map(request=>{
-   const r=world.residents.find(r=>r.id===request.metadata.agentId)!,o=this.orders.get(r.id);
+  return contexts.map(entry=>{
+   const r=world.residents.find(r=>r.id===entry.agentId)!,o=this.orders.get(r.id);
    let actions:Action[];
    if(r.plan.some(p=>!p.done)&&!r.actionFeedback.length)actions=[action('continue')];
-   else if(!o)actions=[wait()];else actions=this.execute(world,r,o,request.context);
+   else if(!o)actions=[wait()];else actions=this.execute(world,r,o,entry.context);
    actions.forEach((a,i)=>a.stage=i);
    const decision:Decision={schemaVersion:'1.0.0',decisionKind:actions[0]?.op==='continue'?'continue':'replace',goal:o?`阶段${this.phase} · ${o.objective.startsWith('task-')?taskTitle(world.camp!.tasks.find(t=>t.id===o.objective)!):o.objective==='home-care'?'改善自己的住处':o.objective==='rest'?'休息':o.objective==='explore'?'探索':`储备${o.objective.slice(6)==='wood'?'木材':o.objective.slice(6)==='stone'?'石料':'口粮'}`}`:'等待阶段安排',reasonBrief:this.settings.mode==='local'||this.fallbackActive?'本地算法执行；不是大模型决定':`执行统筹模型的阶段安排：${this.summary}`.slice(0,500),actions,nextReviewAfterSimMs:2000,watch:[],memorySuggestions:[]};
-   return {metadata:request.metadata,decision,source:this.settings.mode==='local'||this.fallbackActive?'LOCAL_ALGORITHM':'MODEL_DIRECTED',model:this.settings.mode==='local'||this.fallbackActive?'local-task-planner-v1':'glm-4.5-air / phase-executor'};
+   return {agentId:entry.agentId,decision};
   });
  }
+ /** Local execution stays synchronous: no remote request, promise boundary or frozen world copy. */
+ decideLocalBatch(contexts:LocalPlanningContext[],world:World):LocalPlannedDecision[]{
+  if(this.settings.mode!=='local')throw Error('Synchronous planning is restricted to explicit local mode');
+  if(this.phaseNeeded(world))this.installPhase(world,this.localPlan(this.report(world)));
+  return this.decisions(contexts,world);
+ }
+ async decideBatch(requests:BrainRequest[],world:World,signal?:AbortSignal):Promise<BrainResponse[]>{
+  signal?.throwIfAborted();
+  const want=this.phaseNeeded(world);
+  if(want&&(this.settings.mode==='local'||this.fallbackActive||world.tick>=this.nextRemoteTick)){
+   const report=this.report(world);let plan:CommandPlan;
+   if(this.settings.mode==='commander'&&!this.fallbackActive){
+    try{this.remoteCalls++;const response=await this.remote.plan(report,signal);signal?.throwIfAborted();if(response.source!=='REAL_MODEL'||response.model!=='glm-4.5-air'||response.requestId!==report.requestId)throw Error('统筹响应来源或请求不匹配');plan=validateCommandPlan(response.plan,report);this.notice='';}
+    catch(e){signal?.throwIfAborted();if(!this.settings.fallback)throw e;this.fallbackActive=true;this.notice='远程不可用，已转本地算法；点击设置可恢复远程。原因：'+(e as Error).message.slice(0,100);plan=this.localPlan(report);}
+   }else plan=this.localPlan(report);
+   signal?.throwIfAborted();this.installPhase(world,plan);
+  }
+  return this.decisions(requests.map(request=>({agentId:request.metadata.agentId,context:request.context})),world).map((entry,i)=>({metadata:requests[i].metadata,decision:entry.decision,source:this.settings.mode==='local'||this.fallbackActive?'LOCAL_ALGORITHM':'MODEL_DIRECTED',model:this.settings.mode==='local'||this.fallbackActive?'local-task-planner-v1':'glm-4.5-air / phase-executor'}));
+ }
  private execute(w:World,r:Resident,o:Order,context:CharacterContext):Action[]{
-  const known=Object.values(r.known);const find=(id:string)=>known.find(k=>k.entityId===id);const near=(k:KnowledgeEntry)=>dist(r,k)<=1.8;
+  const allowedRefs=new Set(context.knownTargets.map(k=>k.ref));
+  const known=Object.values(r.known).filter(k=>allowedRefs.has(k.ref));const find=(id:string)=>known.find(k=>k.entityId===id);const near=(k:KnowledgeEntry)=>dist(r,k)<=1.8;
   const at=(k:KnowledgeEntry,a:Action)=>near(k)?[a]:[action('walk',{targetRef:k.ref,gait:'walk'}),a];
   const board=known.find(k=>k.entityId==='camp-board'),station=known.find(k=>k.entityId==='camp-workbench');
   const supply=(kind:ResourceKind)=>find(`supply-${kind}-${r.id}`);
@@ -101,9 +121,16 @@ export class ColonyProvider implements BrainProvider{
      if(!pond)return explore();
      const source=w.objects.find(object=>object.id===pond.entityId&&object.kind==='pond');
      const shore=source?pondApproachPoint(source,r.position):pond.lastPosition;
-     return Math.hypot(r.position.x-shore.x,r.position.z-shore.z)<=1.05?[action('fetch_water',{sourceRef:pond.ref})]:[action('walk',{targetRef:pond.ref,gait:'walk'}),action('fetch_water',{sourceRef:pond.ref})];
+     const fetch=Math.hypot(r.position.x-shore.x,r.position.z-shore.z)<=1.05?[action('fetch_water',{sourceRef:pond.ref})]:[action('walk',{targetRef:pond.ref,gait:'walk'}),action('fetch_water',{sourceRef:pond.ref})];
+     // Reserve only intentions, never water or crop state. Each stage checks its
+     // real prerequisites again when reached, including contention from others.
+     if(this.settings.mode!=='local')return fetch;
+     return [...fetch,...(fetch[0].op==='fetch_water'&&near(target)?[]:[action('walk',{targetRef:target.ref,gait:'walk'})]),action('farm',{targetRef:target.ref,work:'water'})];
     }
-    return at(target,action('farm',{targetRef:target.ref,work}));
+    const chain=at(target,action('farm',{targetRef:target.ref,work}));
+    if(this.settings.mode==='local'&&work==='till')chain.push(action('farm',{targetRef:target.ref,work:'sow'}));
+    if(this.settings.mode==='local'&&(work==='till'||work==='sow')&&(r.water??0)>0)chain.push(action('farm',{targetRef:target.ref,work:'water'}));
+    return chain;
    }
    if(!zoneId)return null;
    const location=find('field-'+zoneId);

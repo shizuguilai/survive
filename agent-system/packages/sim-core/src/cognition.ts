@@ -1,7 +1,8 @@
 import type {BrainProvider,BrainRequest,BrainResponse,CharacterContext} from '../../contracts/src/types.ts';
 import {hashCanonical} from '../../contracts/src/canonical.ts';
-import {validateDecision,validateBrainRequest} from '../../contracts/src/validation.ts';
-import type {World} from './domain.ts';
+import {validateDecision,validateBrainRequest,validateCharacterContext} from '../../contracts/src/validation.ts';
+import type {World,Resident} from './domain.ts';
+import type {LocalPlanningContext,LocalPlannedDecision} from './colony.ts';
 import {SimulationClock} from './clock.ts';
 import {createWorld,cloneWorld,advanceEnvironment} from './world.ts';
 import {applyDecision,stepActions,validateActionConcurrency} from './actions.ts';
@@ -17,21 +18,24 @@ type Slot={context:CharacterContext;generation:number;accepted?:AcceptedDecision
 type Pending={view:BarrierView;snapshot:World;slots:Map<string,Slot>;epoch:number};
 export type SimulationOptions={world?:World;seed?:number;runId?:string;allowMock?:boolean;controlMode?:'commander'|'independent'|'local';allowLocalFallback?:boolean;maxRetries?:number;requestTimeoutMs?:number;
   onSnapshot?:(world:World,reason:string)=>void;onCommit?:(record:CommitRecord)=>void|Promise<void>;
+  /** Read-only notification after an atomic local intent batch. Copy immediately if retaining it. */
+  onLocalCommit?:(world:World)=>void;
   onStatus?:(status:SimulationStatus,barrier:BarrierView|null)=>void};
 
-/** A single, global cognition transaction coordinator. No rule-brain fallback exists. */
+/** Remote model batches use a global barrier; explicit local batches commit synchronously. */
 export class Simulation {
   world:World;
   status:SimulationStatus='READY';
   observerError:string|null=null;
   readonly clock=new SimulationClock();
-  private readonly provider:BrainProvider & {decideBatch?:(requests:BrainRequest[],world:World,signal?:AbortSignal)=>Promise<BrainResponse[]>};
+  private readonly provider:BrainProvider & {decideBatch?:(requests:BrainRequest[],world:World,signal?:AbortSignal)=>Promise<BrainResponse[]>;decideLocalBatch?:(contexts:LocalPlanningContext[],world:World)=>LocalPlannedDecision[]};
   private readonly options:SimulationOptions;
   private pending:Pending|null=null;
   private active=Promise.resolve();
   private epoch=0;
   private sequence=0;
   private bootstrapped=false;
+  private localFailureIds:string[]|null=null;
   private plannerInbox:TaskDraft[]=[];
   get queuedTasks():TaskDraft[]{return structuredClone(this.plannerInbox);}
   get pendingTaskCount():number{return this.plannerInbox.length;}
@@ -53,7 +57,7 @@ export class Simulation {
   pause(token='USER_PAUSE'):void{this.clock.acquire(token);this.notify();}
   resume(token='USER_PAUSE'):void{
     // Observer controls can never release cognition, startup, error, or stopped locks.
-    if(/^(COGNITION:|ERROR:|BOOTSTRAP$|STOPPED$)/.test(token))return;
+    if(/^(COGNITION:|ERROR:|BOOTSTRAP$|STOPPED$|LOCAL_PLAN_ERROR$)/.test(token))return;
     this.clock.release(token);if(token==='OBSERVER_ERROR')this.observerError=null;if(!this.clock.paused&&this.status!=='STOPPED')this.status='RUNNING';this.notify();
   }
   frame(wallMs:number):number{return this.clock.frame(wallMs,()=>this.step());}
@@ -70,7 +74,8 @@ export class Simulation {
     const alive=[...due].filter(id=>(this.world.residents.find(r=>r.id===id)?.health??100)>0);
     if(this.options.controlMode&&this.options.controlMode!=='independent'){
       const workers=this.world.residents.filter(r=>(r.health??100)>0);
-      if(newTasks||workers.some(r=>r.actionFeedback.length>0||!r.plan.some(p=>!p.done)&&r.nextReviewTick<=nextTick))this.begin(workers.map(r=>r.id));
+      const ready=workers.filter(r=>r.actionFeedback.length>0||!r.plan.some(p=>!p.done)&&r.nextReviewTick<=nextTick);
+      if(newTasks||ready.length)this.begin((this.fastLocal&&!newTasks?ready:workers).map(r=>r.id));
     }else if(alive.length)this.begin(alive);
     return true;
   }
@@ -80,10 +85,11 @@ export class Simulation {
     const due=this.world.residents.filter(r=>!resumePlans||newTasks||sensed.includes(r.id)||r.nextReviewTick<=this.world.tick||r.actionFeedback.length>0).map(r=>r.id);
     if(due.length)this.begin(this.options.controlMode&&this.options.controlMode!=='independent'?this.world.residents.map(r=>r.id):due);
     this.clock.release('BOOTSTRAP');
-    if(!due.length)this.setStatus(this.clock.paused?'READY':'RUNNING');
+    if(!due.length||this.fastLocal&&!this.localFailureIds)this.setStatus(this.clock.paused?'READY':'RUNNING');
     return this.active;
   }
   retry():Promise<void>{
+    if(this.localFailureIds&&this.status==='ERROR_PAUSED'){const ids=this.localFailureIds;this.localFailureIds=null;this.observerError=null;this.clock.release('LOCAL_PLAN_ERROR');this.beginLocal(ids);return this.active;}
     if(!this.pending||this.status!=='ERROR_PAUSED')return this.active;
     this.clock.release(`ERROR:${this.pending.view.id}`);
     for(const slot of this.pending.slots.values())if(!slot.accepted)slot.error=undefined;
@@ -95,7 +101,9 @@ export class Simulation {
     this.clock.acquire('STOPPED');this.setStatus('STOPPED');
   }
   settled():Promise<void>{return this.active;}
+  private get fastLocal():boolean{return this.options.controlMode==='local'&&!!this.provider.decideLocalBatch&&!this.options.onCommit;}
   private begin(ids:string[]):void{
+    if(this.fastLocal){this.beginLocal(ids);return;}
     if(this.pending&&['THINKING','COMMITTING','ERROR_PAUSED'].includes(this.status))throw new Error('A cognition transaction is already pending');
     const dueAgentIds=[...new Set(ids)].sort();
     const id=`cognition-${++this.sequence}`;
@@ -106,6 +114,44 @@ export class Simulation {
     for(const agentId of dueAgentIds){const resident=snapshot.residents.find(r=>r.id===agentId);if(!resident)throw new Error('Unknown due resident');slots.set(agentId,{context:buildContext(snapshot,resident),generation:0});}
     this.pending={view:{id,tick:snapshot.tick,worldRevision:snapshot.revision,snapshotHash,dueAgentIds,causeObservationIds:[...slots.values()].flatMap(s=>s.context.observations.map(o=>o.obsRef)),status:'THINKING',errors:{},acceptedAgentIds:[],requestAttempts:{}},snapshot,slots,epoch:this.epoch};
     this.notify();this.active=this.resolve(this.pending);
+  }
+  private beginLocal(ids:string[]):void{
+    const dueAgentIds=[...new Set(ids)].sort();
+    try{
+      // No async boundary exists inside this batch, so no simulation tick can
+      // interleave. Validate every resident first, then publish all intent patches
+      // together. Private memories, map knowledge, objects and archives are not
+      // cloned or hashed merely to choose the next local action.
+      const contexts=dueAgentIds.map(agentId=>{
+        const resident=this.world.residents.find(r=>r.id===agentId);if(!resident)throw Error('Unknown local resident');
+        return {agentId,context:validateCharacterContext(buildContext(this.world,resident))};
+      });
+      const decisions=this.provider.decideLocalBatch!(contexts,this.world);
+      if(decisions.length!==contexts.length||new Set(decisions.map(d=>d.agentId)).size!==contexts.length)throw Error('Incomplete local decision batch');
+      const validated=contexts.map(entry=>{
+        const planned=decisions.find(d=>d.agentId===entry.agentId);if(!planned)throw Error('Missing local resident decision');
+        const decision=validateDecision(planned.decision,entry.context);validateActionConcurrency(decision.actions);
+        return {...entry,decision};
+      });
+      const staged=new Map<string,Resident>(),events:World['events']=[];
+      for(const entry of validated){
+        const original=this.world.residents.find(r=>r.id===entry.agentId)!;
+        const resident={...original,memories:entry.decision.memorySuggestions.length?[...original.memories]:original.memories};
+        applyDecision(resident,entry.decision,this.world.tick);
+        if(entry.decision.memorySuggestions.length)addModelMemories(resident,entry.decision.memorySuggestions,this.world.tick);
+        resident.consumedObservationRefs=[...new Set([...original.consumedObservationRefs,...entry.context.observations.map(o=>o.obsRef)])];
+        resident.actionFeedback=[];staged.set(resident.id,resident);
+        if(entry.decision.decisionKind!=='continue')events.push({tick:this.world.tick,kind:'decision',agentId:resident.id,source:'LOCAL_ALGORITHM',text:`目标：${entry.decision.goal}。理由：${entry.decision.reasonBrief}。计划动作：${entry.decision.actions.map(a=>a.op).join(' → ')}。`});
+      }
+      this.world={...this.world,residents:this.world.residents.map(r=>staged.get(r.id)??r),events:events.length?[...this.world.events,...events]:this.world.events,revision:this.world.revision+1};
+      this.emit('commit');
+      // Local persistence is an observer, never a clock lock or remote gate.
+      try{this.options.onLocalCommit?.(this.world);}catch(error){this.observerError=`本地保存提示：${message(error)}`;}
+      this.setStatus(this.clock.paused?'READY':'RUNNING');
+    }catch(error){
+      this.localFailureIds=dueAgentIds;this.observerError=`本地规划失败：${message(error)}`;
+      this.clock.acquire('LOCAL_PLAN_ERROR');this.setStatus('ERROR_PAUSED');
+    }
   }
   private current(pending:Pending):boolean{return this.pending===pending&&pending.epoch===this.epoch&&this.status!=='STOPPED';}
   private async resolve(pending:Pending):Promise<void>{

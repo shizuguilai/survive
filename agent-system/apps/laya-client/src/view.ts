@@ -6,7 +6,7 @@ import {Minimap} from './minimap.ts';
 import {ThoughtCadence} from './thought-cadence.ts';
 import {SpeechBubble} from './speech-bubble.ts';
 import {homeDesign,preferredHome} from '../../../packages/sim-core/src/home-design.ts';
-import {clampMapCamera,groundAtScreen,projectToStage,beginMapPinch,moveMapPinch,cameraFootprint,cameraEye,normalizedYaw,type MapPinch,type MapTouch} from './map-camera.ts';
+import {clampMapCamera,groundAtScreen,projectToStage,focusMapCamera,beginMapPinch,moveMapPinch,cameraFootprint,cameraEye,normalizedYaw,type MapPinch,type MapTouch} from './map-camera.ts';
 import {NativeTextScroll} from './native-scroll.ts';
 import {dayClock,residentThought,moodReasons,ownHouse,onBreak,FURNITURE,homeSize} from '../../../packages/sim-core/src/living.ts';
 import {drawIcon} from './hud-icons.ts';
@@ -520,7 +520,15 @@ export class ObserverView {
     this.buttons.summaryGenerate.root.mouseEnabled=!state.summaryBusy&&!replay&&own.some(e=>e.runId===runId);this.buttons.summaryGenerate.root.alpha=this.buttons.summaryGenerate.root.mouseEnabled?1:.45;
     for(const [id,enabled]of [['historyNewer',!!this.historyDetail||this.historyPage>0],['historyOlder',!!this.historyDetail||this.historyPage<pages-1]] as const){this.buttons[id].root.mouseEnabled=enabled;this.buttons[id].root.alpha=enabled?1:.4;}
   }
-  private selectIndex(index:number):void{const id=this.state?.world.residents[index]?.id;if(id){this.selectedObject=null;this.hudDirty=true;this.api.onSelect(id);}}
+  private selectIndex(index:number):void{const r=this.state?.world.residents[index];if(r){this.selectedObject=null;this.hudDirty=true;this.senseRevision='';this.api.onSelect(r.id);this.focusResident(r);}}
+  private focusResident(r:Resident):void{
+    // The inspector changes the camera viewport; the right-hand stock/minimap and
+    // upper controls still overlap it. Aim the head at the remaining open space.
+    const target={x:(this.sceneLeft+1013)/2,y:(190+BOTTOM)/2};
+    const head={...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.95)};
+    this.resetMapGesture();const c=focusMapCamera(head,this.mapCamera(),this.mapViewport(),target);
+    this.offset={x:c.x,z:c.z};this.moveCamera();this.positionLabels();
+  }
   private mapViewport(){return {x:this.sceneLeft,y:TOP,width:WIDTH-this.sceneLeft,height:BOTTOM-TOP};}
   private mapCamera(){return {x:this.offset.x,z:this.offset.z,zoom:this.zoom,yaw:this.yaw};}
   private setYaw(value:number):void{this.resetMapGesture();this.yaw=normalizedYaw(value);this.moveCamera();this.positionLabels();}
@@ -637,7 +645,7 @@ export class ObserverView {
     const r=state.world.residents.find(x=>x.id===state.selectedId)||state.world.residents[0];
     const control=state.control??{...DEFAULT_CONTROL,mode:'independent' as const};
     const mode=state.mode==='LOCAL_ALGORITHM'?'本地算法 · 无远程模型':state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':control.mode==='commander'?'模型统筹 · 阶段执行':'真实模型 · 独立居民';
-    this.labels.mode.text=mode;const statusText=(state.controlDetail&&!['THINKING','ERROR_PAUSED'].includes(state.status)?state.controlDetail:this.humanStatus(state.status)+(state.cognitionDetail?' · '+state.cognitionDetail:''));this.labels.status.text=statusText.length>82?statusText.slice(0,76)+'… 点此展开':statusText+' · 点此展开';this.labels.statusDetails.text=mode+'\n\n'+statusText+(state.controlNotice?'\n\n'+state.controlNotice:'')+(state.error?'\n\n'+state.error:'');this.statusScroll?.refresh();
+    this.labels.mode.text=mode;const statusText=(state.controlDetail&&!['THINKING','ERROR_PAUSED'].includes(state.status)?state.controlDetail:this.humanStatus(state.status,state.mode)+(state.cognitionDetail?' · '+state.cognitionDetail:''));this.labels.status.text=statusText.length>82?statusText.slice(0,76)+'… 点此展开':statusText+' · 点此展开';this.labels.statusDetails.text=mode+'\n\n'+statusText+(state.controlNotice?'\n\n'+state.controlNotice:'')+(state.error?'\n\n'+state.error:'');this.statusScroll?.refresh();
     this.buttons.start.set(state.resumeReady?'继续营地':'开始运行');this.labels.saveStatus.text=state.saveStatus??'本机自动存档';this.labels.saveDetail.text=(state.saveStatus??'本机自动存档')+'\n存于此设备此浏览器，换设备不会同步。';
     if(this.controlPanel.visible){const d=this.controlDraft;for(const m of ['commander','independent','local']){const t=this.buttons['mode-'+m].label;t.color=m===d.mode?'#14271b':'#314030';t.bold=m===d.mode;t.underline=m===d.mode;}this.labels.controlHelp.text=d.mode==='commander'?'一个glm-4.5-air统筹阶段目标；执行器持续完成走路、采集、搬运和施工。每人记忆独立。阶段结束、新任务或持续受阻时汇总复查；最短间隔按模拟时间计算。':d.mode==='independent'?'每名居民独立调用真实模型，只读自己的感官与记忆。保留原有认知触发；模型失败保持暂停，可手动切换本地模式。':'完全本地任务算法，免密钥、免远程请求；不是大模型。根据任务和有限感知执行采集、备料、制作与分步建房。';this.buttons.phaseSize.set('阶段工作量：'+d.phaseUnits+'份');this.buttons.reviewGap.set('模型最短间隔：'+d.reviewSeconds+'秒');this.buttons.crewCount.set('新营地人数：'+d.residents);this.buttons.localFallback.set('统筹失败自动转本地：'+(d.fallback?'开':'关'));}
     const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${action.action.op==='farm'?({till:'开垦翻土',sow:'播种',water:'浇水'} as Record<string,string>)[action.action.params.work]??'耕作':readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
@@ -646,7 +654,7 @@ export class ObserverView {
     if(r){this.renderResident(r,state);if(this.lifePanel.visible)this.renderLifeDetails(r,state);}this.renderObject(state);this.renderResources(state);
     this.buttons.senses.set(`感官 ${state.showSenses?'开':'关'}`);this.buttons.quickSenses.set(`感官 ${state.showSenses?'开':'关'}`);
     this.buttons.pause.set(/PAUS|STOP|暂停/i.test(state.status)?'继续':'暂停');
-    this.labels.error.text=state.controlNotice?state.controlNotice:state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
+    this.labels.error.text=state.controlNotice?state.controlNotice:state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?(state.mode==='LOCAL_ALGORITHM'?'\n已保留当前营地，可点击重试。':'\n世界保持冻结，可修正连接后重试。'):''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
     this.labels.caption.text=this.zoneDrawing?'圈选'+ZONE_LABELS[this.draftZoneKind()]+' · 单指拖出范围，双指调整地图':state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'双指平移 · 捏合缩放 · 小地图定位':'两名居民 · 两棵树 · 一堵墙';
     const tasks=state.world.camp?.tasks??[],recipe=RECIPES.find(r=>r.id===this.draftRecipe)!;
     const isZone=this.draftKind!=='gather'&&this.draftKind!=='craft',kind=this.draftZoneKind();
@@ -671,5 +679,5 @@ export class ObserverView {
     this.labels.taskNotice.text=state.pendingTasks?`已排队${state.pendingTasks}项，世界恢复后写入`:(state.error??'').slice(0,70);
     this.renderHistory(state);if(this.inventoryPanel.visible&&r)this.renderInventory(r);this.updateZoneHint();
   }
-  private humanStatus(status:string):string{const map:Record<string,string>={RUNNING:'世界运行中',PAUSED:'观察者已暂停',THINKING:'居民正在思考 · 世界已冻结',COMMITTING:'完整决策批次正在提交 · 世界保持冻结',READY:'准备开始',PLAYING:'回放播放中 · 不调用模型',BUFFERING:'回放缓冲中',ERROR_PAUSED:'认知请求失败 · 世界保持冻结',WAITING_FOR_MODEL:'模型思考中 · 世界已冻结',WAITING:'模型思考中 · 世界已冻结',ERROR:'认知请求失败 · 世界保持冻结',IDLE:'准备开始',STOPPED:'已停止',UNCONFIGURED:'未配置真实模型'};return map[status]||status;}
+  private humanStatus(status:string,mode?:ViewState['mode']):string{if(mode==='LOCAL_ALGORITHM'&&['ERROR_PAUSED','ERROR'].includes(status))return '本地规划异常 · 已暂停';const map:Record<string,string>={RUNNING:'世界运行中',PAUSED:'观察者已暂停',THINKING:'居民正在思考 · 世界已冻结',COMMITTING:'完整决策批次正在提交 · 世界保持冻结',READY:'准备开始',PLAYING:'回放播放中 · 不调用模型',BUFFERING:'回放缓冲中',ERROR_PAUSED:'认知请求失败 · 世界保持冻结',WAITING_FOR_MODEL:'模型思考中 · 世界已冻结',WAITING:'模型思考中 · 世界已冻结',ERROR:'认知请求失败 · 世界保持冻结',IDLE:'准备开始',STOPPED:'已停止',UNCONFIGURED:'未配置真实模型'};return map[status]||status;}
 }

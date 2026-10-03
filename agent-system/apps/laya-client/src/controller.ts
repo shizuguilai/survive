@@ -66,7 +66,8 @@ export async function boot():Promise<void>{
     colony=settings.mode==='independent'?null:new ColonyProvider(settings,new GatewayCommander());
     return new Simulation(colony??provider,{world:world??createCrewWorld(settings.residents),allowMock:false,controlMode:settings.mode,allowLocalFallback:settings.fallback,requestTimeoutMs:settings.mode==='independent'?120000:30000,
       // The complete decision batch commits in memory even when observer storage is unavailable.
-      onCommit:record=>{if(!saveBlocked&&!loadBusy)void writeSave(record.nextWorld,false);}
+      onCommit:settings.mode==='local'?undefined:record=>{if(!saveBlocked&&!loadBusy)void writeSave(record.nextWorld,false);},
+      onLocalCommit:world=>{if(!saveBlocked&&!loadBusy)void writeSave(world,false);}
     });
   }
   let sim=makeSimulation(restored.save?.world);for(const task of restored.save?.queuedTasks??[])sim.queueTask(task);sim.pause('NOT_STARTED');
@@ -143,7 +144,7 @@ export async function boot():Promise<void>{
     onSave:()=>{void saveCurrent(true);},onLoad:()=>{void loadSavedCamp();},
     onControl:(next,newCamp)=>{void configure(next,newCamp).catch(e=>{diagnostic=e.message;});},onRemoteRetry:()=>{colony?.retryRemote();},
     onSummarize:request=>{void summarize(request);},
-    onPause:pause,onResume:resume,onRetry:()=>{void health().then(()=>sim.retry());},
+    onPause:pause,onResume:resume,onRetry:()=>{if(settings.mode==='local')void sim.retry();else void health().then(()=>sim.retry());},
     onTask:draft=>{try{sim.queueTask(draft);void saveCurrent(false,true);notice.show('规划已接收；世界恢复运行后写入公告板。',performance.now(),true);return true;}catch(e){diagnostic=(e as Error).message;return false;}},
     onStop:()=>{resumeSavedPlans=!needsDecisionNow();void saveCurrent(false,true);sim.stop();saveJournal();},
     onSelect:id=>{selectedId=id;},onToggleSenses:()=>{showSenses=!showSenses;},
@@ -164,7 +165,7 @@ export async function boot():Promise<void>{
         const attempt=Math.max(1,...Object.values(barrier.requestAttempts));if(attempt>1)cognitionDetail+=` · 第${attempt}次尝试`;
         if(elapsed>=30)cognitionDetail+=' · 等待较久，可停止';
         latestRequestMs=now-barrierWallStart;
-      }else if(started)cognitionDetail=`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
+      }else if(started)cognitionDetail=settings.mode==='local'?'本地动作队列 · 连续执行':`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
       if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
       if(now-lastSaveWall>=10000&&savedKey()!==lastSaveKey)void saveCurrent();
       const saveStatus=saveWarning||(lastSavedAt?'本机已存档 '+new Date(lastSavedAt).toLocaleTimeString('zh-CN',{hour12:false}):'本机自动存档 · 每10秒及关键操作保存');

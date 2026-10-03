@@ -29,6 +29,11 @@ export function projectToStage(p:MapPoint&{y:number},c:MapCamera,v:MapViewport):
  const scale=v.height/c.zoom,yaw=normalizedYaw(c.yaw),cos=Math.cos(yaw),sin=Math.sin(yaw),dx=p.x-c.x,dz=p.z-c.z;
  return {x:v.x+v.width/2+(dx*cos-dz*sin)*scale,y:v.y+v.height/2+((dx*sin+dz*cos)*TILT_SIN-p.y*TILT_COS)*scale};
 }
+/** Place a raised world point in a clear part of the map without changing yaw or zoom. */
+export function focusMapCamera(p:MapPoint&{y:number},c:MapCamera,v:MapViewport,target:ScreenPoint):MapCamera{
+ const camera=clampMapCamera(c,v),screen=projectToStage(p,camera,v),from=groundAtScreen(screen,camera,v),to=groundAtScreen(target,camera,v);
+ return clampMapCamera({...camera,x:camera.x+from.x-to.x,z:camera.z+from.z-to.z},v);
+}
 export function cameraFootprint(c:MapCamera,v:MapViewport):MapFootprint{const e=cameraExtent(c.zoom,v,normalizedYaw(c.yaw));return {minX:c.x-e.x,maxX:c.x+e.x,minZ:c.z-e.z,maxZ:c.z+e.z,corners:[[0,0],[1,0],[1,1],[0,1]].map(([x,y])=>groundAtScreen({x:v.x+x*v.width,y:v.y+y*v.height},c,v))};}
 export function beginMapPinch(a:MapTouch,b:MapTouch,c:MapCamera,v:MapViewport):MapPinch{
  return {ids:[a.id,b.id],distance:Math.max(12,Math.hypot(a.pos.x-b.pos.x,a.pos.y-b.pos.y)),zoom:c.zoom,yaw:normalizedYaw(c.yaw),anchor:groundAtScreen({x:(a.pos.x+b.pos.x)/2,y:(a.pos.y+b.pos.y)/2},c,v)};

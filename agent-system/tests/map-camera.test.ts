@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {build} from 'esbuild';
 import {createCrewWorld} from '../packages/sim-core/src/world.ts';
 import {hashCanonical} from '../packages/contracts/src/canonical.ts';
-import {clampMapCamera,groundAtScreen,projectToStage,cameraFootprint,beginMapPinch,moveMapPinch,worldToMinimap,minimapToWorld} from '../apps/laya-client/src/map-camera.ts';
+import {clampMapCamera,groundAtScreen,projectToStage,focusMapCamera,cameraFootprint,beginMapPinch,moveMapPinch,worldToMinimap,minimapToWorld} from '../apps/laya-client/src/map-camera.ts';
 import {MAP_HALF,DEFAULT_MAP_ZOOM,MAX_MAP_ZOOM} from '../packages/sim-core/src/map-config.ts';
 const viewport={x:0,y:84,width:1280,height:570};
 const approx=(a:number,b:number)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
@@ -13,6 +13,20 @@ test('Map projection is exact between input events without a refreshed renderer,
   for(const p of [{x:0,z:0},{x:-12.3,z:5.9},{x:13.7,z:-16.2}]){const screen=projectToStage({...p,y:0},c,v),q=groundAtScreen(screen,c,v);approx(q.x,p.x);approx(q.z,p.z);}
   const focus=projectToStage({x:2,y:0,z:-7},c,v);approx(focus.x,left+(1280-left)/2);approx(focus.y,369);
   const raised=projectToStage({x:2,y:2,z:-7},c,v);assert.ok(raised.y<focus.y);
+ }
+});
+test('Focusing a resident places their raised head in the clear map area at every camera rotation',()=>{
+ for(const yaw of Array.from({length:8},(_,i)=>i*Math.PI/4))for(const left of [0,292])for(const zoom of [9,18,24,32]){
+  const v={x:left,y:68,width:1280-left,height:578},c={x:0,z:0,zoom,yaw},head={x:2,y:2.25,z:-4},target={x:(left+1013)/2,y:418};
+  const focused=focusMapCamera(head,c,v,target),screen=projectToStage(head,focused,v);
+  assert.ok(screen.x>left+30&&screen.x<1013-30&&screen.y>190&&screen.y<646-50,'The head must remain clear of inspector, controls, stock and minimap');
+  if(left===292||zoom<32){approx(screen.x,target.x);approx(screen.y,target.y);}approx(focused.zoom,zoom);approx(focused.yaw!,yaw);
+ }
+});
+test('Focusing a resident near the terrain edge obeys the existing camera bounds',()=>{
+ for(const yaw of [0,Math.PI/4,Math.PI,Math.PI*1.5]){
+  const c=focusMapCamera({x:47,y:2,z:-47},{x:0,z:0,zoom:18,yaw},viewport,{x:652.5,y:418}),b=cameraFootprint(c,viewport);
+  assert.ok(b.minX>=-47.500001&&b.maxX<=47.500001&&b.minZ>=-47.500001&&b.maxZ<=47.500001);assert.equal(c.zoom,18);
  }
 });
 test('All pan and zoom limits keep the entire visible ground within the terrain, including malformed values',()=>{
@@ -53,6 +67,24 @@ const bundle=await build({entryPoints:['apps/laya-client/src/view.ts'],bundle:tr
 const {ObserverView}=await import('data:text/javascript;base64,'+Buffer.from(bundle.outputFiles[0].text).toString('base64'));
 function view(){const v:any=Object.create(ObserverView.prototype);Object.assign(v,{zoom:9,offset:{x:0,z:0},sidebarCollapsed:true,pinch:null,pendingPinch:null,suppressTap:false,drag:null,zoneDrawing:false,sceneInput:{},camera:{transform:{lookAt(){}},orthographicVerticalSize:9},state:{world:createCrewWorld(2),selectedId:'resident-a'},positionLabels(){}});return v;}
 const touch=(v:any,id:number,x:number,y=350)=>({touchId:id,began:true,pos:{x,y},downTargets:[v.sceneInput]});
+test('Offline planning errors are described as local errors while remote cognition retains its connection status',()=>{
+ const v=view();assert.equal(v.humanStatus('ERROR_PAUSED','LOCAL_ALGORITHM'),'本地规划异常 · 已暂停');assert.equal(v.humanStatus('ERROR','LOCAL_ALGORITHM'),'本地规划异常 · 已暂停');assert.equal(v.humanStatus('ERROR_PAUSED','REAL_MODEL'),'认知请求失败 · 世界保持冻结');
+});
+test('Inspector selection focuses even the already selected resident, cancels stale gestures, and leaves manual pan free',()=>{
+ const v=view(),r=v.state.world.residents[1],headHeight=2.3;r.position={x:4,y:0,z:-3};
+ Object.assign(v,{sidebarCollapsed:false,zoom:18,yaw:Math.PI/4,selectedObject:'board',senseRevision:'old selection',residents:new Map([[r.id,{height:headHeight}]]),api:{onSelect(id:string){v.state.selectedId=id;}}});
+ const before=hashCanonical(v.state.world);v.drag={x:1,y:2};v.pinch={};v.pendingPinch=[];v.suppressTap=true;
+ v.selectIndex(1);assert.equal(v.state.selectedId,r.id);assert.equal(v.selectedObject,null);assert.equal(v.senseRevision,'');assert.equal(v.drag,null);assert.equal(v.pinch,null);assert.equal(v.pendingPinch,null);assert.equal(v.suppressTap,false);
+ const screen=v.project({...r.position,y:headHeight});approx(screen.x,652.5);approx(screen.y,418);assert.equal(v.zoom,18);assert.equal(v.yaw,Math.PI/4);
+ const focused={...v.offset};v.pointerDown({stageX:650,stageY:350});v.pointerMove({stageX:690,stageY:350});assert.notDeepEqual(v.offset,focused);
+ v.selectIndex(1);approx(v.offset.x,focused.x);approx(v.offset.z,focused.z);assert.equal(hashCanonical(v.state.world),before);
+});
+test('Selecting a character in the scene keeps their screen anchor when the inspector opens',()=>{
+ const v=view(),r=v.state.world.residents[0];r.position={x:-2,y:0,z:0};v.state.world.residents[1].position={x:7,y:0,z:3};
+ Object.assign(v,{yaw:Math.PI/4,residents:new Map([[r.id,{height:2.1}]]),api:{onSelect(id:string){v.state.selectedId=id;}},layoutInspector(){v.moveCamera();},focusResident(){assert.fail('Map taps should keep the under-finger anchor');}});
+ const head={...r.position,y:2.1},screen=v.project(head);v.pointerDown({stageX:screen.x,stageY:screen.y});v.pointerUp({stageX:screen.x,stageY:screen.y});
+ assert.equal(v.sidebarCollapsed,false);assert.equal(v.state.selectedId,r.id);const after=v.project(head);approx(after.x,screen.x);approx(after.y,screen.y);
+});
 test('Real view handlers batch per-finger events: parallel movement at minimum zoom never ratchets scale or drifts',()=>{
  const v=view(),a=touch(v,1,500),b=touch(v,2,700),before=hashCanonical(v.state.world);
  v.pointerDown({touchId:1,touches:[a],stageX:500,stageY:350});v.pointerDown({touchId:2,touches:[a,b]});

@@ -84,6 +84,15 @@ test('failed durable write retains the previous slot; the next save retries with
  await assert.rejects(saves.save(s,20),{name:'QuotaExceededError'});assert.deepEqual([...database.values],original);database.failWrite=false;assert.equal((await saves.save(s,30)).sequence,2);assert.equal((await saves.load(settings)).save!.world.tick,100);
 });
 
+test('the committed cursor follows a successful legacy fallback and resets to externally reloaded database slots',async()=>{
+ const legacy=new Legacy(),database=new Database(),saves=new AsyncCampSaves(legacy,database),s=state();await saves.save(s,10);
+ database.failWrite=true;s.world.tick=20;assert.equal((await saves.save(s,20)).sequence,2);assert.equal(saves.storageMode,'legacy');
+ database.failWrite=false;s.world.tick=30;assert.equal((await saves.save(s,30)).sequence,3);assert.equal(saves.storageMode,'indexeddb');
+ const external=new AsyncCampSaves(legacy,database);await external.load(settings);s.world.tick=40;assert.equal((await external.save(s,40)).sequence,4);
+ assert.equal((await saves.load(settings)).save!.world.tick,40);s.world.tick=50;assert.equal((await saves.save(s,50)).sequence,5);
+ assert.equal((await new AsyncCampSaves(legacy,database).load(settings)).save!.world.tick,50);
+});
+
 test('database accepts a complete camp larger than synchronous quota without dropping private memories',async()=>{
  const legacy=new Legacy(),database=new Database(),saves=new AsyncCampSaves(legacy,database),s=state();legacy.fail=true;
  s.world.residents[0].background='长久记忆'.repeat(800_000);await saves.save(s,100);const restored=(await new AsyncCampSaves(legacy,database).load(settings)).save!;

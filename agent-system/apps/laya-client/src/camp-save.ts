@@ -64,6 +64,8 @@ export function decodeCampSave(raw:string):CampSave{
 export class CampSaves{
  private sequence=0;private slot=-1;private storage:SaveStorage;
  constructor(storage:SaveStorage){this.storage=storage;}
+ /** Stage the next write using an already validated cursor; adopt this fork only after persistence succeeds. */
+ fork(storage:SaveStorage):CampSaves{const next=new CampSaves(storage);next.sequence=this.sequence;next.slot=this.slot;return next;}
  load(fallbackSettings:ControlSettings):{save:CampSave|null;warning:string;blocked:boolean}{
   let damaged=0,readFailed=false;const candidates:{slot:number;save:CampSave}[]=[];
   for(const [slot,key]of CAMP_SAVE_KEYS.entries()){

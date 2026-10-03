@@ -1,0 +1,1032 @@
+{
+  "status": "passed",
+  "environment": "Headless Chromium SwiftShader; 30 fps quality setting; not physical phone",
+  "instrumentation": "Read-only timings of production functions. Hash and clone timings overlap caller timings; no totals should be summed.",
+  "fixture": "Normal local farm simulation to tick 11739. Mobile survey additionally records real limited-cone perception at explicit survey positions before boot, restoring resident positions.",
+  "baseline": false,
+  "profiles": [
+    {
+      "config": {
+        "name": "desktop",
+        "width": 1536,
+        "height": 864,
+        "dpr": 1,
+        "survey": false
+      },
+      "seed": {
+        "tick": 11739,
+        "known": [
+          55,
+          48,
+          34,
+          37
+        ],
+        "observations": [
+          638,
+          592,
+          348,
+          436
+        ],
+        "memories": [
+          297,
+          365,
+          162,
+          172
+        ],
+        "characters": 948684,
+        "surveyed": false
+      },
+      "measured": {
+        "tick": 11980,
+        "status": "RUNNING",
+        "error": "",
+        "statuses": [
+          {
+            "status": "READY",
+            "tick": 11739
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11739
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11779
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11783
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11836
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11844
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11883
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11902
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11930
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11936
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11942
+          }
+        ],
+        "times": {
+          "colony.decideLocalBatch": {
+            "count": 10,
+            "totalMs": 3.0000000074505806,
+            "maxMs": 1,
+            "p95Ms": 1,
+            "p50Ms": 0.20000000298023224
+          },
+          "simulation.beginLocal": {
+            "count": 10,
+            "totalMs": 85.90000002086163,
+            "maxMs": 26.899999998509884,
+            "p95Ms": 26.899999998509884,
+            "p50Ms": 6.300000004470348
+          },
+          "simulation.begin": {
+            "count": 10,
+            "totalMs": 85.90000002086163,
+            "maxMs": 26.899999998509884,
+            "p95Ms": 26.899999998509884,
+            "p50Ms": 6.300000004470348
+          },
+          "save.capture": {
+            "count": 2,
+            "totalMs": 20.700000002980232,
+            "maxMs": 10.899999998509884,
+            "p95Ms": 10.899999998509884,
+            "p50Ms": 10.899999998509884
+          },
+          "observer.journal": {
+            "count": 148,
+            "totalMs": 68.20000004023314,
+            "maxMs": 6,
+            "p95Ms": 0.7000000029802322,
+            "p50Ms": 0.3999999985098839
+          },
+          "observer.render": {
+            "count": 142,
+            "totalMs": 386.10000003129244,
+            "maxMs": 13.200000002980232,
+            "p95Ms": 6.5,
+            "p50Ms": 2.100000001490116
+          },
+          "simulation.step": {
+            "count": 241,
+            "totalMs": 393.19999999552965,
+            "maxMs": 21.30000000447035,
+            "p95Ms": 7,
+            "p50Ms": 0.29999999701976776
+          }
+        },
+        "frames": {
+          "count": 141,
+          "totalMs": 12079.80000000447,
+          "maxMs": 199.70000000298023,
+          "p95Ms": 121.09999999403954,
+          "p50Ms": 91.59999999403954
+        },
+        "longTasks": {
+          "count": 1,
+          "totalMs": 72,
+          "maxMs": 72,
+          "p95Ms": 72,
+          "p50Ms": 72
+        },
+        "known": [
+          56,
+          48,
+          34,
+          37
+        ],
+        "contexts": [
+          63,
+          55,
+          41,
+          44
+        ],
+        "saveStatus": "本机已存档 21:00:34"
+      },
+      "focus": [
+        {
+          "selectedId": "resident-a",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 17.04772892287758,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 3.1027901082642853,
+            "z": -5.465103928842707,
+            "zoom": 32,
+            "yaw": 0
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-b",
+          "head": {
+            "x": 652.4999999999999,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 3.3407027889263645,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -16.809816242215504,
+            "z": -6.579039464087285,
+            "zoom": 32,
+            "yaw": 0
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-c",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 11.588696317625104,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 8.561822713516765,
+            "z": -8.83457823664204,
+            "zoom": 32,
+            "yaw": 0
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-c",
+          "head": {
+            "x": 652.5,
+            "y": 417.99999999999994
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 1.8392443960064497,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 2.4316732544980226,
+            "z": -12.41829493687132,
+            "zoom": 32,
+            "yaw": 0.7853981633974483
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-d",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 5.987147782239768,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 1.9667293318292844,
+            "z": -8.270391550638001,
+            "zoom": 32,
+            "yaw": 0.7853981633974483
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-a",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 5.190884017293348,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -2.9843026086954674,
+            "z": -9.066655315584422,
+            "zoom": 32,
+            "yaw": 0.7853981633974483
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-a",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 12.841406845074054,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -9.835208554925831,
+            "z": -7.309112186067815,
+            "zoom": 32,
+            "yaw": 1.5707963267948966
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-b",
+          "head": {
+            "x": 652.4999999999999,
+            "y": 389.9838612036816
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 0,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -27.83754224675971,
+            "z": -8.42720914988383,
+            "zoom": 32,
+            "yaw": 1.5707963267948966
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-c",
+          "head": {
+            "x": 652.5,
+            "y": 418.00000000000006
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 9.532823965846145,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -4.437067378244784,
+            "z": -10.617695065295724,
+            "zoom": 32,
+            "yaw": 1.5707963267948966
+          },
+          "collapsed": false
+        }
+      ],
+      "errors": [],
+      "missing": [],
+      "remoteCalls": [],
+      "screenshot": "local-evidence/local-smooth-after-desktop.png"
+    },
+    {
+      "config": {
+        "name": "mobile-surveyed",
+        "width": 844,
+        "height": 390,
+        "dpr": 2,
+        "survey": true
+      },
+      "seed": {
+        "tick": 11739,
+        "known": [
+          174,
+          174,
+          175,
+          175
+        ],
+        "observations": [
+          575,
+          541,
+          593,
+          688
+        ],
+        "memories": [
+          416,
+          491,
+          303,
+          310
+        ],
+        "characters": 1253115,
+        "surveyed": true
+      },
+      "measured": {
+        "tick": 11980,
+        "status": "RUNNING",
+        "error": "",
+        "statuses": [
+          {
+            "status": "READY",
+            "tick": 11739
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11739
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11779
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11783
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11836
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11844
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11883
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11902
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11930
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11936
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11942
+          },
+          {
+            "status": "RUNNING",
+            "tick": 11970
+          }
+        ],
+        "times": {
+          "colony.decideLocalBatch": {
+            "count": 11,
+            "totalMs": 3.899999998509884,
+            "maxMs": 1.6999999955296516,
+            "p95Ms": 1.6999999955296516,
+            "p50Ms": 0.10000000149011612
+          },
+          "simulation.beginLocal": {
+            "count": 11,
+            "totalMs": 151.60000000149012,
+            "maxMs": 47,
+            "p95Ms": 47,
+            "p50Ms": 10.599999994039536
+          },
+          "simulation.begin": {
+            "count": 11,
+            "totalMs": 151.69999999552965,
+            "maxMs": 47.099999994039536,
+            "p95Ms": 47.099999994039536,
+            "p50Ms": 10.599999994039536
+          },
+          "save.capture": {
+            "count": 2,
+            "totalMs": 45.70000000298023,
+            "maxMs": 29.600000001490116,
+            "p95Ms": 29.600000001490116,
+            "p50Ms": 29.600000001490116
+          },
+          "observer.journal": {
+            "count": 178,
+            "totalMs": 87.39999997615814,
+            "maxMs": 4.699999995529652,
+            "p95Ms": 0.7000000029802322,
+            "p50Ms": 0.3999999985098839
+          },
+          "observer.render": {
+            "count": 172,
+            "totalMs": 1227.0999999642372,
+            "maxMs": 18.299999997019768,
+            "p95Ms": 12.899999998509884,
+            "p50Ms": 6.800000004470348
+          },
+          "simulation.step": {
+            "count": 241,
+            "totalMs": 615.9000000059605,
+            "maxMs": 18.69999999552965,
+            "p95Ms": 11.400000005960464,
+            "p50Ms": 0.30000000447034836
+          }
+        },
+        "frames": {
+          "count": 171,
+          "totalMs": 12062.70000000298,
+          "maxMs": 164.39999999850988,
+          "p95Ms": 99.89999999850988,
+          "p50Ms": 70.89999999850988
+        },
+        "longTasks": {
+          "count": 1,
+          "totalMs": 108,
+          "maxMs": 108,
+          "p95Ms": 108,
+          "p50Ms": 108
+        },
+        "known": [
+          180,
+          174,
+          175,
+          175
+        ],
+        "contexts": [
+          128,
+          128,
+          128,
+          128
+        ],
+        "saveStatus": "本机已存档 21:00:59"
+      },
+      "focus": [
+        {
+          "selectedId": "resident-a",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 13.55715470295456,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 6.5933643281873096,
+            "z": -5.208410307557022,
+            "zoom": 32,
+            "yaw": 0
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-b",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 3.340702788926361,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -16.809816242215508,
+            "z": -6.579039464087285,
+            "zoom": 32,
+            "yaw": 0
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-c",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 11.588696317625107,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 8.561822713516761,
+            "z": -8.83457823664204,
+            "zoom": 32,
+            "yaw": 0
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-c",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 1.8392443960064497,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 2.431673254498019,
+            "z": -12.41829493687132,
+            "zoom": 32,
+            "yaw": 0.7853981633974483
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-d",
+          "head": {
+            "x": 652.4999999999999,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 5.987147782239763,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 1.9667293318292862,
+            "z": -8.270391550638006,
+            "zoom": 32,
+            "yaw": 0.7853981633974483
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-a",
+          "head": {
+            "x": 652.5,
+            "y": 418.00000000000006
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 5.44757763857903,
+          "sceneLeft": 292,
+          "camera": {
+            "x": 0.5062716112275591,
+            "z": -8.809961694298739,
+            "zoom": 32,
+            "yaw": 0.7853981633974483
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-a",
+          "head": {
+            "x": 652.5,
+            "y": 418
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 13.098100466359735,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -6.344634335002805,
+            "z": -7.0524185647821325,
+            "zoom": 32,
+            "yaw": 1.5707963267948966
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-b",
+          "head": {
+            "x": 652.4999999999999,
+            "y": 389.9838612036816
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 0,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -27.83754224675971,
+            "z": -8.42720914988383,
+            "zoom": 32,
+            "yaw": 1.5707963267948966
+          },
+          "collapsed": false
+        },
+        {
+          "selectedId": "resident-c",
+          "head": {
+            "x": 652.5,
+            "y": 418.00000000000006
+          },
+          "target": {
+            "x": 652.5,
+            "y": 418
+          },
+          "edgeDistance": 9.532823965846145,
+          "sceneLeft": 292,
+          "camera": {
+            "x": -4.437067378244784,
+            "z": -10.617695065295724,
+            "zoom": 32,
+            "yaw": 1.5707963267948966
+          },
+          "collapsed": false
+        }
+      ],
+      "errors": [],
+      "missing": [],
+      "remoteCalls": [],
+      "screenshot": "local-evidence/local-smooth-after-mobile-surveyed.png"
+    }
+  ],
+  "before": {
+    "status": "passed",
+    "environment": "Headless Chromium SwiftShader; 30 fps quality setting; not physical phone",
+    "instrumentation": "Read-only timings of production functions. Hash and clone timings overlap caller timings; no totals should be summed.",
+    "fixture": "Normal local farm simulation to tick 11739. Mobile survey additionally records real limited-cone perception at explicit survey positions before boot, restoring resident positions.",
+    "baseline": true,
+    "profiles": [
+      {
+        "config": {
+          "name": "desktop",
+          "width": 1536,
+          "height": 864,
+          "dpr": 1,
+          "survey": false
+        },
+        "seed": {
+          "tick": 11739,
+          "known": [
+            55,
+            48,
+            34,
+            37
+          ],
+          "observations": [
+            638,
+            592,
+            348,
+            436
+          ],
+          "memories": [
+            297,
+            365,
+            162,
+            172
+          ],
+          "characters": 948684,
+          "surveyed": false
+        },
+        "measured": {
+          "tick": 11943,
+          "status": "RUNNING",
+          "error": "",
+          "statuses": [
+            {
+              "status": "COMMITTING",
+              "tick": 11739
+            },
+            {
+              "status": "RUNNING",
+              "tick": 11739
+            },
+            {
+              "status": "COMMITTING",
+              "tick": 11779
+            },
+            {
+              "status": "RUNNING",
+              "tick": 11779
+            },
+            {
+              "status": "COMMITTING",
+              "tick": 11819
+            },
+            {
+              "status": "RUNNING",
+              "tick": 11819
+            },
+            {
+              "status": "COMMITTING",
+              "tick": 11859
+            },
+            {
+              "status": "RUNNING",
+              "tick": 11859
+            },
+            {
+              "status": "COMMITTING",
+              "tick": 11917
+            },
+            {
+              "status": "RUNNING",
+              "tick": 11917
+            }
+          ],
+          "times": {
+            "cloneWorld": {
+              "count": 20,
+              "totalMs": 182.19999998807907,
+              "maxMs": 16,
+              "p95Ms": 16,
+              "p50Ms": 9.599999994039536
+            },
+            "hashCanonical": {
+              "count": 120,
+              "totalMs": 1365.2000000178814,
+              "maxMs": 104.70000000298023,
+              "p95Ms": 72.89999999850988,
+              "p50Ms": 1.2000000029802322
+            },
+            "colony.decideBatch": {
+              "count": 5,
+              "totalMs": 3.7000000029802322,
+              "maxMs": 1.5,
+              "p95Ms": 1.5,
+              "p50Ms": 0.3999999985098839
+            },
+            "simulation.resolveBatch": {
+              "count": 5,
+              "totalMs": 283.29999999701977,
+              "maxMs": 68.69999999552965,
+              "p95Ms": 68.69999999552965,
+              "p50Ms": 58.20000000298023
+            },
+            "simulation.resolve": {
+              "count": 5,
+              "totalMs": 283.59999999403954,
+              "maxMs": 68.69999999552965,
+              "p95Ms": 68.69999999552965,
+              "p50Ms": 58.5
+            },
+            "simulation.begin": {
+              "count": 5,
+              "totalMs": 744.8999999985099,
+              "maxMs": 178,
+              "p95Ms": 178,
+              "p50Ms": 151.39999999850988
+            },
+            "save.capture": {
+              "count": 2,
+              "totalMs": 12.800000004470348,
+              "maxMs": 6.700000002980232,
+              "p95Ms": 6.700000002980232,
+              "p50Ms": 6.700000002980232
+            },
+            "observer.journal": {
+              "count": 140,
+              "totalMs": 59.00000002980232,
+              "maxMs": 4.5,
+              "p95Ms": 0.7999999970197678,
+              "p50Ms": 0.3999999985098839
+            },
+            "observer.render": {
+              "count": 134,
+              "totalMs": 342.799999974668,
+              "maxMs": 9.399999998509884,
+              "p95Ms": 6.100000001490116,
+              "p50Ms": 2.1999999955296516
+            },
+            "simulation.step": {
+              "count": 204,
+              "totalMs": 813.699999935925,
+              "maxMs": 178.19999999552965,
+              "p95Ms": 6.5999999940395355,
+              "p50Ms": 0.20000000298023224
+            }
+          },
+          "frames": {
+            "count": 133,
+            "totalMs": 11967.89999999851,
+            "maxMs": 466.70000000298023,
+            "p95Ms": 185.60000000149012,
+            "p50Ms": 89.60000000149012
+          },
+          "longTasks": {
+            "count": 5,
+            "totalMs": 1835,
+            "maxMs": 435,
+            "p95Ms": 435,
+            "p50Ms": 373
+          },
+          "known": [
+            56,
+            48,
+            34,
+            37
+          ],
+          "contexts": [
+            62,
+            55,
+            40,
+            42
+          ],
+          "saveStatus": "本机已存档 20:57:53"
+        },
+        "focus": [],
+        "errors": [],
+        "missing": [],
+        "remoteCalls": [],
+        "screenshot": "local-evidence/local-smooth-before-desktop.png"
+      },
+      {
+        "config": {
+          "name": "mobile-surveyed",
+          "width": 844,
+          "height": 390,
+          "dpr": 2,
+          "survey": true
+        },
+        "seed": {
+          "tick": 11739,
+          "known": [
+            174,
+            174,
+            175,
+            175
+          ],
+          "observations": [
+            575,
+            541,
+            593,
+            688
+          ],
+          "memories": [
+            416,
+            491,
+            303,
+            310
+          ],
+          "characters": 1253115,
+          "surveyed": true
+        },
+        "measured": {
+          "tick": 11739,
+          "status": "ERROR_PAUSED",
+          "error": "$.context.knownTargets: array length outside range；$.context.knownTargets: array length outside range；$.context.knownTargets: array length outside range；$.context.knownTargets: array length outside range",
+          "statuses": [
+            {
+              "status": "ERROR_PAUSED",
+              "tick": 11739
+            }
+          ],
+          "times": {
+            "cloneWorld": {
+              "count": 1,
+              "totalMs": 9.600000001490116,
+              "maxMs": 9.600000001490116,
+              "p95Ms": 9.600000001490116,
+              "p50Ms": 9.600000001490116
+            },
+            "hashCanonical": {
+              "count": 9,
+              "totalMs": 104.89999999850988,
+              "maxMs": 91.60000000149012,
+              "p95Ms": 91.60000000149012,
+              "p50Ms": 2.899999998509884
+            },
+            "simulation.resolveBatch": {
+              "count": 1,
+              "totalMs": 22,
+              "maxMs": 22,
+              "p95Ms": 22,
+              "p50Ms": 22
+            },
+            "simulation.resolve": {
+              "count": 1,
+              "totalMs": 22.399999998509884,
+              "maxMs": 22.399999998509884,
+              "p95Ms": 22.399999998509884,
+              "p50Ms": 22.399999998509884
+            },
+            "simulation.begin": {
+              "count": 1,
+              "totalMs": 140.79999999701977,
+              "maxMs": 140.79999999701977,
+              "p95Ms": 140.79999999701977,
+              "p50Ms": 140.79999999701977
+            },
+            "save.capture": {
+              "count": 1,
+              "totalMs": 8.399999998509884,
+              "maxMs": 8.399999998509884,
+              "p95Ms": 8.399999998509884,
+              "p50Ms": 8.399999998509884
+            },
+            "observer.journal": {
+              "count": 33,
+              "totalMs": 0.09999999403953552,
+              "maxMs": 0.09999999403953552,
+              "p95Ms": 0,
+              "p50Ms": 0
+            },
+            "observer.render": {
+              "count": 33,
+              "totalMs": 12.300000004470348,
+              "maxMs": 2,
+              "p95Ms": 1.8999999985098839,
+              "p50Ms": 0.29999999701976776
+            }
+          },
+          "frames": {
+            "count": 32,
+            "totalMs": 1439.8999999985099,
+            "maxMs": 161.90000000596046,
+            "p95Ms": 88,
+            "p50Ms": 33.600000001490116
+          },
+          "longTasks": {
+            "count": 1,
+            "totalMs": 189,
+            "maxMs": 189,
+            "p95Ms": 189,
+            "p50Ms": 189
+          },
+          "known": [
+            174,
+            174,
+            175,
+            175
+          ],
+          "contexts": [
+            181,
+            180,
+            182,
+            181
+          ],
+          "saveStatus": "本机已存档 20:58:04"
+        },
+        "focus": [],
+        "errors": [],
+        "missing": [],
+        "remoteCalls": [],
+        "screenshot": "local-evidence/local-smooth-before-mobile-surveyed.png"
+      }
+    ]
+  }
+}

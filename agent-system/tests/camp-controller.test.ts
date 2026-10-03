@@ -69,3 +69,17 @@ test('New camp wins over an already queued save and asynchronous load without re
  const current=f.rendered.world.runId,stored=new CampSaves(f.storage).load(f.settings).save!;assert.equal(stored.world.runId,current);assert.equal(stored.settings.residents,4);assert.equal(stored.needsDecision,true);
  f.api.onStart();await settle();f.frame();assert.equal(f.rendered.world.runId,current);assert.equal(f.rendered.status,'RUNNING');f.api.onStop();await settle();
 }));
+
+test('Offline retry recovers a local planning error without contacting the model gateway',async()=>withControllerFixture(async f=>{
+ const fetchBefore=globalThis.fetch;let requests=0;
+ globalThis.fetch=async()=>{requests++;throw Error('No network in offline mode');};
+ try{
+  await boot();const resident=f.rendered.world.residents[0],background=resident.background;
+  resident.background='超长测试'.repeat(600);f.api.onStart();await settle();f.frame();
+  assert.equal(f.rendered.status,'ERROR_PAUSED');assert.match(f.rendered.error,/本地规划失败/);
+  resident.background=background;f.api.onRetry();await settle();f.frame();
+  assert.equal(f.rendered.status,'RUNNING');assert.equal(requests,0);
+  assert.doesNotMatch(f.rendered.error??'',/网关|连接|规划失败/);
+  f.now+=50;f.frame();assert.ok(f.rendered.world.tick>0);f.api.onStop();await settle();
+ }finally{globalThis.fetch=fetchBefore;}
+}));

@@ -2,6 +2,7 @@ import decisionSchema from '../schemas/agent-decision.schema.json' with {type:'j
 import observationSchema from '../schemas/private-observation.schema.json' with {type:'json'};
 import type {BrainRequest, CharacterContext, Decision, Observation} from './types.ts';
 import {hashCanonical} from './canonical.ts';
+import {CONTEXT_LIMITS} from './context-limits.ts';
 
 export class ContractError extends Error {
   code = 'CONTRACT_INVALID';
@@ -58,9 +59,9 @@ const contextSchema = object({
   schemaVersion:{const:'1.0.0'}, identity:object({name:text(80),background:text(2000),personality:text(1000),personalGoal:text(1000)}),
   experiencedWhen:text(80), body:{...object({hunger:text(120),fatigue:text(120),pain:text(120),mood:text(120),need:text(400)}),required:['hunger','fatigue','pain']},
   currentPlan:object({goal:{type:'string',maxLength:300},actions:array(actionSchema,16),progress:{type:'string',maxLength:2000}}),
-  observations:array(observationSchema,128),
-  memories:array(object({ref,kind:{enum:['direct','hearsay','belief','summary']},text:text(2000),evidenceRefs:array(ref,64),experiencedWhen:text(80)}),128),
-  knownTargets:array({...object({ref,description:text(1000),lastObservedWhen:text(80),atLastKnownPosition:{type:'boolean'}}),required:['ref','description','lastObservedWhen']},128),
+  observations:array(observationSchema,CONTEXT_LIMITS.observations),
+  memories:array(object({ref,kind:{enum:['direct','hearsay','belief','summary']},text:text(2000),evidenceRefs:array(ref,64),experiencedWhen:text(80)}),CONTEXT_LIMITS.memories),
+  knownTargets:array({...object({ref,description:text(1000),lastObservedWhen:text(80),atLastKnownPosition:{type:'boolean'}}),required:['ref','description','lastObservedWhen']},CONTEXT_LIMITS.knownTargets),
   allowedActions:{type:'array',items:{enum:decisionSchema.properties.actions.items.oneOf.map(a=>a.properties.op.const)},minItems:1,maxItems:26}
 });
 // Additive personal-map field: older contexts remain readable.

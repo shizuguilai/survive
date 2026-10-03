@@ -83,7 +83,7 @@ const keys=[...CAMP_SAVE_KEYS,LEGACY_CAMP_SAVE_KEY];
  */
 export class AsyncCampSaves{
  private legacy:SaveStorage;private backend:AsyncSaveStorage|null;private mode:'indexeddb'|'legacy'='legacy';
- private memory=new MemorySlots();private ready=false;private tail:Promise<unknown>=Promise.resolve();
+ private memory=new MemorySlots();private codec=new CampSaves(this.memory);private ready=false;private tail:Promise<unknown>=Promise.resolve();
  constructor(legacy:SaveStorage,backend?:AsyncSaveStorage|null){
   this.legacy=legacy;
   if(backend!==undefined)this.backend=backend;else{try{this.backend=globalThis.indexedDB?new IndexedDBCampStorage():null;}catch{this.backend=null;}}
@@ -124,6 +124,9 @@ export class AsyncCampSaves{
   }
   if(!result.save){result={save:null,blocked:old.blocked||current.blocked,warning:append(old.warning,current.warning)};}
   else if(result===old&&current.blocked)result={...result,warning:append(result.warning,'新存档无法读取，已恢复旧营地存档。')};
+  // Reads and migrations validate the current slots once. Normal saves can then stage a
+  // cursor fork instead of reparsing two complete, immutable world snapshots each time.
+  this.codec=new CampSaves(this.memory);this.codec.load(settings);
   this.ready=true;return result;
  }
  load(settings:ControlSettings):Promise<CampLoadResult>{return this.queue(()=>this.initialize(settings));}
@@ -132,13 +135,13 @@ export class AsyncCampSaves{
   let snapshot:CampSaveState;try{snapshot=structuredClone(state);}catch(error){return Promise.reject(error);}
   return this.queue(async()=>{
    if(!this.ready)await this.initialize(snapshot.settings);
-   const staged=new MemorySlots(this.memory.values),codec=new CampSaves(staged);codec.load(snapshot.settings);
+   const staged=new MemorySlots(this.memory.values),codec=this.codec.fork(staged);
    const data=codec.save(snapshot,savedAt),changed:CAMPEntry[]=[];
    for(const key of CAMP_SAVE_KEYS){const raw=staged.getItem(key);if(raw&&raw!==this.memory.getItem(key))changed.push([key,raw]);}
-   if(this.backend){try{await this.backend.write(changed);this.memory=staged;this.mode='indexeddb';return data;}catch{/* A safe legacy write may still work; neither old slot is removed. */}}
+   if(this.backend){try{await this.backend.write(changed);this.memory=staged;this.codec=codec;this.mode='indexeddb';return data;}catch{/* A safe legacy write may still work; neither old slot is removed. */}}
    // There is only one changed alternating slot for a normal save. setItem is atomic.
    for(const [key,value]of changed)this.legacy.setItem(key,value);
-   this.memory=staged;this.mode='legacy';return data;
+   this.memory=staged;this.codec=codec;this.mode='legacy';return data;
   });
  }
 }
