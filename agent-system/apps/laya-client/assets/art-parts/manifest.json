@@ -66,5 +66,18 @@
       "garden-soil.png.11.part",
       "garden-soil.png.12.part"
     ]
+  },
+  {
+    "name": "berry-bush-empty.png",
+    "bytes": 1001244,
+    "sha256": "c781d653227c7716f1d4d4e9327a1cc2d00a666b3f382b2a5e970976c029e973",
+    "parts": [
+      "berry-bush-empty.png.00.part",
+      "berry-bush-empty.png.01.part",
+      "berry-bush-empty.png.02.part",
+      "berry-bush-empty.png.03.part",
+      "berry-bush-empty.png.04.part",
+      "berry-bush-empty.png.05.part"
+    ]
   }
 ]

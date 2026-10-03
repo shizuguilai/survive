@@ -1,0 +1,40 @@
+{
+  "tool": "image_gen.imagegen built-in",
+  "useCase": "precise-object-edit",
+  "generatedSource": "exec-c8b711e8-e13f-43c9-9101-2ccdb158b826.png",
+  "output": "berry-bush-empty.png",
+  "reference": "scenery-atlas.png, far upper-right compact berry bush; inspected before editing.",
+  "prompt": "Use case: precise-object-edit.\nInput image is the edit target, a 1448 by 1086 transparent game atlas. The ONLY target is the small RED-BERRY BUSH at the FAR UPPER RIGHT: it occupies approximately x=1145..1405, y=150..390. It is the FOURTH sprite in the first row. This is the low round shrub with six visible bright red berries and a VERY SHORT brown branch base. Do NOT use any of the three tall trees to its left.\nOutput one isolated harvested state of this exact small berry bush. Remove all its red berries, reconstructing the underlying matching green leaves. Retain the shrub's exact round compact silhouette, dense layered green leaf puffs, teal lower shading, warm green top highlights, and very short branches visible ONLY in the bottom 10 percent. The shrub is almost as wide as it is tall. It MUST NOT have a tall tree trunk, roots, or tree silhouette.\nKeep the exact perspective, hand-painted outline and leaf rendering of the source berry bush. This is the SAME bush after its fruit was picked, not a new plant design.\nCenter this one small round bush on a square transparent canvas, fill around 75 percent canvas width with the entire bush. Genuine alpha transparency in all surroundings; no checkerboard, grass, other atlas sprites, fruit, berries, red marks, flowers, ground, labels or shadows. Strong priority: source image FAR UPPER RIGHT compact berry BUSH, NOT A TREE.",
+  "preservation": "Generated PNG bytes copied unchanged; no image post-processing. Runtime UV crop excludes transparent margin.",
+  "dimensions": [
+    1254,
+    1254
+  ],
+  "alphaBoundingBox": [
+    0,
+    15,
+    1210,
+    1236
+  ],
+  "visibleAlphaBoundingBox": {
+    "threshold": 8,
+    "box": [
+      132,
+      160,
+      1137,
+      1078
+    ]
+  },
+  "recommendedCrop": {
+    "x": 132,
+    "y": 160,
+    "width": 1005,
+    "height": 918
+  },
+  "recommendedAnchor": {
+    "x": 0.5,
+    "y": 1
+  },
+  "bytes": 1001244,
+  "sha256": "c781d653227c7716f1d4d4e9327a1cc2d00a666b3f382b2a5e970976c029e973"
+}

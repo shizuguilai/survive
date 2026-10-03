@@ -91,7 +91,8 @@ export class ObserverView {
   private worldRevision='';private senseRevision='';private hudRevision='';private mapRevision='';private hudDirty=true;private highQuality=false;
   private offset={x:-3,z:-2};private drag:{id?:number;x:number;y:number;ox:number;oz:number;moved:boolean;travel?:number}|null=null;
   private residentDetails:any;private objectDetails:any;private inventoryPanel:any;
-  private statBars:any[]=[];private statValues:any[]=[];private selectedObject:string|null=null;
+  private objectScroll:NativeTextScroll|null=null;private saveDetailScroll:NativeTextScroll|null=null;
+  private statBars:any[]=[];private statValues:any[]=[];private selectedObject:string|null=null;private inspectedObjectId:string|null=null;
   private nightShade:any;private daylightLight:any;private lifePanel:any;private statusPanel:any;private inventoryScroll:NativeTextScroll|null=null;private lifeScroll:NativeTextScroll|null=null;private statusScroll:NativeTextScroll|null=null;private taskScroll:NativeTextScroll|null=null;
   private resourceRail:any;private resourceExpanded=true;private showRoofs=true;private showZones=false;
   private zoneOverlay:any;private zoneDrawing=false;private zoneStart:{x:number;z:number}|null=null;private zoneDraft:ResidentialBounds|null=null;private zoneRevision='';
@@ -118,7 +119,7 @@ export class ObserverView {
     this.selection=new L.PixelLineSprite3D(72,'selected resident');this.scene.addChild(this.selection);
     try{this.showRoofs=globalThis.localStorage?.getItem('survive_roofs_v1')!=='hidden';}catch{}
     try{this.showZones=globalThis.localStorage?.getItem('survive_zones_v1')==='shown';}catch{}
-    this.art=new PaintedWorld();L.stage.addChild(this.art.root);
+    this.art=new PaintedWorld();this.scene.addChild(this.art.node);L.stage.addChild(this.art.root);
     this.zoneOverlay=new L.Sprite();this.zoneOverlay.name='Residential zone overlay';this.zoneOverlay.mouseEnabled=false;L.stage.addChild(this.zoneOverlay);
     this.root=new L.Sprite();this.root.name='Observer UI';L.stage.addChild(this.root);
     this.nightShade=new L.Sprite();this.nightShade.mouseEnabled=false;this.root.addChild(this.nightShade);
@@ -134,18 +135,20 @@ export class ObserverView {
   private text(parent:any,text:string,x:number,y:number,size=16,color=palette.ink,width=250):any{
     const t=new L.Text();t.text=text;t.pos(x,y);t.font='Camp Extension, Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;t.mouseEnabled=false;parent.addChild(t);return t;
   }
+  // Compact summaries stay in their allocated row; their complete text remains in the detail panels.
+  private boundText(t:any,height:number,wrap=false):any{t.height=height;t.wordWrap=wrap;t.overflow='ellipsis';return t;}
   private panel(parent:any,x:number,y:number,w:number,h:number,color:string,r=0):any{
     const s=new L.Sprite();s.pos(x,y);s.size(w,h);
     if(r){s.graphics.drawRoundRect(0,3,w,h,r,r,r,r,'rgba(9,28,40,0.24)');s.graphics.drawRoundRect(0,0,w,h,r,r,r,r,color,'#8299a6',1.3);s.graphics.drawRoundRect(2,2,w-4,Math.min(14,h/3),r-1,r-1,0,0,'rgba(221,239,250,0.07)');}else s.graphics.drawRect(0,0,w,h,color);
     parent.addChild(s);return s;
   }
-  private button(id:string,text:string,x:number,y:number,w:number,click:()=>void,bright=false):NativeButton{
-    const h=42,r=this.panel(this.root,x,y,w,h,bright?palette.mint:palette.line,12);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,h);
+  private button(id:string,text:string,x:number,y:number,w:number,click:()=>void,bright=false,h=42):NativeButton{
+    const r=this.panel(this.root,x,y,w,h,bright?palette.mint:palette.line,12);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,h);
     r.graphics.drawRoundRect(2,2,w-4,16,10,10,3,3,bright?'#ccea98':'#436985');
     const glyphs:Record<string,string>={quickHistory:'▤',quickMap:'◈',quickSenses:'◉',start:'▶',pause:'Ⅱ',retry:'⟳',stop:'■',workshop:'⚒',tasks:'▦',rotateLeft:'↶',rotateReset:'⟳',rotateRight:'↷',connect:'↗',control:'⚙',stockToggle:'▣'};
     const glyph=glyphs[id],inset=glyph?25:0;
-    if(glyph){const icon=this.text(r,glyph,9,8,21,bright?'#264628':'#f1f6f8',26);icon.align='center';icon.bold=true;}
-    const t=this.text(r,text,inset,12,14,bright?'#263e2c':'#f5f8fc',w-inset-3);t.align='center';t.bold=true;t.mouseEnabled=false;
+    if(glyph){const icon=this.boundText(this.text(r,glyph,7,0,21,bright?'#264628':'#f1f6f8',24),h);icon.align='center';icon.valign='middle';icon.bold=true;}
+    const t=this.boundText(this.text(r,text,glyph?inset:6,0,h<36?13:14,bright?'#263e2c':'#f5f8fc',w-(glyph?inset+6:12)),h);t.align='center';t.valign='middle';t.bold=true;t.mouseEnabled=false;
     r.on(L.Event.MOUSE_DOWN,this,()=>r.alpha=.82);r.on(L.Event.MOUSE_UP,this,()=>r.alpha=1);r.on(L.Event.MOUSE_OUT,this,()=>r.alpha=1);
     r.on(L.Event.CLICK,this,()=>{this.hudDirty=true;click();});const b={root:r,label:t,set:(s:string)=>t.text=s};this.buttons[id]=b;return b;
   }
@@ -155,30 +158,30 @@ export class ObserverView {
     this.panel(this.root,0,0,WIDTH,TOP,palette.paper);this.panel(this.inspector,0,TOP,SIDE,HEIGHT-TOP,palette.panel);
     this.panel(this.root,0,BOTTOM,WIDTH,HEIGHT-BOTTOM,palette.paper);
     this.panel(this.root,0,TOP-1,WIDTH,1,'#535b58');
-    this.text(this.root,'SURVIVE',72,7,34,palette.ink,230).bold=true;
-    this.text(this.root,'边境营地 · 生存与建造',74,43,14,palette.muted,240);
+    this.text(this.root,'SURVIVE',72,4,32,palette.ink,230).bold=true;
+    this.text(this.root,'边境营地 · 生存与建造',74,46,14,palette.muted,240);
     drawIcon(this.root,'leaf',19,10,45);
     this.labels.mode=this.text(this.root,'等待连接真实模型',350,13,17,palette.ink,430);
-    this.labels.status=this.text(this.root,'世界尚未启动',350,40,12,'#b4b7a8',700);this.labels.status.height=34;this.labels.status.leading=3;this.labels.status.mouseEnabled=true;this.labels.status.hitArea=new L.Rectangle(0,0,744,37);this.labels.status.on(L.Event.CLICK,this,()=>{this.hideModals();this.statusPanel.visible=true;});
+    this.labels.status=this.boundText(this.text(this.root,'世界尚未启动',350,40,12,'#b4b7a8',640),20);this.labels.status.mouseEnabled=true;this.labels.status.hitArea=new L.Rectangle(0,0,640,24);this.labels.status.on(L.Event.CLICK,this,()=>{this.hideModals();this.statusPanel.visible=true;});
     this.labels.time=this.text(this.root,'模拟 00:00',999,17,21,palette.ink,191);this.labels.time.align='right';
     this.button('control','设置',1207,12,61,()=>{this.controlDraft=controlSettings(this.state?.control);this.hideModals();this.controlPanel.visible=true;});
     const inspectorStart=this.root.numChildren;
-    this.button('nextResident','下一位',187,89,85,()=>this.nextResident());
+    this.button('nextResident','下一位',187,80,85,()=>this.nextResident());
     this.button('resident0','居民 A',18,129,121,()=>this.selectIndex(this.residentPage()));this.button('resident1','居民 B',151,129,121,()=>this.selectIndex(this.residentPage()+1));
     this.residentDetails=new L.Sprite();this.root.addChild(this.residentDetails);const detailStart=this.root.numChildren;
-    this.labels.person=this.text(this.root,'选择居民',22,181,24,'#f1f4dc',248);this.labels.person.bold=true;
-    this.labels.personality=this.text(this.root,'',22,215,13,palette.muted,248);this.labels.personality.height=18;this.labels.personality.overflow='hidden';
-    const section=(y:number,h:number,title:string,icon:string)=>{const card=this.panel(this.root,16,y,260,h,'#343e41',5);card.graphics.drawRoundRect(0,0,260,h,5,5,5,5,null,'#52605b',1);drawIcon(this.root,icon,27,y+10,20);this.text(this.root,title,55,y+12,14,palette.mint,205);};
+    this.labels.person=this.boundText(this.text(this.root,'选择居民',22,181,24,'#f1f4dc',248),30);this.labels.person.bold=true;
+    this.labels.personality=this.text(this.root,'',22,215,13,palette.muted,248);this.boundText(this.labels.personality,19);
+    const section=(y:number,h:number,title:string,icon:string)=>{const card=this.panel(this.root,16,y,260,h,'#343e41',5);card.graphics.drawRoundRect(0,0,260,h,5,5,5,5,null,'#52605b',1);drawIcon(this.root,icon,27,y+10,20);this.boundText(this.text(this.root,title,55,y+12,14,palette.mint,112),20);};
     section(242,158,'身体与心情','health');
     ['health','hunger','mood','fatigue'].forEach((kind,i)=>{const y=279+i*27;drawIcon(this.root,kind,28,y-3,19);this.text(this.root,['生命','饱腹感','心情','精力'][i],54,y,14,palette.ink,75);const value=this.text(this.root,'',185,y,13,palette.ink,75);value.align='right';this.statValues.push(value);const bar=new L.Sprite();bar.pos(99,y+5);this.root.addChild(bar);this.statBars.push(bar);});
-    section(410,98,'随身携带','bag');
-    this.button('inventory','查看物品',172,416,94,()=>{this.hideModals();this.inventoryPanel.visible=true;});
-    ['wood','stone','food'].forEach((kind,i)=>{drawIcon(this.root,kind,29+i*82,455,21);this.labels['carry-'+kind]=this.text(this.root,'0',55+i*82,454,17,palette.ink,50);this.text(this.root,['木材','石料','食物'][i],28+i*82,479,12,palette.muted,75);});
-    this.labels.equipment=this.text(this.root,'',28,494,11,palette.muted,232);this.labels.equipment.height=16;this.labels.equipment.overflow='hidden';
-    section(518,130,'心愿与活动','eye');this.button('lifeDetails','生活详情',177,523,89,()=>{this.hideModals();this.lifePanel.visible=true;});
-    this.labels.goal=this.text(this.root,'',28,552,14,palette.ink,232);this.labels.goal.height=36;this.labels.goal.overflow='hidden';
-    this.labels.action=this.text(this.root,'',28,592,13,palette.amber,232);this.labels.action.height=18;this.labels.action.overflow='hidden';
-    this.labels.perception=this.text(this.root,'',28,621,12,palette.muted,232);this.labels.perception.height=18;this.labels.perception.overflow='hidden';
+    section(410,102,'随身携带','bag');
+    this.button('inventory','查看物品',172,416,94,()=>{this.hideModals();this.inventoryPanel.visible=true;},false,28);
+    ['wood','stone','food'].forEach((kind,i)=>{drawIcon(this.root,kind,29+i*82,450,21);this.labels['carry-'+kind]=this.boundText(this.text(this.root,'0',55+i*82,449,17,palette.ink,50),22);this.boundText(this.text(this.root,['木材','石料','食物'][i],28+i*82,474,12,palette.muted,75),15);});
+    this.labels.equipment=this.boundText(this.text(this.root,'',28,492,11,palette.muted,232),14);
+    section(520,126,'心愿与活动','eye');this.button('lifeDetails','生活详情',177,525,89,()=>{this.hideModals();this.lifePanel.visible=true;},false,28);
+    this.labels.goal=this.boundText(this.text(this.root,'',28,560,14,palette.ink,232),38,true);this.labels.goal.leading=2;
+    this.labels.action=this.boundText(this.text(this.root,'',28,602,13,palette.amber,232),18);
+    this.labels.perception=this.boundText(this.text(this.root,'',28,625,12,palette.muted,232),16);
     this.button('history','档案',18,667,79,()=>this.openHistory(),true);
     this.button('memoryMap','地图',105,667,79,()=>{this.hideModals();this.memoryPanel.visible=true;},true);
     this.button('senses','感官',192,667,80,()=>this.api.onToggleSenses());
@@ -191,7 +194,7 @@ export class ObserverView {
     this.markers=new L.Sprite();this.markers.mouseEnabled=false;this.root.addChild(this.markers);
     this.button('inspectorToggle','居民信息 ›',15,80,170,()=>{this.sidebarCollapsed=!this.sidebarCollapsed;this.layoutInspector();}).root.zOrder=11;
     this.captionPanel=this.panel(this.root,190,80,255,57,'#887642',9);this.captionPanel.alpha=.92;
-    this.labels.caption=this.text(this.root,'两名居民 · 两棵树 · 一堵墙',202,89,13,'#fff6d5',330);
+    this.labels.caption=this.boundText(this.text(this.root,'两名居民 · 两棵树 · 一堵墙',202,89,12,'#fff6d5',231),19);
     this.labels.caption.mouseEnabled=false;
     this.button('zoomOut','−',952,81,51,()=>{this.setZoom(this.zoom+3);});
     this.button('zoomIn','＋',1011,81,51,()=>{this.setZoom(this.zoom-3);});
@@ -204,10 +207,10 @@ export class ObserverView {
     this.button('zoneToggle',this.showZones?'区域：开':'区域：关',1176,133,89,()=>{this.showZones=!this.showZones;this.drawZones();this.drawMinimap();this.updateZoneHint();try{globalThis.localStorage?.setItem('survive_zones_v1',this.showZones?'shown':'hidden');}catch{}});
     this.buildResourceRail();this.buildObjectDetails();
     this.button('zoneConfirm','确认居住区',610,147,140,()=>this.commitZone()).root.visible=false;
-    this.button('zoneCancel','取消圈地',759,147,120,()=>this.cancelZone()).root.visible=false;
+    this.button('zoneCancel','取消圈地',759,147,105,()=>this.cancelZone()).root.visible=false;
     this.labels.zoneHint=this.text(this.root,'',320,151,14,'#fff4c2',280);this.labels.zoneHint.stroke=3;this.labels.zoneHint.strokeColor='#152d40';this.labels.zoneHint.visible=false;
-    this.labels.taskSummary=this.text(this.root,'',202,114,13,'#fff6d5',560);this.labels.taskSummary.mouseEnabled=false;
-    this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',682);this.labels.error.height=148;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
+    this.labels.taskSummary=this.boundText(this.text(this.root,'',202,114,12,'#fff6d5',231),19);this.labels.taskSummary.mouseEnabled=false;
+    this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',682);this.boundText(this.labels.error,148,true);this.labels.error.mouseEnabled=false;
     this.button('quickHistory','档案',19,660,86,()=>this.openHistory());
     this.button('quickMap','地图',116,660,86,()=>{this.hideModals();this.memoryPanel.visible=true;});
     this.button('quickSenses','感官',214,660,91,()=>this.api.onToggleSenses());
@@ -220,7 +223,7 @@ export class ObserverView {
     this.labels.hosted=this.text(this.root,'云端模型 · 服务端连接',932,674,13,'#b4b7a8',315);this.labels.hosted.visible=false;
     this.token=new L.Input();this.token.pos(997,661);this.token.size(149,39);this.token.fontSize=14;this.token.color='#26352c';this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
     this.button('connect','连接',1161,660,101,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
-    this.labels.saveStatus=this.text(this.root,'本机自动存档 · 运行设置中可手动保存与读取',315,707,11,'#a6afa7',650);
+    this.labels.saveStatus=this.boundText(this.text(this.root,'本机自动存档 · 运行设置中可手动保存与读取',315,704,11,'#a6afa7',680),16);
     this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();this.buildInventory();this.buildLifeDetails();
     this.minimap=new Minimap(this.root,p=>{this.resetMapGesture();this.offset={...p};this.moveCamera();this.positionLabels();},()=>this.focusCamp());
   }
@@ -228,30 +231,31 @@ export class ObserverView {
   private buildResourceRail():void{
     this.resourceRail=this.panel(this.root,1077,222,188,163,palette.panel,12);this.resourceRail.mouseEnabled=true;this.resourceRail.hitArea=new L.Rectangle(0,0,188,163);
     this.button('stockToggle','仓储 ▾',1077,179,188,()=>{this.resourceExpanded=!this.resourceExpanded;this.resourceRail.visible=this.resourceExpanded;this.buttons.stockToggle.set(this.resourceExpanded?'仓储 ▾':'仓储 ▸');});
-    ['wood','stone','food'].forEach((kind,i)=>{drawIcon(this.resourceRail,kind,17,9+i*43,31);this.text(this.resourceRail,RESOURCE_LABELS[kind as TaskDraft['resource']],72,6+i*43,14,palette.muted,95);this.labels['stock-'+kind]=this.text(this.resourceRail,'0',72,23+i*43,19,palette.ink,95);});
+    ['wood','stone','food'].forEach((kind,i)=>{drawIcon(this.resourceRail,kind,17,9+i*43,31);this.text(this.resourceRail,RESOURCE_LABELS[kind as TaskDraft['resource']],72,6+i*43,14,palette.muted,95);this.labels['stock-'+kind]=this.boundText(this.text(this.resourceRail,'0',72,23+i*43,19,palette.ink,95),25);});
     this.text(this.resourceRail,'已搬入仓储',18,143,13,palette.muted,150);
   }
 
   private renderResources(state:ViewState):void{for(const kind of ['wood','stone','food'] as const)this.labels['stock-'+kind].text=String(state.world.camp?.stock?.[kind]??0);}
   private buildObjectDetails():void{
     this.objectDetails=new L.Sprite();this.inspector.addChild(this.objectDetails);this.objectDetails.visible=false;
-    this.labels.objectName=this.text(this.objectDetails,'',22,189,24,palette.ink,248);
-    this.labels.objectType=this.text(this.objectDetails,'',22,223,14,palette.muted,248);
+    this.labels.objectName=this.boundText(this.text(this.objectDetails,'',22,189,24,palette.ink,248),30);
+    this.labels.objectType=this.boundText(this.text(this.objectDetails,'',22,223,14,palette.muted,248),34,true);
     this.panel(this.objectDetails,16,262,260,142,'#343e41',5);drawIcon(this.objectDetails,'eye',28,278,23);
     this.text(this.objectDetails,'现场信息',62,283,15,palette.mint,198);
-    this.labels.objectStock=this.text(this.objectDetails,'',29,324,20,palette.amber,229);
-    this.labels.objectDetail=this.text(this.objectDetails,'',24,424,15,palette.ink,244);this.labels.objectDetail.height=172;this.labels.objectDetail.overflow='hidden';
-    this.labels.objectLocation=this.text(this.objectDetails,'',24,613,13,palette.muted,244);
+    this.labels.objectStock=this.boundText(this.text(this.objectDetails,'',29,324,18,palette.amber,229),68,true);
+    this.labels.objectDetail=this.text(this.objectDetails,'',24,424,15,palette.ink,222);this.objectScroll=new NativeTextScroll(this.labels.objectDetail,this.objectDetails,253,424,174);
+    this.labels.objectLocation=this.boundText(this.text(this.objectDetails,'',24,613,13,palette.muted,244),20);
     const back=this.button('objectBack','返回居民信息',18,667,254,()=>{this.selectedObject=null;this.senseRevision='';});this.objectDetails.addChild(back.root);
   }
   private renderObject(state:ViewState):void{
-    const o=state.world.objects.find(o=>o.id===this.selectedObject);this.objectDetails.visible=!!o;this.residentDetails.visible=!o;if(!o)return;
+    const o=state.world.objects.find(o=>o.id===this.selectedObject);this.objectDetails.visible=!!o;this.residentDetails.visible=!o;if(!o){this.inspectedObjectId=null;return;}
+    const detailScrollY=this.inspectedObjectId===o.id?this.labels.objectDetail.scrollY:0;this.inspectedObjectId=o.id;
     const names:Record<string,string>={tree:'树木',rock:'岩石',berry:'浆果丛',house:'木石小屋',plot:'住宅工地',board:'公告板 / 仓储',pond:'池塘',workbench:'工作台',wall:'石墙'};
     this.labels.objectName.text=['house','plot'].includes(o.kind)?homeDesign(o.homeDesign,o.ownerId).name:o.crop?CROP_LABELS[o.crop.kind]:o.animal?ANIMAL_LABELS[o.animal.kind]:names[o.kind];this.labels.objectType.text=o.ownerId?(state.world.residents.find(r=>r.id===o.ownerId)?.name??'居民')+'的住处':'地图物体';
     if(['tree','rock','berry'].includes(o.kind)){
       const capacity=resourceCapacity(o),resource=o.resourceKind??(o.kind==='tree'?'wood':o.kind==='rock'?'stone':'food');
       this.labels.objectStock.text=`${RESOURCE_LABELS[resource]}剩余 ${o.resources} / ${capacity}`;
-      this.labels.objectDetail.text=(o.resources<=0?'已经采空。':`还可采集 ${o.resources} 份。\n剩余 ${Math.round(o.resources/capacity*100)}% · ${resourceStage(o)<=2?'已明显减少':'资源充足'}`)+'\n\n'+(o.kind==='tree'?'采伐后树冠减少，树干出现切口并倾斜；采空留下树桩。':o.kind==='rock'?'采掘后岩石逐步缩小，采空留下碎石。':'采收后枝上的浆果逐步减少。');
+      this.labels.objectDetail.text=(o.resources<=0?'已经采空。':`还可采集 ${o.resources} 份。\n剩余 ${Math.round(o.resources/capacity*100)}% · ${resourceStage(o)<=2?'已明显减少':'资源充足'}`)+'\n\n'+(o.kind==='tree'?'采伐后树冠减少，树干出现切口并倾斜；采空留下树桩。':o.kind==='rock'?'采掘后岩石逐步缩小，采空留下碎石。':'采空后保留完整灌木，只移除成熟浆果。');
     }else if(o.crop){
       const c=o.crop,stage={fallow:'待开垦',tilled:'待播种',sown:'待浇水',seedling:'幼苗',growing:'生长中',mature:'已成熟',harvested:'待重新耕作'}[c.stage],moisture=Math.round((c.moisture??1)*100);
       this.labels.objectType.text='种植区 · '+stage;this.labels.objectStock.text=c.stage==='mature'?`可收割食物 ${o.resources} 份`:c.stage==='fallow'?'荒地 · 等待居民开垦':c.stage==='tilled'?'已翻土 · 等待播种':c.stage==='sown'?'已播种 · 等待首次浇水':c.stage==='harvested'?'田茬 · 等待重新翻土':`生长 ${Math.round(c.growth*100)}% · ${moisture<=0?'缺水停长':'水分 '+moisture+'%'}`;
@@ -262,7 +266,7 @@ export class ObserverView {
       this.labels.objectStock.text=o.kind==='house'?'已竣工 · 可进入休息':`施工 ${o.buildStage??0} / 3`;
       const project=state.world.camp?.tasks.find(t=>t.id===o.projectId);this.labels.objectDetail.text=`大小 ${o.width}×${o.depth} · ${o.homeLevel??1}级\n`+(o.kind==='house'?`整洁度 ${Math.round((o.cleanliness??1)*100)}%\n家具：${Object.entries(FURNITURE).filter(([k])=>o.furniture?.[k as keyof typeof FURNITURE]).map(([,f])=>f.label).join('、')||'尚未添置'}\n柜内：${materialText(o.stored??{})||'空'}`:`下一步：${project?houseSteps(project)[project.progress]?.label:'地基'}\n材料${project?.reserved?'已预留':'从仓储扣除'}`)+'\n\n右上角可隐藏屋顶，观察屋内生活。';
     }else{this.labels.objectStock.text=o.kind==='board'?materialText(state.world.camp?.stock??{})||'仓储暂无物资':o.kind==='pond'?'岸边取水 · 绕岸通行':o.kind==='workbench'?'工具制作 / 物资置换':'阻挡通行与视线';this.labels.objectDetail.text=o.appearance;}
-    this.labels.objectLocation.text=`位置 ${o.position.x.toFixed(1)}, ${o.position.z.toFixed(1)}`;
+    this.labels.objectLocation.text=`位置 ${o.position.x.toFixed(1)}, ${o.position.z.toFixed(1)}`;this.objectScroll?.set(detailScrollY);
   }
   private renderResident(r:Resident,state:ViewState):void{
     const values=[(r.health??100)/100,1-r.hunger,r.mood??.75,1-r.fatigue];
@@ -307,7 +311,7 @@ export class ObserverView {
     const design=homeDesign(h?.homeDesign,r.id),targetSize=homeSize(level,h?h.homeDesign:preferredHome(r.id).id);
     this.labels.lifeTitle.text=r.name+' · 生活与心愿';
     const furniture=h?(Object.entries(FURNITURE).map(([k,v])=>`${h.furniture?.[k as keyof typeof FURNITURE]?'✓':'○'} ${v.label} · ${v.effect}`).join('\n')):'';
-    const body=`现在的心愿\n${residentThought(w,r)}\n住房喜好：${design.name}\n\n身体与心情（100%最好）\n饱腹感 ${Math.round((1-r.hunger)*100)}%    精力 ${Math.round((1-r.fatigue)*100)}%    心情 ${Math.round((r.mood??.75)*100)}%\n${onBreak(w,r)?`正在${r.living?.breakKind==='tantrum'?'冷静':'罢工'} · 还需${Math.ceil(((r.living?.breakUntil??0)-w.tick)/20)}模拟秒\n`:''}\n心情的原因\n${moodReasons(w,r).map(s=>'· '+s).join('\n')}\n\n自己的住处\n${h?`${h.width}×${h.depth} · ${h.homeLevel??1}级住宅 · 整洁度${Math.round((h.cleanliness??1)*100)}%\n${furniture}\n\n个人柜子（24份容量）\n${materialText(h.stored??{})||'暂无存放物资'}`:project?`正在施工 ${project.progress}/${project.amount} · ${houseSteps(project)[project.progress]?.label??''}`:'还没有自己的住处。请在「规划 / 居住区」圈出可用空地。'}\n\n下一步生活\n${h&&level>(h.homeLevel??1)?`希望改建到${targetSize.width}×${targetSize.depth}，先备足${materialText(houseCost(level,h.homeDesign))}并检查居住区空地。`:(h?.homeLevel===3?'目前已是宽敞住宅，继续照料家具与整洁。':'居民会逐步添置家具；住满一个模拟日后可能想扩建。')}\n夜间与精力不足时优先休息，床能加快恢复。长期缺少住房、食物和休息会降低心情；归零会短暂罢工，或在自家发脾气损坏家具。\n\n当前安排\n${r.goal}`;
+    const body=`现在的心愿\n${residentThought(w,r)}\n住房喜好：${design.name}\n\n身体与心情（100%最好）\n饱腹感 ${Math.round((1-r.hunger)*100)}%    精力 ${Math.round((1-r.fatigue)*100)}%    心情 ${Math.round((r.mood??.75)*100)}%\n${onBreak(w,r)?`正在${r.living?.breakKind==='tantrum'?'冷静':'罢工'} · 还需${Math.ceil(((r.living?.breakUntil??0)-w.tick)/20)}模拟秒\n`:''}\n心情的原因\n${moodReasons(w,r).map(s=>'· '+s).join('\n')}\n\n自己的住处\n${h?`${h.width}×${h.depth} · ${h.homeLevel??1}级住宅 · 整洁度${Math.round((h.cleanliness??1)*100)}%\n${furniture}\n\n个人柜子（24份容量）\n${materialText(h.stored??{})||'暂无存放物资'}`:project?`正在施工 ${project.progress}/${project.amount} · ${houseSteps(project)[project.progress]?.label??''}`:'还没有自己的住处。请在「规划 / 居住区」圈出可用空地。'}\n\n下一步生活\n${h&&level>(h.homeLevel??1)?`希望改建到${targetSize.width}×${targetSize.depth}，先备足${materialText(houseCost(level,h.homeDesign))}并检查居住区空地。`:(h?.homeLevel===3?'目前已是宽敞住宅，继续照料家具与整洁。':'居民会逐步添置家具；住满一个模拟日后可能想扩建。')}\n夜间与精力不足时优先休息，床能加快恢复。长期缺少住房、食物和休息会降低心情；归零会短暂罢工，或在自家发脾气损坏家具。\n\n当前安排\n${r.goal}\n\n实际动作\n${this.labels.action.text}\n\n最新感知\n${this.labels.perception.text}`;
     if(this.labels.lifeBody.text!==body){const y=this.labels.lifeBody.scrollY;this.labels.lifeBody.text=body;this.lifeScroll?.set(y);}
   }
   private draftZoneKind():ZoneKind{return this.draftKind==='planting'||this.draftKind==='pasture'?this.draftKind:'residential';}
@@ -351,7 +355,7 @@ export class ObserverView {
     for(const id of ['quickHistory','quickMap'])this.buttons[id].root.visible=this.sidebarCollapsed;this.buttons.quickSenses.root.visible=true;this.buttons.quickSenses.root.pos(this.sidebarCollapsed?214:21,this.sidebarCollapsed?660:87);this.buttons.quickSenses.root.visible=this.sidebarCollapsed;
     this.camera.normalizedViewport=new L.Viewport(left/WIDTH,TOP/HEIGHT,(WIDTH-left)/WIDTH,(BOTTOM-TOP)/HEIGHT);
     this.sceneInput.pos(left,TOP);this.sceneInput.size(WIDTH-left,BOTTOM-TOP);this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-left,BOTTOM-TOP);
-    this.labels.caption.x=this.sidebarCollapsed?202:315;this.labels.taskSummary.x=this.sidebarCollapsed?202:320;this.captionPanel.visible=this.sidebarCollapsed;
+    this.labels.caption.x=this.sidebarCollapsed?202:315;this.labels.taskSummary.x=this.sidebarCollapsed?202:320;this.labels.caption.width=this.labels.taskSummary.width=this.sidebarCollapsed?231:450;this.captionPanel.visible=this.sidebarCollapsed;
     for(const {panel,width}of this.modalLayouts)panel.x=left+(WIDTH-left-width)/2-320;
     this.applyQuality();this.updateInspectorButton();if(this.nightShade){this.nightShade.graphics.clear();this.nightShade.graphics.drawRect(this.sceneLeft,TOP,WIDTH-this.sceneLeft,BOTTOM-TOP,'#0c1734');}this.resetMapGesture();this.moveCamera();this.positionLabels();
   }
@@ -365,23 +369,23 @@ export class ObserverView {
     this.text(this.planner,'把目标写上公告板，居民亲自阅读后，自主接取、备料与执行。',344,205,13,palette.muted,840);
     const add=(id:string,label:string,x:number,y:number,w:number,fn:()=>void)=>this.modalButton(this.planner,id,label,x,y,w,fn);
     for(const [i,kind]of (['gather','craft','residential','planting','pasture'] as const).entries())add('kind-'+kind,['采集','制作','居住区','种植区','畜牧区'][i],344+i*76,239,70,()=>{this.draftKind=kind;});
-    this.labels.draftTitle=this.text(this.planner,'',344,292,17,'#f1f4dc',385);
+    this.labels.draftTitle=this.boundText(this.text(this.planner,'',344,292,17,'#f1f4dc',385),29);
     for(const [i,resource]of (['wood','stone','food'] as const).entries())add('task-'+resource,RESOURCE_LABELS[resource],344+i*125,330,115,()=>{this.draftResource=resource;});
     for(const [i,recipe]of RECIPES.filter(r=>r.kind==='craft').entries())add('recipe-'+recipe.id,recipe.label,344+i*184,330,174,()=>{this.draftRecipe=recipe.id;});
     for(const [i,kind]of (['rice','wheat','corn','carrot'] as const).entries())add('crop-'+kind,CROP_LABELS[kind],344+i*96,330,86,()=>{this.draftCrop=kind;});
     for(const [i,kind]of (['chicken','duck','goose','mixed'] as const).entries())add('animal-'+kind,kind==='mixed'?'混养':ANIMAL_LABELS[kind],344+i*96,330,86,()=>{this.draftAnimal=kind;});
     this.labels.zonePlanner=this.text(this.planner,'',344,329,14,palette.mint,374);
     add('amount','数量 8',344,379,110,()=>{this.draftAmount=this.draftKind==='craft'?(this.draftAmount>=3?1:this.draftAmount+1):(this.draftAmount>=20?4:this.draftAmount+4);});
-    this.labels.requirements=this.text(this.planner,'',469,379,12,'#c9d8bd',250);this.labels.requirements.height=40;
+    this.labels.requirements=this.text(this.planner,'',469,379,12,'#c9d8bd',250);this.boundText(this.labels.requirements,40,true);
     this.taskNote=new L.Input();this.taskNote.pos(344,430);this.taskNote.size(374,36);this.taskNote.fontSize=14;this.taskNote.color='#26352c';this.taskNote.bgColor='#e0e6d9';this.taskNote.prompt='目标说明（可选）';this.taskNote.maxChars=120;this.planner.addChild(this.taskNote);
-    this.labels.draftHelp=this.text(this.planner,'',344,481,12,palette.muted,380);this.labels.draftHelp.height=43;
+    this.labels.draftHelp=this.text(this.planner,'',344,481,12,palette.muted,380);this.boundText(this.labels.draftHelp,44,true);this.labels.draftHelp.leading=4;
     this.text(this.planner,'已发布的目标',756,246,14,palette.mint,430);
     this.text(this.planner,'上下滑动查看全部',1030,248,12,palette.muted,174);
     this.labels.taskList=this.text(this.planner,'',756,282,14,'#e5f1df',421);this.taskScroll=new NativeTextScroll(this.labels.taskList,this.planner,1186,282,207);
-    this.labels.stock=this.text(this.planner,'',756,496,13,palette.amber,442);
+    this.labels.stock=this.boundText(this.text(this.planner,'',756,496,13,palette.amber,442),34,true);
     add('publishTask','发布目标',344,535,204,()=>{if(this.draftKind!=='gather'&&this.draftKind!=='craft'){this.beginZone();return;}this.api.onTask({kind:this.draftKind,resource:this.draftResource,amount:this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount,note:this.taskNote.text,recipeId:this.draftRecipe});this.taskNote.text='';});
     add('closeTasks','返回观察',1062,535,142,()=>{this.planner.visible=false;});
-    this.labels.taskNotice=this.text(this.planner,'',565,538,11,palette.amber,480);this.labels.taskNotice.height=35;
+    this.labels.taskNotice=this.text(this.planner,'',565,538,11,palette.amber,480);this.boundText(this.labels.taskNotice,35,true);
   }
   private buildWorkshop():void{
     this.workshopPanel=this.modal('Recipe book',735);
@@ -409,7 +413,7 @@ export class ObserverView {
     this.controlPanel=this.modal('Control settings');
     this.text(this.controlPanel,'运行设置 · 玩家布置任务，居民执行',344,167,22,'#f1f4dc',845);
     for(const [i,mode]of (['commander','independent','local'] as const).entries())this.modalButton(this.controlPanel,'mode-'+mode,['模型统筹（默认）','独立居民','本地算法'][i],344+i*290,218,276,()=>{this.controlDraft.mode=mode;});
-    this.labels.controlHelp=this.text(this.controlPanel,'',344,270,14,palette.muted,835);this.labels.controlHelp.height=85;
+    this.labels.controlHelp=this.text(this.controlPanel,'',344,270,14,palette.muted,835);this.boundText(this.labels.controlHelp,85,true);
     this.modalButton(this.controlPanel,'phaseSize','',344,365,264,()=>{this.controlDraft.phaseUnits=this.controlDraft.phaseUnits===4?8:4;});
     this.modalButton(this.controlPanel,'reviewGap','',628,365,285,()=>{const a=[30,60,120] as const;this.controlDraft.reviewSeconds=a[(a.indexOf(this.controlDraft.reviewSeconds)+1)%3];});
     this.modalButton(this.controlPanel,'crewCount','',933,365,270,()=>{const a=[2,4,6] as const;this.controlDraft.residents=a[(a.indexOf(this.controlDraft.residents)+1)%3];});
@@ -418,7 +422,7 @@ export class ObserverView {
     this.text(this.controlPanel,'应用设置保留现场与私人记忆；人数仅在“新营地”生效。新营地会重置当前世界。',344,476,13,palette.amber,850);
     this.modalButton(this.controlPanel,'saveCamp','保存进度',344,500,125,()=>this.api.onSave?.());
     this.modalButton(this.controlPanel,'loadCamp','读取存档',482,500,125,()=>{this.api.onLoad?.();this.controlPanel.visible=false;});
-    this.labels.saveDetail=this.text(this.controlPanel,'',626,498,12,palette.mint,578);this.labels.saveDetail.height=40;
+    this.labels.saveDetail=this.text(this.controlPanel,'',626,498,12,palette.mint,550);this.saveDetailScroll=new NativeTextScroll(this.labels.saveDetail,this.controlPanel,1186,498,40);
     this.modalButton(this.controlPanel,'applyControl','应用设置',344,545,265,()=>{this.api.onControl?.(this.controlDraft);this.controlPanel.visible=false;});
     this.modalButton(this.controlPanel,'newCamp','新营地（重置）',631,545,285,()=>{this.api.onControl?.(this.controlDraft,true);this.controlPanel.visible=false;});
     this.modalButton(this.controlPanel,'closeControl','返回观察',936,545,266,()=>{this.controlPanel.visible=false;});
@@ -647,7 +651,7 @@ export class ObserverView {
     const mode=state.mode==='LOCAL_ALGORITHM'?'本地算法 · 无远程模型':state.mode==='UNCONFIGURED'?'尚未接入真实模型':state.mode==='REPLAY'?'观察回放 · 不调用模型':control.mode==='commander'?'模型统筹 · 阶段执行':'真实模型 · 独立居民';
     this.labels.mode.text=mode;const statusText=(state.controlDetail&&!['THINKING','ERROR_PAUSED'].includes(state.status)?state.controlDetail:this.humanStatus(state.status,state.mode)+(state.cognitionDetail?' · '+state.cognitionDetail:''));this.labels.status.text=statusText.length>82?statusText.slice(0,76)+'… 点此展开':statusText+' · 点此展开';this.labels.statusDetails.text=mode+'\n\n'+statusText+(state.controlNotice?'\n\n'+state.controlNotice:'')+(state.error?'\n\n'+state.error:'');this.statusScroll?.refresh();
     this.buttons.start.set(state.resumeReady?'继续营地':'开始运行');this.labels.saveStatus.text=state.saveStatus??'本机自动存档';this.labels.saveDetail.text=(state.saveStatus??'本机自动存档')+'\n存于此设备此浏览器，换设备不会同步。';
-    if(this.controlPanel.visible){const d=this.controlDraft;for(const m of ['commander','independent','local']){const t=this.buttons['mode-'+m].label;t.color=m===d.mode?'#14271b':'#314030';t.bold=m===d.mode;t.underline=m===d.mode;}this.labels.controlHelp.text=d.mode==='commander'?'一个glm-4.5-air统筹阶段目标；执行器持续完成走路、采集、搬运和施工。每人记忆独立。阶段结束、新任务或持续受阻时汇总复查；最短间隔按模拟时间计算。':d.mode==='independent'?'每名居民独立调用真实模型，只读自己的感官与记忆。保留原有认知触发；模型失败保持暂停，可手动切换本地模式。':'完全本地任务算法，免密钥、免远程请求；不是大模型。根据任务和有限感知执行采集、备料、制作与分步建房。';this.buttons.phaseSize.set('阶段工作量：'+d.phaseUnits+'份');this.buttons.reviewGap.set('模型最短间隔：'+d.reviewSeconds+'秒');this.buttons.crewCount.set('新营地人数：'+d.residents);this.buttons.localFallback.set('统筹失败自动转本地：'+(d.fallback?'开':'关'));}
+    if(this.controlPanel.visible){this.saveDetailScroll?.refresh();const d=this.controlDraft;for(const m of ['commander','independent','local']){const t=this.buttons['mode-'+m].label;t.color=m===d.mode?'#14271b':'#314030';t.bold=m===d.mode;t.underline=m===d.mode;}this.labels.controlHelp.text=d.mode==='commander'?'一个glm-4.5-air统筹阶段目标；执行器持续完成走路、采集、搬运和施工。每人记忆独立。阶段结束、新任务或持续受阻时汇总复查；最短间隔按模拟时间计算。':d.mode==='independent'?'每名居民独立调用真实模型，只读自己的感官与记忆。保留原有认知触发；模型失败保持暂停，可手动切换本地模式。':'完全本地任务算法，免密钥、免远程请求；不是大模型。根据任务和有限感知执行采集、备料、制作与分步建房。';this.buttons.phaseSize.set('阶段工作量：'+d.phaseUnits+'份');this.buttons.reviewGap.set('模型最短间隔：'+d.reviewSeconds+'秒');this.buttons.crewCount.set('新营地人数：'+d.residents);this.buttons.localFallback.set('统筹失败自动转本地：'+(d.fallback?'开':'关'));}
     const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${action.action.op==='farm'?({till:'开垦翻土',sow:'播种',water:'浇水'} as Record<string,string>)[action.action.params.work]??'耕作':readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
     const seconds=Math.floor(state.world.tick*defaults.simulation.fixedDtMs/1000);this.labels.time.fontSize=21;this.labels.time.text=(dayClock(state.world.tick).night?'夜 · ':'日 · ')+dayClock(state.world.tick).label;
     for(let i=0;i<2;i++){const person=state.world.residents[this.residentPage()+i];this.buttons['resident'+i].set(person?`${person.id===state.selectedId?'●  ':''}${person.name}`:'暂无居民');this.buttons['memoryPerson'+i].set(person?person.name+'的地图':'暂无居民');}

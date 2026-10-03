@@ -1,0 +1,2772 @@
+{
+  "mode": "EXPLICIT_PRESENTATION_FIXTURE",
+  "auditOnly": false,
+  "environment": "Headless Chromium, bundled Camp Sans + Camp Extension loaded; three viewport sizes, not a physical phone.",
+  "fixture": "4 residents, long repeated goal/perception/task/history/status text, 999 stock resources, object and all HUD/modal types. No remote calls or simulation planning.",
+  "profiles": [
+    {
+      "width": 1536,
+      "height": 864,
+      "dpr": 1,
+      "errors": [],
+      "missing": [],
+      "cases": [
+        {
+          "name": "resident",
+          "screenshot": "local-evidence/hud-verified-resident-1536.png",
+          "textCount": 86,
+          "buttonCount": 25,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "person",
+              "rect": {
+                "x": 22,
+                "y": 181,
+                "w": 248,
+                "h": 30
+              },
+              "textHeight": 29,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "personality",
+              "rect": {
+                "x": 22,
+                "y": 215,
+                "w": 248,
+                "h": 19
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "equipment",
+              "rect": {
+                "x": 28,
+                "y": 492,
+                "w": 232,
+                "h": 14
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "goal",
+              "rect": {
+                "x": 28,
+                "y": 560,
+                "w": 232,
+                "h": 38
+              },
+              "textHeight": 18,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "action",
+              "rect": {
+                "x": 28,
+                "y": 602,
+                "w": 232,
+                "h": 18
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "perception",
+              "rect": {
+                "x": 28,
+                "y": 625,
+                "w": 232,
+                "h": 16
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": []
+        },
+        {
+          "name": "collapsed",
+          "screenshot": "local-evidence/hud-verified-collapsed-1536.png",
+          "textCount": 61,
+          "buttonCount": 20,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "object-board",
+          "screenshot": "local-evidence/hud-verified-object-board-1536.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 49,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 571,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 397,
+              "after": 397,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "object-berry",
+          "screenshot": "local-evidence/hud-verified-object-berry-1536.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 22,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 115,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "object-pond",
+          "screenshot": "local-evidence/hud-verified-object-pond-1536.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 22,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 19,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-gather",
+          "screenshot": "local-evidence/hud-verified-planner-gather-1536.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 480,
+                "y": 379,
+                "w": 250,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-craft",
+          "screenshot": "local-evidence/hud-verified-planner-craft-1536.png",
+          "textCount": 20,
+          "buttonCount": 10,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 480,
+                "y": 379,
+                "w": 250,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-residential",
+          "screenshot": "local-evidence/hud-verified-planner-residential-1536.png",
+          "textCount": 18,
+          "buttonCount": 7,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-planting",
+          "screenshot": "local-evidence/hud-verified-planner-planting-1536.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 35,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-pasture",
+          "screenshot": "local-evidence/hud-verified-planner-pasture-1536.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 35,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "workshop",
+          "screenshot": "local-evidence/hud-verified-workshop-1536.png",
+          "textCount": 20,
+          "buttonCount": 2,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "settings",
+          "screenshot": "local-evidence/hud-verified-settings-1536.png",
+          "textCount": 17,
+          "buttonCount": 13,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "controlHelp",
+              "rect": {
+                "x": 355,
+                "y": 270,
+                "w": 835,
+                "h": 85
+              },
+              "textHeight": 18,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "saveDetail",
+              "rect": {
+                "x": 637,
+                "y": 498,
+                "w": 550,
+                "h": 40
+              },
+              "textHeight": 115,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "saveDetail",
+              "max": 75,
+              "after": 75,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "history",
+          "screenshot": "local-evidence/hud-verified-history-1536.png",
+          "textCount": 24,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "history-detail",
+          "screenshot": "local-evidence/hud-verified-history-detail-1536.png",
+          "textCount": 16,
+          "buttonCount": 12,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "historyDetail",
+              "rect": {
+                "x": 361,
+                "y": 282,
+                "w": 842,
+                "h": 222
+              },
+              "textHeight": 133,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "historyDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "inventory",
+          "screenshot": "local-evidence/hud-verified-inventory-1536.png",
+          "textCount": 5,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "inventoryBody",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 276
+              },
+              "textHeight": 395,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "inventoryBody",
+              "max": 119,
+              "after": 119,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "life",
+          "screenshot": "local-evidence/hud-verified-life-1536.png",
+          "textCount": 4,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "lifeBody",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 300
+              },
+              "textHeight": 845,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "lifeBody",
+              "max": 545,
+              "after": 545,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "screenshot": "local-evidence/hud-verified-status-1536.png",
+          "textCount": 4,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "statusDetails",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 300
+              },
+              "textHeight": 370,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "statusDetails",
+              "max": 70,
+              "after": 70,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "map",
+          "screenshot": "local-evidence/hud-verified-map-1536.png",
+          "textCount": 8,
+          "buttonCount": 5,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        }
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dpr": 2,
+      "errors": [],
+      "missing": [],
+      "cases": [
+        {
+          "name": "resident",
+          "screenshot": "local-evidence/hud-verified-resident-844.png",
+          "textCount": 86,
+          "buttonCount": 25,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "person",
+              "rect": {
+                "x": 22,
+                "y": 181,
+                "w": 248,
+                "h": 30
+              },
+              "textHeight": 29,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "personality",
+              "rect": {
+                "x": 22,
+                "y": 215,
+                "w": 248,
+                "h": 19
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "equipment",
+              "rect": {
+                "x": 28,
+                "y": 492,
+                "w": 232,
+                "h": 14
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "goal",
+              "rect": {
+                "x": 28,
+                "y": 560,
+                "w": 232,
+                "h": 38
+              },
+              "textHeight": 18,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "action",
+              "rect": {
+                "x": 28,
+                "y": 602,
+                "w": 232,
+                "h": 18
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "perception",
+              "rect": {
+                "x": 28,
+                "y": 625,
+                "w": 232,
+                "h": 16
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": []
+        },
+        {
+          "name": "collapsed",
+          "screenshot": "local-evidence/hud-verified-collapsed-844.png",
+          "textCount": 61,
+          "buttonCount": 20,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "object-board",
+          "screenshot": "local-evidence/hud-verified-object-board-844.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 49,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 571,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 397,
+              "after": 397,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "object-berry",
+          "screenshot": "local-evidence/hud-verified-object-berry-844.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 22,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 115,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "object-pond",
+          "screenshot": "local-evidence/hud-verified-object-pond-844.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 22,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 19,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-gather",
+          "screenshot": "local-evidence/hud-verified-planner-gather-844.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 480,
+                "y": 379,
+                "w": 250,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-craft",
+          "screenshot": "local-evidence/hud-verified-planner-craft-844.png",
+          "textCount": 20,
+          "buttonCount": 10,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 480,
+                "y": 379,
+                "w": 250,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-residential",
+          "screenshot": "local-evidence/hud-verified-planner-residential-844.png",
+          "textCount": 18,
+          "buttonCount": 7,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-planting",
+          "screenshot": "local-evidence/hud-verified-planner-planting-844.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 35,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-pasture",
+          "screenshot": "local-evidence/hud-verified-planner-pasture-844.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 35,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "workshop",
+          "screenshot": "local-evidence/hud-verified-workshop-844.png",
+          "textCount": 20,
+          "buttonCount": 2,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "settings",
+          "screenshot": "local-evidence/hud-verified-settings-844.png",
+          "textCount": 17,
+          "buttonCount": 13,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "controlHelp",
+              "rect": {
+                "x": 355,
+                "y": 270,
+                "w": 835,
+                "h": 85
+              },
+              "textHeight": 18,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "saveDetail",
+              "rect": {
+                "x": 637,
+                "y": 498,
+                "w": 550,
+                "h": 40
+              },
+              "textHeight": 115,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "saveDetail",
+              "max": 75,
+              "after": 75,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "history",
+          "screenshot": "local-evidence/hud-verified-history-844.png",
+          "textCount": 24,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "history-detail",
+          "screenshot": "local-evidence/hud-verified-history-detail-844.png",
+          "textCount": 16,
+          "buttonCount": 12,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "historyDetail",
+              "rect": {
+                "x": 361,
+                "y": 282,
+                "w": 842,
+                "h": 222
+              },
+              "textHeight": 133,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "historyDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "inventory",
+          "screenshot": "local-evidence/hud-verified-inventory-844.png",
+          "textCount": 5,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "inventoryBody",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 276
+              },
+              "textHeight": 395,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "inventoryBody",
+              "max": 119,
+              "after": 119,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "life",
+          "screenshot": "local-evidence/hud-verified-life-844.png",
+          "textCount": 4,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "lifeBody",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 300
+              },
+              "textHeight": 845,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "lifeBody",
+              "max": 545,
+              "after": 545,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "screenshot": "local-evidence/hud-verified-status-844.png",
+          "textCount": 4,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "statusDetails",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 300
+              },
+              "textHeight": 370,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "statusDetails",
+              "max": 70,
+              "after": 70,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "map",
+          "screenshot": "local-evidence/hud-verified-map-844.png",
+          "textCount": 8,
+          "buttonCount": 5,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        }
+      ]
+    },
+    {
+      "width": 2048,
+      "height": 1110,
+      "dpr": 1,
+      "errors": [],
+      "missing": [],
+      "cases": [
+        {
+          "name": "resident",
+          "screenshot": "local-evidence/hud-verified-resident-2048.png",
+          "textCount": 86,
+          "buttonCount": 25,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "person",
+              "rect": {
+                "x": 22,
+                "y": 181,
+                "w": 248,
+                "h": 30
+              },
+              "textHeight": 29,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "personality",
+              "rect": {
+                "x": 22,
+                "y": 215,
+                "w": 248,
+                "h": 19
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "equipment",
+              "rect": {
+                "x": 28,
+                "y": 492,
+                "w": 232,
+                "h": 14
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "goal",
+              "rect": {
+                "x": 28,
+                "y": 560,
+                "w": 232,
+                "h": 38
+              },
+              "textHeight": 18,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "action",
+              "rect": {
+                "x": 28,
+                "y": 602,
+                "w": 232,
+                "h": 18
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "perception",
+              "rect": {
+                "x": 28,
+                "y": 625,
+                "w": 232,
+                "h": 16
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": []
+        },
+        {
+          "name": "collapsed",
+          "screenshot": "local-evidence/hud-verified-collapsed-2048.png",
+          "textCount": 61,
+          "buttonCount": 20,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "object-board",
+          "screenshot": "local-evidence/hud-verified-object-board-2048.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 49,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 571,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 397,
+              "after": 397,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "object-berry",
+          "screenshot": "local-evidence/hud-verified-object-berry-2048.png",
+          "textCount": 65,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 22,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 115,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "object-pond",
+          "screenshot": "local-evidence/hud-verified-object-pond-2048.png",
+          "textCount": 66,
+          "buttonCount": 21,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "objectStock",
+              "rect": {
+                "x": 29,
+                "y": 324,
+                "w": 229,
+                "h": 68
+              },
+              "textHeight": 22,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "objectDetail",
+              "rect": {
+                "x": 24,
+                "y": 424,
+                "w": 222,
+                "h": 174
+              },
+              "textHeight": 19,
+              "overflow": "scroll"
+            },
+            {
+              "id": "objectLocation",
+              "rect": {
+                "x": 24,
+                "y": 613,
+                "w": 244,
+                "h": 20
+              },
+              "textHeight": 17,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "objectDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-gather",
+          "screenshot": "local-evidence/hud-verified-planner-gather-2048.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 480,
+                "y": 379,
+                "w": 250,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-craft",
+          "screenshot": "local-evidence/hud-verified-planner-craft-2048.png",
+          "textCount": 20,
+          "buttonCount": 10,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 480,
+                "y": 379,
+                "w": 250,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-residential",
+          "screenshot": "local-evidence/hud-verified-planner-residential-2048.png",
+          "textCount": 18,
+          "buttonCount": 7,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 15,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-planting",
+          "screenshot": "local-evidence/hud-verified-planner-planting-2048.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 35,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "planner-pasture",
+          "screenshot": "local-evidence/hud-verified-planner-pasture-2048.png",
+          "textCount": 21,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "requirements",
+              "rect": {
+                "x": 355,
+                "y": 379,
+                "w": 374,
+                "h": 40
+              },
+              "textHeight": 35,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "draftHelp",
+              "rect": {
+                "x": 355,
+                "y": 481,
+                "w": 380,
+                "h": 44
+              },
+              "textHeight": 34,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "taskList",
+              "rect": {
+                "x": 767,
+                "y": 282,
+                "w": 421,
+                "h": 207
+              },
+              "textHeight": 616,
+              "overflow": "scroll"
+            },
+            {
+              "id": "taskNotice",
+              "rect": {
+                "x": 576,
+                "y": 538,
+                "w": 480,
+                "h": 35
+              },
+              "textHeight": 14,
+              "overflow": "ellipsis"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "taskList",
+              "max": 409,
+              "after": 409,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "workshop",
+          "screenshot": "local-evidence/hud-verified-workshop-2048.png",
+          "textCount": 20,
+          "buttonCount": 2,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "settings",
+          "screenshot": "local-evidence/hud-verified-settings-2048.png",
+          "textCount": 17,
+          "buttonCount": 13,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "controlHelp",
+              "rect": {
+                "x": 355,
+                "y": 270,
+                "w": 835,
+                "h": 85
+              },
+              "textHeight": 18,
+              "overflow": "ellipsis"
+            },
+            {
+              "id": "saveDetail",
+              "rect": {
+                "x": 637,
+                "y": 498,
+                "w": 550,
+                "h": 40
+              },
+              "textHeight": 115,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "saveDetail",
+              "max": 75,
+              "after": 75,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "history",
+          "screenshot": "local-evidence/hud-verified-history-2048.png",
+          "textCount": 24,
+          "buttonCount": 11,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        },
+        {
+          "name": "history-detail",
+          "screenshot": "local-evidence/hud-verified-history-detail-2048.png",
+          "textCount": 16,
+          "buttonCount": 12,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "historyDetail",
+              "rect": {
+                "x": 361,
+                "y": 282,
+                "w": 842,
+                "h": 222
+              },
+              "textHeight": 133,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "historyDetail",
+              "max": 0,
+              "after": 0,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "inventory",
+          "screenshot": "local-evidence/hud-verified-inventory-2048.png",
+          "textCount": 5,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "inventoryBody",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 276
+              },
+              "textHeight": 395,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "inventoryBody",
+              "max": 119,
+              "after": 119,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "life",
+          "screenshot": "local-evidence/hud-verified-life-2048.png",
+          "textCount": 4,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "lifeBody",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 300
+              },
+              "textHeight": 845,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "lifeBody",
+              "max": 545,
+              "after": 545,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "status",
+          "screenshot": "local-evidence/hud-verified-status-2048.png",
+          "textCount": 4,
+          "buttonCount": 1,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [
+            {
+              "id": "statusDetails",
+              "rect": {
+                "x": 442.5,
+                "y": 225,
+                "w": 639,
+                "h": 300
+              },
+              "textHeight": 370,
+              "overflow": "scroll"
+            }
+          ],
+          "scrollChecks": [
+            {
+              "id": "statusDetails",
+              "max": 70,
+              "after": 70,
+              "restored": true
+            }
+          ]
+        },
+        {
+          "name": "map",
+          "screenshot": "local-evidence/hud-verified-map-2048.png",
+          "textCount": 8,
+          "buttonCount": 5,
+          "overlap": [],
+          "outside": [],
+          "buttonOverflow": [],
+          "keyFields": [],
+          "scrollChecks": []
+        }
+      ]
+    }
+  ],
+  "finalResidentFollowup": {
+    "mode": "EXPLICIT_PRESENTATION_FIXTURE",
+    "auditOnly": false,
+    "residentOnly": true,
+    "viewSha256": "8e6682eb05ad16091a97e54f7e17f20952849fe67d7fdb5aa2e2192c2167610a",
+    "environment": "Headless Chromium, bundled Camp Sans + Camp Extension loaded; three viewport sizes, not a physical phone.",
+    "fixture": "4 residents, long repeated goal/perception/task/history/status text, 999 stock resources, object and all HUD/modal types. No remote calls or simulation planning.",
+    "profiles": [
+      {
+        "width": 1536,
+        "height": 864,
+        "dpr": 1,
+        "errors": [],
+        "missing": [],
+        "cases": [
+          {
+            "name": "resident",
+            "screenshot": "local-evidence/hud-verified-resident-1536.png",
+            "textCount": 86,
+            "buttonCount": 25,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [
+              {
+                "id": "person",
+                "rect": {
+                  "x": 22,
+                  "y": 181,
+                  "w": 248,
+                  "h": 30
+                },
+                "textHeight": 29,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "personality",
+                "rect": {
+                  "x": 22,
+                  "y": 215,
+                  "w": 248,
+                  "h": 19
+                },
+                "textHeight": 17,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "equipment",
+                "rect": {
+                  "x": 28,
+                  "y": 492,
+                  "w": 232,
+                  "h": 14
+                },
+                "textHeight": 14,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "goal",
+                "rect": {
+                  "x": 28,
+                  "y": 560,
+                  "w": 232,
+                  "h": 38
+                },
+                "textHeight": 38,
+                "overflow": "ellipsis",
+                "lineCount": 2,
+                "lines": [
+                  {
+                    "text": "我好想有个家，能给我们划一片居住",
+                    "rect": {
+                      "x": 28,
+                      "y": 560,
+                      "w": 224,
+                      "h": 17
+                    }
+                  },
+                  {
+                    "text": "区吗？",
+                    "rect": {
+                      "x": 28,
+                      "y": 580,
+                      "w": 42,
+                      "h": 17
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "action",
+                "rect": {
+                  "x": 28,
+                  "y": 602,
+                  "w": 232,
+                  "h": 18
+                },
+                "textHeight": 17,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "perception",
+                "rect": {
+                  "x": 28,
+                  "y": 625,
+                  "w": 232,
+                  "h": 16
+                },
+                "textHeight": 15,
+                "overflow": "ellipsis"
+              }
+            ],
+            "scrollChecks": []
+          },
+          {
+            "name": "map",
+            "screenshot": "local-evidence/hud-verified-map-1536.png",
+            "textCount": 14,
+            "buttonCount": 5,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [],
+            "scrollChecks": []
+          }
+        ]
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "dpr": 2,
+        "errors": [],
+        "missing": [],
+        "cases": [
+          {
+            "name": "resident",
+            "screenshot": "local-evidence/hud-verified-resident-844.png",
+            "textCount": 86,
+            "buttonCount": 25,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [
+              {
+                "id": "person",
+                "rect": {
+                  "x": 22,
+                  "y": 181,
+                  "w": 248,
+                  "h": 30
+                },
+                "textHeight": 29,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "personality",
+                "rect": {
+                  "x": 22,
+                  "y": 215,
+                  "w": 248,
+                  "h": 19
+                },
+                "textHeight": 17,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "equipment",
+                "rect": {
+                  "x": 28,
+                  "y": 492,
+                  "w": 232,
+                  "h": 14
+                },
+                "textHeight": 14,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "goal",
+                "rect": {
+                  "x": 28,
+                  "y": 560,
+                  "w": 232,
+                  "h": 38
+                },
+                "textHeight": 38,
+                "overflow": "ellipsis",
+                "lineCount": 2,
+                "lines": [
+                  {
+                    "text": "我好想有个家，能给我们划一片居住",
+                    "rect": {
+                      "x": 28,
+                      "y": 560,
+                      "w": 224,
+                      "h": 17
+                    }
+                  },
+                  {
+                    "text": "区吗？",
+                    "rect": {
+                      "x": 28,
+                      "y": 580,
+                      "w": 42,
+                      "h": 17
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "action",
+                "rect": {
+                  "x": 28,
+                  "y": 602,
+                  "w": 232,
+                  "h": 18
+                },
+                "textHeight": 17,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "perception",
+                "rect": {
+                  "x": 28,
+                  "y": 625,
+                  "w": 232,
+                  "h": 16
+                },
+                "textHeight": 15,
+                "overflow": "ellipsis"
+              }
+            ],
+            "scrollChecks": []
+          },
+          {
+            "name": "map",
+            "screenshot": "local-evidence/hud-verified-map-844.png",
+            "textCount": 14,
+            "buttonCount": 5,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [],
+            "scrollChecks": []
+          }
+        ]
+      },
+      {
+        "width": 2048,
+        "height": 1110,
+        "dpr": 1,
+        "errors": [],
+        "missing": [],
+        "cases": [
+          {
+            "name": "resident",
+            "screenshot": "local-evidence/hud-verified-resident-2048.png",
+            "textCount": 86,
+            "buttonCount": 25,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [
+              {
+                "id": "person",
+                "rect": {
+                  "x": 22,
+                  "y": 181,
+                  "w": 248,
+                  "h": 30
+                },
+                "textHeight": 29,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "personality",
+                "rect": {
+                  "x": 22,
+                  "y": 215,
+                  "w": 248,
+                  "h": 19
+                },
+                "textHeight": 17,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "equipment",
+                "rect": {
+                  "x": 28,
+                  "y": 492,
+                  "w": 232,
+                  "h": 14
+                },
+                "textHeight": 14,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "goal",
+                "rect": {
+                  "x": 28,
+                  "y": 560,
+                  "w": 232,
+                  "h": 38
+                },
+                "textHeight": 38,
+                "overflow": "ellipsis",
+                "lineCount": 2,
+                "lines": [
+                  {
+                    "text": "我好想有个家，能给我们划一片居住",
+                    "rect": {
+                      "x": 28,
+                      "y": 560,
+                      "w": 224,
+                      "h": 17
+                    }
+                  },
+                  {
+                    "text": "区吗？",
+                    "rect": {
+                      "x": 28,
+                      "y": 580,
+                      "w": 42,
+                      "h": 17
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "action",
+                "rect": {
+                  "x": 28,
+                  "y": 602,
+                  "w": 232,
+                  "h": 18
+                },
+                "textHeight": 17,
+                "overflow": "ellipsis"
+              },
+              {
+                "id": "perception",
+                "rect": {
+                  "x": 28,
+                  "y": 625,
+                  "w": 232,
+                  "h": 16
+                },
+                "textHeight": 15,
+                "overflow": "ellipsis"
+              }
+            ],
+            "scrollChecks": []
+          },
+          {
+            "name": "map",
+            "screenshot": "local-evidence/hud-verified-map-2048.png",
+            "textCount": 14,
+            "buttonCount": 5,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [],
+            "scrollChecks": []
+          }
+        ]
+      }
+    ]
+  },
+  "finalMapFollowup": {
+    "mode": "EXPLICIT_PRESENTATION_FIXTURE",
+    "auditOnly": false,
+    "residentOnly": false,
+    "mapOnly": true,
+    "viewSha256": "8e6682eb05ad16091a97e54f7e17f20952849fe67d7fdb5aa2e2192c2167610a",
+    "mapSha256": "822b3e3127b112d2dcbbcef851eddfbfd34c8ca551dff88bdff1fb842d4b7745",
+    "environment": "Headless Chromium, bundled Camp Sans + Camp Extension loaded; three viewport sizes, not a physical phone.",
+    "fixture": "4 residents, long repeated goal/perception/task/history/status text, 999 stock resources, object and all HUD/modal types. No remote calls or simulation planning.",
+    "profiles": [
+      {
+        "width": 1536,
+        "height": 864,
+        "dpr": 1,
+        "errors": [],
+        "missing": [],
+        "cases": [
+          {
+            "name": "map",
+            "screenshot": "local-evidence/hud-verified-map-1536.png",
+            "textCount": 14,
+            "buttonCount": 5,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [
+              {
+                "id": "mapLegend",
+                "rect": {
+                  "x": 1021,
+                  "y": 245,
+                  "w": 196,
+                  "h": 294
+                },
+                "textHeight": 287,
+                "overflow": "hidden"
+              }
+            ],
+            "scrollChecks": []
+          }
+        ]
+      },
+      {
+        "width": 844,
+        "height": 390,
+        "dpr": 2,
+        "errors": [],
+        "missing": [],
+        "cases": [
+          {
+            "name": "map",
+            "screenshot": "local-evidence/hud-verified-map-844.png",
+            "textCount": 14,
+            "buttonCount": 5,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [
+              {
+                "id": "mapLegend",
+                "rect": {
+                  "x": 1021,
+                  "y": 245,
+                  "w": 196,
+                  "h": 294
+                },
+                "textHeight": 287,
+                "overflow": "hidden"
+              }
+            ],
+            "scrollChecks": []
+          }
+        ]
+      },
+      {
+        "width": 2048,
+        "height": 1110,
+        "dpr": 1,
+        "errors": [],
+        "missing": [],
+        "cases": [
+          {
+            "name": "map",
+            "screenshot": "local-evidence/hud-verified-map-2048.png",
+            "textCount": 14,
+            "buttonCount": 5,
+            "overlap": [],
+            "outside": [],
+            "buttonOverflow": [],
+            "keyFields": [
+              {
+                "id": "mapLegend",
+                "rect": {
+                  "x": 1021,
+                  "y": 245,
+                  "w": 196,
+                  "h": 294
+                },
+                "textHeight": 287,
+                "overflow": "hidden"
+              }
+            ],
+            "scrollChecks": []
+          }
+        ]
+      }
+    ]
+  }
+}
