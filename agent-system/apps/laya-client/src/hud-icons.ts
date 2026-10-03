@@ -1,7 +1,10 @@
+import {artFrame} from './painted-world.ts';
 /** Small native Laya pictograms; no DOM or external font-glyph dependency. */
 export function drawIcon(parent:any,kind:string,x:number,y:number,size=22):any{
   const L=(globalThis as any).Laya,s=new L.Sprite();s.pos(x,y);s.scale(size/24,size/24);s.mouseEnabled=false;parent.addChild(s);const g=s.graphics;
-  if(kind==='wood'){for(let i=0;i<3;i++){g.drawRoundRect(3+i*3,4+i*5,14,6,2,2,2,2,'#b48a58');g.drawCircle(5+i*3,7+i*5,2.5,'#e1bf84');}}
+  const painted=artFrame(kind==='wood'?'logs':kind==='stone'?'rock':kind==='food'?'berries':'');if(painted){g.drawTexture(painted.texture,0,0,24,24);return s;}
+  if(kind==='leaf'){g.drawPoly(0,0,[3,19,3,11,8,4,23,0,21,12,15,20,3,19],'#b8dc6c','#5e913c',.6);g.drawLine(2,23,18,6,'#47773d',1.5);g.drawLine(9,15,8,9,'#6ca14c',1);}
+  else if(kind==='wood'){for(let i=0;i<3;i++){g.drawRoundRect(3+i*3,4+i*5,14,6,2,2,2,2,'#b48a58');g.drawCircle(5+i*3,7+i*5,2.5,'#e1bf84');}}
   else if(kind==='stone')g.drawPoly(0,0,[3,18,5,8,13,3,21,11,20,20,9,22],'#a9b3b4','#d1d2bb',1);
   else if(kind==='food'){g.drawLine(11,8,17,3,'#a8b47c',3);for(const [cx,cy]of [[7,12],[16,12],[12,19]])g.drawCircle(cx,cy,4.5,'#d7937b');}
   else if(kind==='health')g.drawPoly(0,0,[12,21,3,12,2,7,5,3,9,3,12,6,15,3,19,3,22,7,21,12],'#db8c82');

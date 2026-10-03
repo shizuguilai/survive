@@ -1,0 +1,16 @@
+✔ tests/barrier.test.ts (491.695455ms)
+✔ tests/camp-save.test.ts (368.16956ms)
+✔ tests/character.test.ts (156.588454ms)
+✔ tests/map-camera.test.ts (263.839067ms)
+✔ tests/minimap.test.ts (233.651341ms)
+✔ tests/pawn-pose.test.ts (156.744219ms)
+✔ tests/scenery.test.ts (232.709416ms)
+✔ tests/touch-handlers.test.ts (197.928217ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 500.395437

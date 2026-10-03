@@ -49,7 +49,7 @@ test('Real view handlers batch per-finger events: parallel movement at minimum z
  const v=view(),a=touch(v,1,500),b=touch(v,2,700),before=hashCanonical(v.state.world);
  v.pointerDown({touchId:1,touches:[a],stageX:500,stageY:350});v.pointerDown({touchId:2,touches:[a,b]});
  a.pos.x-=40;v.pointerMove({touchId:1,touches:[a,b]});assert.equal(v.zoom,9);
- b.pos.x-=40;v.pointerMove({touchId:2,touches:[a,b]});v.flushPinch();assert.equal(v.zoom,9);approx(v.offset.x,40*9/570);
+ b.pos.x-=40;v.pointerMove({touchId:2,touches:[a,b]});v.flushPinch();assert.equal(v.zoom,9);approx(v.offset.x,40*9/578);
  const offset={...v.offset};for(let n=0;n<50;n++){v.pointerMove({touchId:1,touches:[a,b]});v.flushPinch();}assert.deepEqual(v.offset,offset);assert.equal(hashCanonical(v.state.world),before);
 });
 test('A third finger cannot replace the gesture pair; lifting a finger cannot become a pan or tap',()=>{
@@ -73,12 +73,12 @@ test('Rotating the actual view orbits the camera and preserves screen-relative d
  const v=view(),before=hashCanonical(v.state.world);v.setYaw(Math.PI/2);
  approx(v.camera.transform.position.x,20);approx(v.camera.transform.position.z,0);
  const ground={x:2,y:0,z:-3},p=v.project(ground),q=v.groundAt(p.x,p.y);approx(q.x,2);approx(q.z,-3);
- v.pointerDown({stageX:600,stageY:350});v.pointerMove({stageX:620,stageY:350});approx(v.offset.x,0);approx(v.offset.z,20*9/570);
+ v.pointerDown({stageX:600,stageY:350});v.pointerMove({stageX:620,stageY:350});approx(v.offset.x,0);approx(v.offset.z,20*9/578);
  v.setYaw(0);approx(v.yaw,0);assert.equal(hashCanonical(v.state.world),before);
 });
 test('Landmark labels stay fixed when a resident walks through them, and published tasks retain every entry and scroll offset',()=>{
  const v=view(),w=v.state.world,board=w.objects.find((o:any)=>o.kind==='board'),label:any={pos(x:number,y:number){this.x=x;this.y=y;}};
- Object.assign(v,{residents:new Map(),nameLabels:new Map(),placeLabels:new Map([[board.id,label]]),drawMinimap(){},positionBubbles(){}});
+ Object.assign(v,{art:{render(){},residentTop(){return null;}},objects:new Map(),residents:new Map(),nameLabels:new Map(),placeLabels:new Map([[board.id,label]]),drawMinimap(){},positionBubbles(){}});
  ObserverView.prototype.positionLabels.call(v);const location={x:label.x,y:label.y};w.residents[0].position={...board.position,z:board.position.z+1};ObserverView.prototype.positionLabels.call(v);assert.deepEqual({x:label.x,y:label.y},location);
  const seed=w.camp.tasks[0];w.camp.tasks=Array.from({length:20},(_,i)=>({...seed,id:'target-'+i,note:'目标说明'+i+'，完整说明不应被截断。'.repeat(5)}));
  const body={text:'',scrollY:85};Object.assign(v,{labels:{taskList:body},taskScroll:{set(y:number){body.scrollY=y;}}});v.renderTaskList(v.state);

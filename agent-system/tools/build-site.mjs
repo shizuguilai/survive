@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 await rm('dist',{recursive:true,force:true});
 execFileSync(process.execPath,['tools/build.mjs'],{stdio:'inherit'});
 await mkdir('dist/client',{recursive:true});
-for(const file of ['index.html','app.js','app.js.map','vendor'])await rename(`dist/${file}`,`dist/client/${file}`);
+for(const file of ['index.html','app.js','app.js.map','vendor','assets'])await rename(`dist/${file}`,`dist/client/${file}`);
 await mkdir('dist/server',{recursive:true});
 await build({entryPoints:['services/brain-gateway/src/worker.ts'],outfile:'dist/server/index.js',bundle:true,format:'esm',platform:'browser',target:'es2022',sourcemap:false});
 await mkdir('dist/.openai',{recursive:true});

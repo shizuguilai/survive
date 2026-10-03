@@ -1,3 +1,4 @@
+import {PaintedWorld,loadCampArt} from './painted-world.ts';
 import {Minimap} from './minimap.ts';
 import {ThoughtCadence} from './thought-cadence.ts';
 import {SpeechBubble} from './speech-bubble.ts';
@@ -47,8 +48,8 @@ export type ViewState = {
 // All visible controls and graphics use Laya. Only its engine-owned Input bridge
 // uses platform input facilities; no game scene, HUD, or controls use DOM rendering.
 const L:any=(globalThis as any).Laya;
-const WIDTH=1280,HEIGHT=720,SIDE=292,TOP=84,BOTTOM=654;
-const palette={ink:'#e6e0cb',muted:'#a6afa7',paper:'#20272a',panel:'#2c3437',line:'#465052',mint:'#9cae83',amber:'#ddbd7d'};
+const WIDTH=1280,HEIGHT=720,SIDE=292,TOP=68,BOTTOM=646;
+const palette={ink:'#f5f8f5',muted:'#b9c9d2',paper:'#21394c',panel:'#273f53',line:'#345670',mint:'#b8df78',amber:'#f8da93'};
 type HistoryRow=JournalEntry&{title:string;evidence?:JournalEntry[]};
 type NativeButton={root:any;label:any;set(text:string):void};
 
@@ -62,6 +63,9 @@ export async function initialize(api:ViewCallbacks):Promise<ObserverView>{
   }
   L.stage.designWidth=WIDTH;L.stage.designHeight=HEIGHT;L.stage.scaleMode='showall';L.stage.screenMode='horizontal';
   L.stage.alignH='center';L.stage.alignV='middle';L.stage.bgColor=palette.paper;
+  if(typeof document!=='undefined'&&document.fonts)await document.fonts.load('14px Camp Sans').catch(()=>{});
+  const loading=new L.Text();loading.text='正在载入营地…';loading.font='Camp Sans, Arial';loading.fontSize=22;loading.color='#edf4da';loading.width=WIDTH;loading.align='center';loading.y=HEIGHT/2-15;L.stage.addChild(loading);
+  try{await loadCampArt();loading.destroy();}catch(error){loading.text='营地素材加载未完成，请刷新重试。';throw error;}
   return new ObserverView(api);
 }
 
@@ -80,14 +84,14 @@ export class ObserverView {
   private historyRows:any[]=[];private displayedHistory:HistoryRow[]=[];private historySnapshot:JournalEntry[]|null=null;private historySnapshotScope='';private historySummaryRunId='';private historyCache='';
   private state:ViewState|null=null;private token:any;
   private worldRevision='';private senseRevision='';private hudRevision='';private mapRevision='';private hudDirty=true;private highQuality=false;
-  private offset={x:0,z:0};private drag:{id?:number;x:number;y:number;ox:number;oz:number;moved:boolean;travel?:number}|null=null;
+  private offset={x:-3,z:-2};private drag:{id?:number;x:number;y:number;ox:number;oz:number;moved:boolean;travel?:number}|null=null;
   private residentDetails:any;private objectDetails:any;private inventoryPanel:any;
   private statBars:any[]=[];private statValues:any[]=[];private selectedObject:string|null=null;
   private nightShade:any;private daylightLight:any;private lifePanel:any;private statusPanel:any;private inventoryScroll:NativeTextScroll|null=null;private lifeScroll:NativeTextScroll|null=null;private statusScroll:NativeTextScroll|null=null;private taskScroll:NativeTextScroll|null=null;
   private resourceRail:any;private resourceExpanded=true;private showRoofs=true;
   private zoneLines:any;private zoneDrawing=false;private zoneStart:{x:number;z:number}|null=null;private zoneDraft:ResidentialBounds|null=null;private zoneRevision='';
   private pinch:MapPinch|null=null;private pendingPinch:MapTouch[]|null=null;private suppressTap=false;private minimap:Minimap|null=null;
-  private markers:any;private sceneInput:any;private zoom=18;private yaw=0;
+  private art:PaintedWorld;private markers:any;private sceneInput:any;private zoom=20;private yaw=0;private captionPanel:any;
 
   constructor(private api:ViewCallbacks){
     this.scene=new L.Scene3D();this.scene.name='Survive — 认知观察场';L.stage.addChild(this.scene);
@@ -107,6 +111,7 @@ export class ObserverView {
     this.selection=new L.PixelLineSprite3D(72,'selected resident');this.scene.addChild(this.selection);
     this.zoneLines=new L.PixelLineSprite3D(800,'Residential zones');this.scene.addChild(this.zoneLines);
     try{this.showRoofs=globalThis.localStorage?.getItem('survive_roofs_v1')!=='hidden';}catch{}
+    this.art=new PaintedWorld();L.stage.addChild(this.art.root);
     this.root=new L.Sprite();this.root.name='Observer UI';L.stage.addChild(this.root);
     this.nightShade=new L.Sprite();this.nightShade.mouseEnabled=false;this.root.addChild(this.nightShade);
     this.buildUI();this.layoutInspector();
@@ -119,29 +124,36 @@ export class ObserverView {
 
   private color(hex:string,alpha=1):any{const h=parseInt(hex.slice(1),16);return new L.Color((h>>16&255)/255,(h>>8&255)/255,(h&255)/255,alpha);}
   private text(parent:any,text:string,x:number,y:number,size=16,color=palette.ink,width=250):any{
-    const t=new L.Text();t.text=text;t.pos(x,y);t.font='Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;t.mouseEnabled=false;parent.addChild(t);return t;
+    const t=new L.Text();t.text=text;t.pos(x,y);t.font='Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;t.mouseEnabled=false;parent.addChild(t);return t;
   }
   private panel(parent:any,x:number,y:number,w:number,h:number,color:string,r=0):any{
     const s=new L.Sprite();s.pos(x,y);s.size(w,h);
-    if(r)s.graphics.drawRoundRect(0,0,w,h,r,r,r,r,color);else s.graphics.drawRect(0,0,w,h,color);
+    if(r){s.graphics.drawRoundRect(0,3,w,h,r,r,r,r,'rgba(9,28,40,0.24)');s.graphics.drawRoundRect(0,0,w,h,r,r,r,r,color,'#8299a6',1.3);s.graphics.drawRoundRect(2,2,w-4,Math.min(14,h/3),r-1,r-1,0,0,'rgba(221,239,250,0.07)');}else s.graphics.drawRect(0,0,w,h,color);
     parent.addChild(s);return s;
   }
   private button(id:string,text:string,x:number,y:number,w:number,click:()=>void,bright=false):NativeButton{
-    const r=this.panel(this.root,x,y,w,35,bright?palette.mint:palette.line,3);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,35);
-    const t=this.text(r,text,0,10,14,bright?'#202a23':'#eee9d9',w);t.align='center';t.mouseEnabled=false;
+    const h=42,r=this.panel(this.root,x,y,w,h,bright?palette.mint:palette.line,12);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,h);
+    r.graphics.drawRoundRect(2,2,w-4,16,10,10,3,3,bright?'#ccea98':'#436985');
+    const glyphs:Record<string,string>={quickHistory:'▤',quickMap:'◈',quickSenses:'◉',start:'▶',pause:'Ⅱ',retry:'⟳',stop:'■',workshop:'⚒',tasks:'▦',rotateLeft:'↶',rotateReset:'⟳',rotateRight:'↷',roofToggle:'◉',connect:'↗',control:'⚙',stockToggle:'▣'};
+    const glyph=glyphs[id],inset=glyph?25:0;
+    if(glyph){const icon=this.text(r,glyph,9,8,21,bright?'#264628':'#f1f6f8',26);icon.align='center';icon.bold=true;}
+    const t=this.text(r,text,inset,12,14,bright?'#263e2c':'#f5f8fc',w-inset-3);t.align='center';t.bold=true;t.mouseEnabled=false;
+    r.on(L.Event.MOUSE_DOWN,this,()=>r.alpha=.82);r.on(L.Event.MOUSE_UP,this,()=>r.alpha=1);r.on(L.Event.MOUSE_OUT,this,()=>r.alpha=1);
     r.on(L.Event.CLICK,this,()=>{this.hudDirty=true;click();});const b={root:r,label:t,set:(s:string)=>t.text=s};this.buttons[id]=b;return b;
   }
+
   private buildUI():void{
     this.inspector=new L.Sprite();this.inspector.name='Resident inspector';this.inspector.zOrder=10;this.root.addChild(this.inspector);
     this.panel(this.root,0,0,WIDTH,TOP,palette.paper);this.panel(this.inspector,0,TOP,SIDE,HEIGHT-TOP,palette.panel);
     this.panel(this.root,0,BOTTOM,WIDTH,HEIGHT-BOTTOM,palette.paper);
     this.panel(this.root,0,TOP-1,WIDTH,1,'#535b58');
-    this.text(this.root,'SURVIVE',23,18,27,palette.ink,230).bold=true;
-    this.text(this.root,'边境营地 · 生存与建造',25,54,13,'#b4b7a8',240);
-    this.labels.mode=this.text(this.root,'等待连接真实模型',323,18,17,palette.ink,430);
-    this.labels.status=this.text(this.root,'世界尚未启动',323,44,12,'#b4b7a8',700);this.labels.status.height=34;this.labels.status.leading=3;this.labels.status.mouseEnabled=true;this.labels.status.hitArea=new L.Rectangle(0,0,744,37);this.labels.status.on(L.Event.CLICK,this,()=>{this.hideModals();this.statusPanel.visible=true;});
-    this.labels.time=this.text(this.root,'模拟 00:00',1000,21,24,palette.ink,250);this.labels.time.align='right';
-    this.button('control','运行设置',1094,50,156,()=>{this.controlDraft=controlSettings(this.state?.control);this.hideModals();this.controlPanel.visible=true;});
+    this.text(this.root,'SURVIVE',72,7,34,palette.ink,230).bold=true;
+    this.text(this.root,'边境营地 · 生存与建造',74,43,14,palette.muted,240);
+    drawIcon(this.root,'leaf',19,10,45);
+    this.labels.mode=this.text(this.root,'等待连接真实模型',350,13,17,palette.ink,430);
+    this.labels.status=this.text(this.root,'世界尚未启动',350,40,12,'#b4b7a8',700);this.labels.status.height=34;this.labels.status.leading=3;this.labels.status.mouseEnabled=true;this.labels.status.hitArea=new L.Rectangle(0,0,744,37);this.labels.status.on(L.Event.CLICK,this,()=>{this.hideModals();this.statusPanel.visible=true;});
+    this.labels.time=this.text(this.root,'模拟 00:00',999,17,21,palette.ink,191);this.labels.time.align='right';
+    this.button('control','设置',1207,12,61,()=>{this.controlDraft=controlSettings(this.state?.control);this.hideModals();this.controlPanel.visible=true;});
     const inspectorStart=this.root.numChildren;
     this.button('nextResident','下一位',187,89,85,()=>this.nextResident());
     this.button('resident0','居民 A',18,129,121,()=>this.selectIndex(this.residentPage()));this.button('resident1','居民 B',151,129,121,()=>this.selectIndex(this.residentPage()+1));
@@ -169,46 +181,48 @@ export class ObserverView {
     this.sceneInput.on(L.Event.MOUSE_DOWN,this,(e:any)=>this.pointerDown(e));
     this.sceneInput.on(L.Event.MOUSE_WHEEL,this,(e:any)=>{this.setZoom(this.zoom-e.delta);});
     this.markers=new L.Sprite();this.markers.mouseEnabled=false;this.root.addChild(this.markers);
-    this.button('inspectorToggle','居民信息 ›',18,89,158,()=>{this.sidebarCollapsed=!this.sidebarCollapsed;this.layoutInspector();}).root.zOrder=11;
-    this.labels.caption=this.text(this.root,'两名居民 · 两棵树 · 一堵墙',315,97,12,'#eee3c4',430);
+    this.button('inspectorToggle','居民信息 ›',15,80,170,()=>{this.sidebarCollapsed=!this.sidebarCollapsed;this.layoutInspector();}).root.zOrder=11;
+    this.captionPanel=this.panel(this.root,190,80,255,57,'#887642',9);this.captionPanel.alpha=.92;
+    this.labels.caption=this.text(this.root,'两名居民 · 两棵树 · 一堵墙',202,89,13,'#fff6d5',330);
     this.labels.caption.mouseEnabled=false;
-    this.button('zoomOut','−',966,94,38,()=>{this.setZoom(this.zoom+3);});
-    this.button('zoomIn','＋',1014,94,38,()=>{this.setZoom(this.zoom-3);});
-    this.button('rotateLeft','左转',892,140,52,()=>this.setYaw(this.yaw-Math.PI/4));
-    this.button('rotateReset','复位',949,140,52,()=>this.setYaw(0));
-    this.button('rotateRight','右转',1006,140,52,()=>this.setYaw(this.yaw+Math.PI/4));
-    this.button('workshop','工作台配方',812,94,140,()=>{this.hideModals();this.workshopPanel.visible=true;});
-    this.button('tasks','规划 / 居住区',1064,94,185,()=>{this.hideModals();this.planner.visible=true;},true);
-    this.button('roofToggle',this.showRoofs?'屋顶：显示':'屋顶：隐藏',1064,140,185,()=>{this.showRoofs=!this.showRoofs;this.buttons.roofToggle.set(this.showRoofs?'屋顶：显示':'屋顶：隐藏');for(const node of this.objects.values())node.setRoofVisible(this.showRoofs);try{globalThis.localStorage?.setItem('survive_roofs_v1',this.showRoofs?'shown':'hidden');}catch{}});
+    this.button('zoomOut','−',952,81,51,()=>{this.setZoom(this.zoom+3);});
+    this.button('zoomIn','＋',1011,81,51,()=>{this.setZoom(this.zoom-3);});
+    this.button('rotateLeft','左转',872,133,64,()=>this.setYaw(this.yaw-Math.PI/4));
+    this.button('rotateReset','复位',941,133,64,()=>this.setYaw(0));
+    this.button('rotateRight','右转',1010,133,64,()=>this.setYaw(this.yaw+Math.PI/4));
+    this.button('workshop','工作台配方',794,81,149,()=>{this.hideModals();this.workshopPanel.visible=true;});
+    this.button('tasks','规划 / 居住区',1074,81,191,()=>{this.hideModals();this.planner.visible=true;},true);
+    this.button('roofToggle',this.showRoofs?'屋顶：显示':'屋顶：隐藏',1081,133,184,()=>{this.showRoofs=!this.showRoofs;this.buttons.roofToggle.set(this.showRoofs?'屋顶：显示':'屋顶：隐藏');for(const node of this.objects.values())node.setRoofVisible(this.showRoofs);this.positionLabels();try{globalThis.localStorage?.setItem('survive_roofs_v1',this.showRoofs?'shown':'hidden');}catch{}});
     this.buildResourceRail();this.buildObjectDetails();
     this.button('zoneConfirm','确认居住区',610,147,140,()=>this.commitZone()).root.visible=false;
     this.button('zoneCancel','取消圈地',759,147,120,()=>this.cancelZone()).root.visible=false;
     this.labels.zoneHint=this.text(this.root,'',320,151,14,palette.amber,280);this.labels.zoneHint.visible=false;
-    this.labels.taskSummary=this.text(this.root,'',320,122,12,'#eee3c4',560);this.labels.taskSummary.mouseEnabled=false;
+    this.labels.taskSummary=this.text(this.root,'',202,114,13,'#fff6d5',560);this.labels.taskSummary.mouseEnabled=false;
     this.labels.error=this.text(this.root,'',326,494,16,'#ffe2a5',682);this.labels.error.height=148;this.labels.error.overflow='hidden';this.labels.error.mouseEnabled=false;
-    this.button('quickHistory','档案',18,670,77,()=>this.openHistory());
-    this.button('quickMap','地图',105,670,77,()=>{this.hideModals();this.memoryPanel.visible=true;});
-    this.button('quickSenses','感官',192,670,77,()=>this.api.onToggleSenses());
-    this.button('start','开始真实认知',315,670,130,()=>this.api.onStart(),true);
-    this.button('pause','暂停',455,670,72,()=>{const paused=/PAUS|STOP|暂停/i.test(this.state?.status||'');paused?this.api.onResume():this.api.onPause();});
-    this.button('retry','重试',537,670,72,()=>this.api.onRetry());
-    this.button('stop','停止',619,670,72,()=>this.api.onStop());
-    this.button('quality','画面：流畅优先',705,670,208,()=>{this.highQuality=!this.highQuality;this.applyQuality();try{globalThis.localStorage?.setItem('survive_render_quality_v1',this.highQuality?'fine':'fast');}catch{}});
-    this.labels.gateway=this.text(this.root,'网关令牌',929,678,12,'#b4b7a8',84);
-    this.labels.hosted=this.text(this.root,'云端模型 · 密钥由服务端保管',936,681,12,'#b4b7a8',315);this.labels.hosted.visible=false;
-    this.token=new L.Input();this.token.pos(1007,671);this.token.size(152,33);this.token.fontSize=14;this.token.color='#26352c';this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
-    this.button('connect','连接',1170,670,86,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
+    this.button('quickHistory','档案',19,660,86,()=>this.openHistory());
+    this.button('quickMap','地图',116,660,86,()=>{this.hideModals();this.memoryPanel.visible=true;});
+    this.button('quickSenses','感官',214,660,91,()=>this.api.onToggleSenses());
+    this.button('start','开始真实认知',327,660,131,()=>this.api.onStart(),true);
+    this.button('pause','暂停',471,660,87,()=>{const paused=/PAUS|STOP|暂停/i.test(this.state?.status||'');paused?this.api.onResume():this.api.onPause();});
+    this.button('retry','重试',572,660,87,()=>this.api.onRetry());
+    this.button('stop','停止',672,660,87,()=>this.api.onStop());
+    this.button('quality','画面：流畅优先',772,660,132,()=>{this.highQuality=!this.highQuality;this.applyQuality();try{globalThis.localStorage?.setItem('survive_render_quality_v1',this.highQuality?'fine':'fast');}catch{}});
+    this.labels.gateway=this.text(this.root,'网关令牌',914,674,12,'#b4b7a8',84);
+    this.labels.hosted=this.text(this.root,'云端模型 · 服务端连接',932,674,13,'#b4b7a8',315);this.labels.hosted.visible=false;
+    this.token=new L.Input();this.token.pos(997,661);this.token.size(149,39);this.token.fontSize=14;this.token.color='#26352c';this.token.bgColor='#e0e6d9';this.token.type='password';this.token.prompt='仅存当前会话';this.token.promptColor='#7f9688';this.token.padding=[7,7,7,7];this.root.addChild(this.token);
+    this.button('connect','连接',1161,660,101,()=>{const token=this.token.text;this.token.text='';this.api.onConnect(token);},true);
     this.labels.saveStatus=this.text(this.root,'本机自动存档 · 运行设置中可手动保存与读取',315,707,11,'#a6afa7',650);
     this.buildPlanner();this.buildWorkshop();this.buildHistory();this.buildMemoryMap();this.buildControl();this.buildInventory();this.buildLifeDetails();
     this.minimap=new Minimap(this.root,p=>{this.resetMapGesture();this.offset={...p};this.moveCamera();this.positionLabels();},()=>this.focusCamp());
   }
 
   private buildResourceRail():void{
-    this.resourceRail=this.panel(this.root,1127,224,122,168,'#2c3437',5);this.resourceRail.mouseEnabled=true;this.resourceRail.hitArea=new L.Rectangle(0,0,122,168);
-    this.button('stockToggle','仓储 ▾',1127,186,122,()=>{this.resourceExpanded=!this.resourceExpanded;this.resourceRail.visible=this.resourceExpanded;this.buttons.stockToggle.set(this.resourceExpanded?'仓储 ▾':'仓储 ▸');});
-    ['wood','stone','food'].forEach((kind,i)=>{drawIcon(this.resourceRail,kind,10,12+i*43,24);this.text(this.resourceRail,RESOURCE_LABELS[kind as TaskDraft['resource']],41,11+i*43,13,palette.muted,69);this.labels['stock-'+kind]=this.text(this.resourceRail,'0',41,27+i*43,17,palette.ink,72);});
-    this.text(this.resourceRail,'已搬入仓储',10,150,12,palette.muted,103);
+    this.resourceRail=this.panel(this.root,1077,222,188,163,palette.panel,12);this.resourceRail.mouseEnabled=true;this.resourceRail.hitArea=new L.Rectangle(0,0,188,163);
+    this.button('stockToggle','仓储 ▾',1077,179,188,()=>{this.resourceExpanded=!this.resourceExpanded;this.resourceRail.visible=this.resourceExpanded;this.buttons.stockToggle.set(this.resourceExpanded?'仓储 ▾':'仓储 ▸');});
+    ['wood','stone','food'].forEach((kind,i)=>{drawIcon(this.resourceRail,kind,17,9+i*43,31);this.text(this.resourceRail,RESOURCE_LABELS[kind as TaskDraft['resource']],72,6+i*43,14,palette.muted,95);this.labels['stock-'+kind]=this.text(this.resourceRail,'0',72,23+i*43,19,palette.ink,95);});
+    this.text(this.resourceRail,'已搬入仓储',18,143,13,palette.muted,150);
   }
+
   private renderResources(state:ViewState):void{for(const kind of ['wood','stone','food'] as const)this.labels['stock-'+kind].text=String(state.world.camp?.stock?.[kind]??0);}
   private buildObjectDetails():void{
     this.objectDetails=new L.Sprite();this.inspector.addChild(this.objectDetails);this.objectDetails.visible=false;
@@ -299,10 +313,10 @@ export class ObserverView {
   private applyQuality():void{this.camera.msaa=this.highQuality;L.stage.frameRate=this.highQuality?L.Stage.FRAME_FAST:L.Stage.FRAME_SLOW;this.buttons.quality?.set(this.highQuality?'画面：精细优先':'画面：流畅优先');}
   private layoutInspector():void{
     const left=this.sceneLeft;this.inspector.visible=!this.sidebarCollapsed;
-    for(const id of ['quickHistory','quickMap'])this.buttons[id].root.visible=this.sidebarCollapsed;this.buttons.quickSenses.root.visible=true;this.buttons.quickSenses.root.pos(this.sidebarCollapsed?192:21,this.sidebarCollapsed?670:87);this.buttons.quickSenses.root.visible=this.sidebarCollapsed;
+    for(const id of ['quickHistory','quickMap'])this.buttons[id].root.visible=this.sidebarCollapsed;this.buttons.quickSenses.root.visible=true;this.buttons.quickSenses.root.pos(this.sidebarCollapsed?214:21,this.sidebarCollapsed?660:87);this.buttons.quickSenses.root.visible=this.sidebarCollapsed;
     this.camera.normalizedViewport=new L.Viewport(left/WIDTH,TOP/HEIGHT,(WIDTH-left)/WIDTH,(BOTTOM-TOP)/HEIGHT);
     this.sceneInput.pos(left,TOP);this.sceneInput.size(WIDTH-left,BOTTOM-TOP);this.sceneInput.hitArea=new L.Rectangle(0,0,WIDTH-left,BOTTOM-TOP);
-    this.labels.caption.x=this.sidebarCollapsed?195:315;this.labels.taskSummary.x=this.sidebarCollapsed?195:320;
+    this.labels.caption.x=this.sidebarCollapsed?202:315;this.labels.taskSummary.x=this.sidebarCollapsed?202:320;this.captionPanel.visible=this.sidebarCollapsed;
     for(const {panel,width}of this.modalLayouts)panel.x=left+(WIDTH-left-width)/2-320;
     this.applyQuality();this.updateInspectorButton();if(this.nightShade){this.nightShade.graphics.clear();this.nightShade.graphics.drawRect(this.sceneLeft,TOP,WIDTH-this.sceneLeft,BOTTOM-TOP,'#0c1734');}this.resetMapGesture();this.moveCamera();this.positionLabels();
   }
@@ -467,7 +481,7 @@ export class ObserverView {
   private mapCamera(){return {x:this.offset.x,z:this.offset.z,zoom:this.zoom,yaw:this.yaw};}
   private setYaw(value:number):void{this.resetMapGesture();this.yaw=normalizedYaw(value);this.moveCamera();this.positionLabels();}
   private resetMapGesture():void{this.pinch=null;this.pendingPinch=null;this.drag=null;this.suppressTap=false;this.zoneStart=null;}
-  private focusCamp():void{const p=this.state?.world.objects.find(o=>o.kind==='board')?.position;this.resetMapGesture();this.offset={x:p?.x??0,z:p?.z??0};this.zoom=18;this.moveCamera();this.positionLabels();}
+  private focusCamp():void{const p=this.state?.world.objects.find(o=>o.kind==='board')?.position;this.resetMapGesture();this.offset={x:p?.x??0,z:p?.z??0};this.zoom=20;this.moveCamera();this.positionLabels();}
   private drawMinimap():void{if(this.state)this.minimap?.render(this.state.world,this.state.selectedId,cameraFootprint(this.mapCamera(),this.mapViewport()));}
   private setZoom(value:number):void{this.flushPinch();this.zoom=boundedZoom(value);this.moveCamera();this.positionLabels();}
   private groundAt(x:number,y:number):{x:number;z:number}{return groundAtScreen({x,y},this.mapCamera(),this.mapViewport());}
@@ -503,7 +517,7 @@ export class ObserverView {
     if(this.zoneDrawing){this.zoneStart=null;this.updateZoneHint();return;}if(drag.moved)return;
     const x=e?.stageX??L.stage.mouseX,y=e?.stageY??L.stage.mouseY;
     if(x<this.sceneLeft||y<TOP||y>BOTTOM)return;
-    const hits=this.state.world.residents.map(r=>{const top=this.project({...r.position,y:r.position.y+1.95}),base=this.project(r.position),nearY=Math.max(top.y,Math.min(base.y,y));return {id:r.id,distance:Math.hypot(top.x-x,nearY-y)};}).filter(h=>h.distance<24);
+    const hits=this.state.world.residents.map(r=>{const painted=this.art.residentBounds(r.id);if(painted){const nearX=Math.max(painted.x,Math.min(painted.x+painted.width,x)),nearY=Math.max(painted.y,Math.min(painted.y+painted.height,y));return {id:r.id,distance:Math.hypot(nearX-x,nearY-y)};}const top=this.project({...r.position,y:r.position.y+1.95}),base=this.project(r.position),nearY=Math.max(top.y,Math.min(base.y,y));return {id:r.id,distance:Math.hypot(top.x-x,nearY-y)};}).filter(h=>h.distance<24);
     const id=cycleHit(hits,this.state.selectedId);if(id){this.selectedObject=null;this.api.onSelect(id);}else{
       const candidates=this.state.world.objects.map(o=>{const base=this.project(o.position),edges=[this.project({...o.position,x:o.position.x+o.width/2}),this.project({...o.position,z:o.position.z+(o.depth??o.width)/2})];const radius=Math.max(22,edges.reduce((sum,p)=>sum+Math.abs(p.x-base.x),0)+12);const top=this.project({...o.position,y:o.height}),nearY=Math.max(top.y,Math.min(base.y,y));const d=Math.hypot(base.x-x,nearY-y);return {o,d,radius};}).filter(v=>v.d<v.radius).sort((a,b)=>a.d-b.d);
       if(!candidates.length)return;this.selectedObject=candidates[0].o.id;
@@ -537,7 +551,7 @@ export class ObserverView {
     this.drawZones();this.positionLabels();
   }
   private project(p:{x:number;y:number;z:number}):{x:number;y:number}{return projectToStage(p,this.mapCamera(),this.mapViewport());}
-  private positionLabels():void{if(!this.state)return;this.drawMinimap();for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
+  private positionLabels():void{if(!this.state)return;this.drawMinimap();this.art.render(this.state.world,this.mapCamera(),this.mapViewport(),this.showRoofs,this.state.selectedId);for(const [id,node] of this.residents)node.node.active=!this.art.hasResident(id);for(const [id,node] of this.objects)node.node.active=!this.art.hasObject(id);for(const r of this.state.world.residents){const p=this.art.residentTop(r.id)??this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
     }this.positionBubbles();
     for(const object of this.state.world.objects){const label=this.placeLabels.get(object.id);if(!label)continue;const p=this.project({...object.position,y:0,z:object.position.z+(object.kind==='house'||object.kind==='plot'?object.depth/2+1:object.kind==='pond'?3.1:1)});label.pos(p.x-75,p.y+7);label.visible=p.x>this.sceneLeft+85&&p.x<WIDTH-85&&p.y>TOP+64&&p.y<BOTTOM-30;}
   }
@@ -551,7 +565,7 @@ export class ObserverView {
       const words=spoken.get(r.id),wish=thought?.id===r.id?thought:null;
       if(!words&&!wish){bubble.hide();continue;}
       bubble.show(words?`“${words}”`:wish!.text,!words,words?1:wish!.alpha);
-      const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});
+      const p=this.art.residentTop(r.id)??this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});
       bubble.root.pos(Math.max(this.sceneLeft+12,Math.min(WIDTH-bubble.width-12,p.x-bubble.width/2)),Math.max(TOP+12,p.y-bubble.height-26));
     }
   }

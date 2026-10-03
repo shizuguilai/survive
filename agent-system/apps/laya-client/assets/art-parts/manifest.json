@@ -1,0 +1,50 @@
+[
+  {
+    "name": "grass.png",
+    "bytes": 2596385,
+    "sha256": "9d4098baff2deee1af0815da66d0b6d669b00c14d382c77754bd232d747f66c9",
+    "parts": [
+      "grass.png.00.part",
+      "grass.png.01.part",
+      "grass.png.02.part",
+      "grass.png.03.part",
+      "grass.png.04.part",
+      "grass.png.05.part",
+      "grass.png.06.part",
+      "grass.png.07.part",
+      "grass.png.08.part",
+      "grass.png.09.part",
+      "grass.png.10.part",
+      "grass.png.11.part",
+      "grass.png.12.part",
+      "grass.png.13.part"
+    ]
+  },
+  {
+    "name": "scenery-atlas.png",
+    "bytes": 1446041,
+    "sha256": "3e8e852600dfb07a0e060271e579f0cdd4988033f602d392b26f77a449e85170",
+    "parts": [
+      "scenery-atlas.png.00.part",
+      "scenery-atlas.png.01.part",
+      "scenery-atlas.png.02.part",
+      "scenery-atlas.png.03.part",
+      "scenery-atlas.png.04.part",
+      "scenery-atlas.png.05.part",
+      "scenery-atlas.png.06.part",
+      "scenery-atlas.png.07.part"
+    ]
+  },
+  {
+    "name": "villagers-atlas.png",
+    "bytes": 946058,
+    "sha256": "d3ba04c6213bd114f7d49b8a72d6c1d7565388133fe38c60160b2565c8ca9ad9",
+    "parts": [
+      "villagers-atlas.png.00.part",
+      "villagers-atlas.png.01.part",
+      "villagers-atlas.png.02.part",
+      "villagers-atlas.png.03.part",
+      "villagers-atlas.png.04.part"
+    ]
+  }
+]

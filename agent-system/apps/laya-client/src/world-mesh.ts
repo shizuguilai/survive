@@ -11,12 +11,12 @@ export class WorldMesh{
   const ratio=resourceRatio(object),stage=resourceStage(object);
   const shadowR=object.kind==='pond'?2.75:object.kind==='house'||object.kind==='plot'?2.7:object.kind==='tree'?[.29,.72,.93,1.07,1.15][stage]:.83;
   const stump=object.kind==='tree'&&stage===0;
-  const shadow=this.part('contact shadow',L.PrimitiveMesh.createCylinder(shadowR,.018,20),stump?0:.13,-.022,stump?0:.12,'#4d5539');shadow.transform.localScale=new L.Vector3(1,1,stump?.92:.78);
+  const shadow=this.part('contact shadow',L.PrimitiveMesh.createCylinder(shadowR,.018,20),stump?0:.13,-.022,stump?0:.12,'#799543');shadow.transform.localScale=new L.Vector3(1,1,stump?.92:.78);
   switch(object.kind){
    case 'board':
     box('notice frame',1.5,1,.15,0,1.15,0,'#735437');for(const x of [-.56,.56])box('board post',.12,1.8,.14,x,.9,0,'#866244');
     box('paper notice',1.19,.7,.025,0,1.18,.09,'#e7d8af');for(let i=0;i<3;i++)box('written lines',.8-i*.12,.035,.028,-.08,1.38-i*.16,.108,'#81775d');
-    box('roof',1.8,.16,.65,0,1.83,0,'#577768');box('shared store crate',.85,.65,.75,1.05,.33,.15,'#b1905e');box('crate rim',.95,.07,.83,1.05,.66,.15,'#7e6045');break;
+    box('roof',1.8,.16,.65,0,1.83,0,'#396780');box('shared store crate',.85,.65,.75,1.05,.33,.15,'#b1905e');box('crate rim',.95,.07,.83,1.05,.66,.15,'#7e6045');break;
    case 'workbench':
     box('workbench top',2,.17,.95,0,1.08,0,'#c5a276');for(const x of [-.75,.75])for(const z of [-.3,.3])box('bench leg',.16,1,.16,x,.5,z,'#84613f');
     for(let i=0;i<4;i++)box('bench plank seam',1.96,.012,.018,0,1.17,-.34+i*.23,'#71553a');box('bench brace',1.6,.12,.12,0,.38,0,'#9c794e');ball('anvil stone',.25,.35,1.32,0,'#8c9791',1.3,.6,1);box('hammer handle',.45,.07,.08,-.55,1.22,.13,'#785336');box('hammer head',.15,.15,.24,-.38,1.29,.13,'#818c87');break;
@@ -24,7 +24,7 @@ export class WorldMesh{
    case 'berry':
     ball('berry leaves',.64,0,.45,0,object.resources?'#4d6638':'#858052',1,.72,1);
     if(object.resources)for(let i=0;i<Math.ceil(ratio*7);i++){const a=i*2.4;ball('ripe berry',.095,Math.cos(a)*.42,.59+(i%3)*.1,Math.sin(a)*.4,'#b74e4b');}break;
-   case 'pond':this.part('shore bank',L.PrimitiveMesh.createCylinder(2.72,.025,32),0,-.01,0,'#8d8965');this.part('water',L.PrimitiveMesh.createCylinder(2.5,.035,32),0,.015,0,'#557b78');this.part('deep water',L.PrimitiveMesh.createCylinder(1.92,.012,32),-.17,.04,-.17,'#436c6b');for(let i=0;i<4;i++)box('water glint',.35+i*.11,.008,.025,-.8+i*.42,.055,-.7+i*.4,'#8da8a0');for(let i=0;i<10;i++){const a=i*Math.PI/5;ball('shore stone',.25,Math.cos(a)*2.6,.09,Math.sin(a)*2.6,'#aaa48a',1.3,.45,1);}break;
+   case 'pond':this.part('shore bank',L.PrimitiveMesh.createCylinder(2.72,.025,32),0,-.01,0,'#aec977');this.part('water',L.PrimitiveMesh.createCylinder(2.5,.035,32),0,.015,0,'#557b78');this.part('deep water',L.PrimitiveMesh.createCylinder(1.92,.012,32),-.17,.04,-.17,'#436c6b');for(let i=0;i<4;i++)box('water glint',.35+i*.11,.008,.025,-.8+i*.42,.055,-.7+i*.4,'#8da8a0');for(let i=0;i<10;i++){const a=i*Math.PI/5;ball('shore stone',.25,Math.cos(a)*2.6,.09,Math.sin(a)*2.6,'#aaa48a',1.3,.45,1);}break;
    case 'plot':case 'house':{
     const stage=object.buildStage??3,w=object.width,d=object.depth,hw=w/2,hd=d/2,front=(hw+.7)/2,side=(w-1.4)/2,design=homeDesign(object.homeDesign,object.ownerId),layout=homeLayout(object);
     box('building footprint',w+.4,.03,d+.5,0,.02,0,'#b8ae86');

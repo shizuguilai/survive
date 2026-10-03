@@ -8,6 +8,9 @@ Library/
 Temp/
 build/
 local-evidence/
+apps/laya-client/assets/art/grass.png
+apps/laya-client/assets/art/scenery-atlas.png
+apps/laya-client/assets/art/villagers-atlas.png
 apps/laya-client/vendor/*.js
 evidence/real-meeting-replay.json
 evidence/real-meeting-replay.json.gz

@@ -1,0 +1,25 @@
+{
+  "mode": "EXPLICIT_VISUAL_FIXTURE",
+  "results": [
+    {
+      "width": 1536,
+      "height": 864,
+      "dpr": 1,
+      "worldUnchanged": true,
+      "errors": [],
+      "missing": [],
+      "paintedResidents": 4
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dpr": 2,
+      "worldUnchanged": true,
+      "errors": [],
+      "missing": [],
+      "paintedResidents": 4
+    }
+  ],
+  "physicalDevice": "not_run",
+  "realModel": "not_run_visual_only"
+}

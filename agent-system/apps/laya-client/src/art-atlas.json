@@ -1,0 +1,292 @@
+{
+  "description": "Source rectangles in pixels [x,y,width,height]. Anchors are local pixel coordinates from source crop top-left; render at world position minus scaled anchor. Original generated PNGs retained unchanged. Scenery is arranged 4×3 but equal cell slicing would clip trees; use these explicit rects.",
+  "assets": {
+    "grass": {
+      "file": "grass.png",
+      "width": 1254,
+      "height": 1254,
+      "mode": "RGB"
+    },
+    "scenery": {
+      "file": "scenery-atlas.png",
+      "width": 1448,
+      "height": 1086,
+      "mode": "RGBA",
+      "sprites": [
+        {
+          "name": "treeBroad",
+          "rect": [
+            21,
+            23,
+            360,
+            387
+          ],
+          "anchor": [
+            180,
+            377
+          ]
+        },
+        {
+          "name": "treeTall",
+          "rect": [
+            414,
+            39,
+            277,
+            370
+          ],
+          "anchor": [
+            138,
+            357
+          ]
+        },
+        {
+          "name": "treeBushy",
+          "rect": [
+            724,
+            58,
+            365,
+            345
+          ],
+          "anchor": [
+            188,
+            333
+          ]
+        },
+        {
+          "name": "berryBush",
+          "rect": [
+            1141,
+            145,
+            268,
+            252
+          ],
+          "anchor": [
+            130,
+            240
+          ]
+        },
+        {
+          "name": "rock",
+          "rect": [
+            64,
+            485,
+            271,
+            221
+          ],
+          "anchor": [
+            138,
+            206
+          ]
+        },
+        {
+          "name": "stump",
+          "rect": [
+            443,
+            503,
+            246,
+            188
+          ],
+          "anchor": [
+            124,
+            177
+          ]
+        },
+        {
+          "name": "bulletin",
+          "rect": [
+            760,
+            446,
+            287,
+            260
+          ],
+          "anchor": [
+            143,
+            250
+          ]
+        },
+        {
+          "name": "workbench",
+          "rect": [
+            1109,
+            489,
+            304,
+            218
+          ],
+          "anchor": [
+            153,
+            207
+          ]
+        },
+        {
+          "name": "cottage",
+          "rect": [
+            27,
+            728,
+            372,
+            324
+          ],
+          "anchor": [
+            186,
+            312
+          ]
+        },
+        {
+          "name": "pond",
+          "rect": [
+            422,
+            773,
+            346,
+            273
+          ],
+          "anchor": [
+            173,
+            148
+          ]
+        },
+        {
+          "name": "logs",
+          "rect": [
+            834,
+            796,
+            234,
+            243
+          ],
+          "anchor": [
+            117,
+            122
+          ]
+        },
+        {
+          "name": "berries",
+          "rect": [
+            1159,
+            764,
+            256,
+            265
+          ],
+          "anchor": [
+            128,
+            133
+          ]
+        }
+      ]
+    },
+    "villagers": {
+      "file": "villagers-atlas.png",
+      "width": 1774,
+      "height": 887,
+      "mode": "RGBA",
+      "sprites": [
+        {
+          "name": "whiteFront",
+          "rect": [
+            100,
+            66,
+            260,
+            361
+          ],
+          "anchor": [
+            130,
+            351
+          ]
+        },
+        {
+          "name": "whiteRight",
+          "rect": [
+            531,
+            70,
+            256,
+            359
+          ],
+          "anchor": [
+            134,
+            350
+          ]
+        },
+        {
+          "name": "whiteBack",
+          "rect": [
+            981,
+            70,
+            263,
+            356
+          ],
+          "anchor": [
+            131,
+            346
+          ]
+        },
+        {
+          "name": "whiteLeft",
+          "rect": [
+            1432,
+            70,
+            253,
+            359
+          ],
+          "anchor": [
+            116,
+            350
+          ]
+        },
+        {
+          "name": "navyFront",
+          "rect": [
+            95,
+            467,
+            272,
+            364
+          ],
+          "anchor": [
+            136,
+            354
+          ]
+        },
+        {
+          "name": "navyRight",
+          "rect": [
+            528,
+            473,
+            260,
+            362
+          ],
+          "anchor": [
+            138,
+            353
+          ]
+        },
+        {
+          "name": "navyBack",
+          "rect": [
+            977,
+            470,
+            270,
+            363
+          ],
+          "anchor": [
+            135,
+            354
+          ]
+        },
+        {
+          "name": "navyLeft",
+          "rect": [
+            1427,
+            471,
+            263,
+            364
+          ],
+          "anchor": [
+            120,
+            354
+          ]
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Built-in image tool returned 1448×1086 scenery despite requested at least 1536×1152.",
+    "Grass was prompted seamless but edge matching has not been mathematically verified.",
+    "Anchors were visually estimated for game ground placement."
+  ]
+}

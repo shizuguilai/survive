@@ -135,3 +135,15 @@ T18 已实现本机完整营地保存、启动读档、双份校验回退和旧�
 ## 生活、昼夜与住房成长
 
 背包和生活详情可单指滑动，带可拖动滚动条；顶部统筹简介点击展开全文。提示自动消失，所有身体状态条都以100%为好。居民有住房与生活心愿，气泡和详情显示原因；长期需求未满足会影响心情。加入昼夜、床、柜子、灯、拖把，以及备料后自主拆旧扩建。详见 [生活系统说明与验证](docs/implementation/LIVING_SYSTEM.md)。
+
+
+## Reference-painted interface · 2026-10-03
+
+The existing LayaAir 3.3.12 client now uses the selected warm green illustrated camp reference: textured meadow, illustrated foliage/resources/pond, standard resident portraits, blue HUD panels, green primary controls, right-hand warehouse and map. Sprites are projected from existing world coordinates and sorted by ground depth. All simulation, model barriers, saving and private resident memories stay in the existing engine.
+
+- Generated assets and prompt provenance: `apps/laya-client/assets/art/`; crop anchors: `src/art-atlas.json`. Standard characters use stable resident IDs. Edited appearances or changed equipment retain their full native model; this avoids erasing hair/body/clothing/equipment customization. Walking sprite motion is derived from simulation ticks.
+- Original PNG bytes are stored in `apps/laya-client/assets/art-parts/` to fit transfer limits. `tools/copy-art.mjs` automatically reconstructs them into the build output and verifies each SHA-256. No image quality is lost and no extra setup is required.
+- Completed houses retain design colors and footprint-dependent proportions. Rotated views, construction stages and roof-hidden interiors use the existing native house with all furniture. These native customization/cutaway views have not yet been fully converted to modular painted artwork.
+- Map pan, pinch, zoom, selection, minimap and roof controls remain live. Selection uses painted sprite bounds at close zoom. Ground is tiled with explicit UVs to avoid non-power-of-two repeat/clamp artefacts on WebGL devices.
+- Chinese interface subset: Noto Sans CJK SC, SIL OFL 1.1, source `https://github.com/notofonts/noto-cjk`; license is included alongside the WOFF. System font fallback handles characters outside the subset.
+- Verification: targeted camera/minimap/touch/scenery/character/pose/save/barrier regression files; typecheck + production build; real Laya WebGL rendering at 1536×864 and 844×390/DPR2, checking resource loading, yaw, zoom, cutaway and unchanged world hash. `tools/verify-painted-ui.mjs` uses an explicit visual fixture, no live model requests. Set `BROWSER_EXECUTABLE_PATH` to an installed Chromium. Physical handset and WeChat IDE builds were not run for this visual change.
