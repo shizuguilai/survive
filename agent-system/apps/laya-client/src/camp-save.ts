@@ -7,9 +7,9 @@ import {validateCharacterState} from '../../../packages/sim-core/src/character.t
 
 export type CampSaveState={world:World;settings:ControlSettings;queuedTasks:TaskDraft[];selectedId:string;showSenses:boolean;needsDecision:boolean};
 export type CampSave=CampSaveState&{version:1;sequence:number;savedAt:number};
-export type SaveStorage={getItem(key:string):string|null;setItem(key:string,value:string):void};
+export type SaveStorage={getItem(key:string):string|null;setItem(key:string,value:string):void;removeItem?(key:string):void};
 export const CAMP_SAVE_KEYS=['survive_camp_a_v1','survive_camp_b_v1'] as const;
-const LEGACY_KEY='survive_agent_commit_v1';
+export const LEGACY_CAMP_SAVE_KEY='survive_agent_commit_v1';
 const record=(x:any)=>x&&typeof x==='object'&&!Array.isArray(x);
 const finite=(x:any)=>typeof x==='number'&&Number.isFinite(x);
 const count=(x:any)=>Number.isSafeInteger(x)&&x>=0;
@@ -56,6 +56,10 @@ function validateState(data:any):asserts data is CampSaveState{
  if(!list(data.queuedTasks)||data.queuedTasks.length>64||typeof data.selectedId!=='string'||typeof data.showSenses!=='boolean'||typeof data.needsDecision!=='boolean'||!record(data.settings))throw Error('营地存档设置不完整');
  if(data.queuedTasks.length){const probe=structuredClone(data.world);for(const task of data.queuedTasks){if(!record(task)||(task.kind!==undefined&&!taskKinds.includes(task.kind))||!agricultureOptions(task))throw Error('营地存档任务不完整');postTask(probe,task);}}
 }
+/** Shared packet validation for the browser database and the legacy synchronous slots. */
+export function decodeCampSave(raw:string):CampSave{
+ const packet=JSON.parse(raw),s=packet.data;if(checksum(JSON.stringify(s))!==packet.checksum||s.version!==1||!count(s.sequence)||s.sequence<1||!finite(s.savedAt))throw Error('存档校验失败');validateState(s);return s as CampSave;
+}
 /** Alternating atomic slots retain the previous good camp if a write fails or one slot is damaged. */
 export class CampSaves{
  private sequence=0;private slot=-1;private storage:SaveStorage;
@@ -64,11 +68,11 @@ export class CampSaves{
   let damaged=0,readFailed=false;const candidates:{slot:number;save:CampSave}[]=[];
   for(const [slot,key]of CAMP_SAVE_KEYS.entries()){
    let raw:string|null;try{raw=this.storage.getItem(key);}catch{readFailed=true;continue;}if(!raw)continue;
-   try{const packet=JSON.parse(raw),s=packet.data;if(checksum(JSON.stringify(s))!==packet.checksum||s.version!==1||!count(s.sequence)||s.sequence<1||!finite(s.savedAt))throw Error('存档校验失败');validateState(s);candidates.push({slot,save:s as CampSave});}catch{damaged++;}
+   try{candidates.push({slot,save:decodeCampSave(raw)});}catch{damaged++;}
   }
   candidates.sort((a,b)=>b.save.sequence-a.save.sequence);const latest=candidates[0];
   if(latest){this.sequence=latest.save.sequence;this.slot=latest.slot;latest.save.settings=controlSettings(latest.save.settings);return {save:latest.save,warning:damaged||readFailed?'一份存档无法读取，已恢复另一份完整存档。':'',blocked:false};}
-  try{const raw=this.storage.getItem(LEGACY_KEY);if(raw){const old=JSON.parse(raw);validateWorld(old.world);if(old.commit?.afterHash!==hashCanonical(old.world))throw Error('旧检查点校验失败');
+  try{const raw=this.storage.getItem(LEGACY_CAMP_SAVE_KEY);if(raw){const old=JSON.parse(raw);validateWorld(old.world);if(old.commit?.afterHash!==hashCanonical(old.world))throw Error('旧检查点校验失败');
    const save:CampSave={version:1,sequence:0,savedAt:0,world:old.world,settings:controlSettings(fallbackSettings),queuedTasks:[],selectedId:old.world.residents[0].id,showSenses:false,needsDecision:false};return {save,warning:'已恢复旧版最近一次决策检查点，之后尚未保存的进度无法找回。',blocked:false};
   }}catch{damaged++;}
   return {save:null,warning:damaged?'存档校验失败，原数据已保留；点击“保存进度”才会用当前营地替换。':readFailed?'本机存档暂时无法读取，自动保存已暂停。':'',blocked:damaged>0||readFailed};

@@ -2,7 +2,7 @@ import {residentThought,dayClock,moodReasons} from './living.ts';
 import defaults from '../defaults.json' with { type: 'json' };
 import type { CharacterContext, Observation, Vec3 } from '../../contracts/src/types.ts';
 import type { KnowledgeEntry, Resident, SensoryOverlay, SoundFragment, World, WorldObject } from './domain.ts';
-import { experiencedWhen, privateAction, privateMemory, privateObservation, rememberObservation } from './knowledge.ts';
+import { experiencedWhen, privateAction, privateMemory, privateObservation, rememberObservation, retainRecentObservations, RECENT_OBSERVATION_LIMIT } from './knowledge.ts';
 import {rememberFootstep,rememberMapCell,rememberLandmark,rememberedCellCenter,buildSpatialContext} from './spatial-memory.ts';
 import {solidWalls,walkDestination} from './navigation.ts';
 import {skillLevel} from './recipes.ts';
@@ -232,11 +232,13 @@ function bodily(world: World, resident: Resident): boolean {
 export function samplePerception(world: World): string[] {
   const due: string[] = [];
   for (const resident of world.residents) {
+    const observationBatch = Math.floor(resident.observationSequence / RECENT_OBSERVATION_LIMIT);
     rememberFootstep(resident,world.tick);
   for(const kind of ['wood','stone','food'] as const){if(!resident.supplies?.[kind])continue;const id=`supply-${kind}-${resident.id}`;let entry=Object.values(resident.known).find(k=>k.entityId===id);if(!entry){const ref=`known_${++resident.knowledgeSequence}`;entry={ref,entityId:id,description:'',lastPosition:{...resident.position},lastSeenTick:world.tick,visible:false,recognizedName:null};resident.known[ref]=entry;}entry.description=`自己携带的${kind==='wood'?'木材':kind==='stone'?'石料':'可食用食物'}${resident.supplies[kind]}份；可haul到公告板旁的公共仓储${kind==='food'?'，也可eat':''}`;entry.lastPosition={...resident.position};entry.lastSeenTick=world.tick;}
     const visual = world.tick % SCAN_TICKS === 0 || !resident.visualSignature ? vision(world, resident) : false;
     const auditory = hearing(world, resident);
     const body = bodily(world, resident);
+    if (resident.observations.length > RECENT_OBSERVATION_LIMIT * 2 && Math.floor(resident.observationSequence / RECENT_OBSERVATION_LIMIT) > observationBatch) retainRecentObservations(resident);
     if (visual || auditory || body) due.push(resident.id);
   }
   return due;

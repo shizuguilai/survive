@@ -1,0 +1,181 @@
+{
+  "fixture": "Normal 4-resident LOCAL_ALGORITHM camp with one farm, before observation retention change",
+  "realModel": "not_run",
+  "userSave": "not_accessed",
+  "measurement": {
+    "tick": 11739,
+    "revision": 12002,
+    "status": "RUNNING",
+    "seconds": 68,
+    "world": {
+      "chars": 1832875,
+      "utf16Bytes": 3665750,
+      "utf8Bytes": 2259025,
+      "gzipBytes": 135954
+    },
+    "journal": {
+      "count": 1376,
+      "chars": 295550,
+      "utf16Bytes": 591100,
+      "utf8Bytes": 389200,
+      "gzipBytes": 18863
+    },
+    "events": {
+      "count": 848,
+      "chars": 88876,
+      "utf16Bytes": 177752,
+      "utf8Bytes": 117082,
+      "gzipBytes": 6152
+    },
+    "residents": [
+      {
+        "id": "resident-a",
+        "observations": {
+          "count": 2031,
+          "chars": 552703,
+          "utf16Bytes": 1105406,
+          "utf8Bytes": 675334,
+          "gzipBytes": 27631
+        },
+        "memories": {
+          "count": 297,
+          "chars": 47118,
+          "utf16Bytes": 94236,
+          "utf8Bytes": 72705,
+          "gzipBytes": 6416
+        },
+        "consumedRefs": {
+          "count": 1723,
+          "chars": 31873,
+          "utf16Bytes": 63746,
+          "utf8Bytes": 31873,
+          "gzipBytes": 4287
+        },
+        "known": {
+          "count": 55,
+          "chars": 13880,
+          "utf16Bytes": 27760,
+          "utf8Bytes": 16297,
+          "gzipBytes": 3150
+        },
+        "spatial": {
+          "chars": 17979,
+          "utf16Bytes": 35958,
+          "utf8Bytes": 17979,
+          "gzipBytes": 2925
+        }
+      },
+      {
+        "id": "resident-b",
+        "observations": {
+          "count": 2261,
+          "chars": 617225,
+          "utf16Bytes": 1234450,
+          "utf8Bytes": 758730,
+          "gzipBytes": 28709
+        },
+        "memories": {
+          "count": 365,
+          "chars": 58316,
+          "utf16Bytes": 116632,
+          "utf8Bytes": 91437,
+          "gzipBytes": 7505
+        },
+        "consumedRefs": {
+          "count": 1793,
+          "chars": 33262,
+          "utf16Bytes": 66524,
+          "utf8Bytes": 33262,
+          "gzipBytes": 4433
+        },
+        "known": {
+          "count": 48,
+          "chars": 12081,
+          "utf16Bytes": 24162,
+          "utf8Bytes": 14302,
+          "gzipBytes": 2821
+        },
+        "spatial": {
+          "chars": 16939,
+          "utf16Bytes": 33878,
+          "utf8Bytes": 16939,
+          "gzipBytes": 2729
+        }
+      },
+      {
+        "id": "resident-c",
+        "observations": {
+          "count": 348,
+          "chars": 92529,
+          "utf16Bytes": 185058,
+          "utf8Bytes": 111218,
+          "gzipBytes": 5430
+        },
+        "memories": {
+          "count": 162,
+          "chars": 23609,
+          "utf16Bytes": 47218,
+          "utf8Bytes": 34220,
+          "gzipBytes": 3868
+        },
+        "consumedRefs": {
+          "count": 332,
+          "chars": 5869,
+          "utf16Bytes": 11738,
+          "utf8Bytes": 5869,
+          "gzipBytes": 747
+        },
+        "known": {
+          "count": 34,
+          "chars": 8570,
+          "utf16Bytes": 17140,
+          "utf8Bytes": 9977,
+          "gzipBytes": 2552
+        },
+        "spatial": {
+          "chars": 10598,
+          "utf16Bytes": 21196,
+          "utf8Bytes": 10598,
+          "gzipBytes": 1834
+        }
+      },
+      {
+        "id": "resident-d",
+        "observations": {
+          "count": 436,
+          "chars": 116388,
+          "utf16Bytes": 232776,
+          "utf8Bytes": 139723,
+          "gzipBytes": 6440
+        },
+        "memories": {
+          "count": 172,
+          "chars": 25129,
+          "utf16Bytes": 50258,
+          "utf8Bytes": 36380,
+          "gzipBytes": 4049
+        },
+        "consumedRefs": {
+          "count": 424,
+          "chars": 7525,
+          "utf16Bytes": 15050,
+          "utf8Bytes": 7525,
+          "gzipBytes": 944
+        },
+        "known": {
+          "count": 37,
+          "chars": 9452,
+          "utf16Bytes": 18904,
+          "utf8Bytes": 10915,
+          "gzipBytes": 2715
+        },
+        "spatial": {
+          "chars": 12410,
+          "utf16Bytes": 24820,
+          "utf8Bytes": 12410,
+          "gzipBytes": 2053
+        }
+      }
+    ]
+  }
+}

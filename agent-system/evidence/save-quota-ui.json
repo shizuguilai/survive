@@ -1,0 +1,434 @@
+{
+  "status": "passed",
+  "mode": "EXPLICIT_BROWSER_STORAGE_FIXTURE",
+  "simulation": "Real production controller + local algorithm + real Laya UI; readonly QA prototype wrappers",
+  "quota": "Actual localStorage capacity reached in fresh contexts",
+  "failureInjection": "Failure profile only: indexedDB.open throws QuotaExceededError",
+  "realModel": "not_run",
+  "physicalDevice": "not_run",
+  "profiles": [
+    {
+      "config": {
+        "name": "indexeddb",
+        "width": 1536,
+        "height": 864,
+        "dpr": 1
+      },
+      "seed": {
+        "runId": "save-quota-browser-fixture-indexeddb",
+        "tick": 102,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "slots": [
+          {
+            "key": "survive_camp_a_v1",
+            "length": 17933,
+            "hash": "fnv1a64:531576a5484016e4"
+          },
+          {
+            "key": "survive_camp_b_v1",
+            "length": 17933,
+            "hash": "fnv1a64:fcfc42b637ac49a4"
+          }
+        ],
+        "fillerCharacters": 5206833,
+        "quotaName": "QuotaExceededError"
+      },
+      "quotaAtCommit": {
+        "fillerCharacters": 5242733,
+        "quotaName": "QuotaExceededError"
+      },
+      "migratedSlots": [
+        {
+          "key": "survive_camp_a_v1",
+          "length": 0,
+          "hash": "fnv1a64:5b9bc4ba528108e4"
+        },
+        {
+          "key": "survive_camp_b_v1",
+          "length": 0,
+          "hash": "fnv1a64:5b9bc4ba528108e4"
+        }
+      ],
+      "initial": {
+        "runId": "save-quota-browser-fixture-indexeddb",
+        "tick": 102,
+        "revision": 1,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "READY",
+        "viewStatus": "READY",
+        "saveStatus": "旧营地已迁移到新的本机存档。",
+        "saveLabel": "旧营地已迁移到新的本机存档。",
+        "error": "",
+        "historyWarning": "",
+        "worldHash": "fnv1a64:61fd556d9c994120",
+        "statuses": [],
+        "pauseTokens": [
+          "BOOTSTRAP",
+          "NOT_STARTED"
+        ]
+      },
+      "running": {
+        "runId": "save-quota-browser-fixture-indexeddb",
+        "tick": 132,
+        "revision": 32,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "RUNNING",
+        "viewStatus": "RUNNING",
+        "saveStatus": "本机已存档 20:28:23",
+        "saveLabel": "本机已存档 20:28:23",
+        "error": "",
+        "historyWarning": "本机历史存储失败；本次会话内仍可查看，刷新可能丢失。",
+        "worldHash": "fnv1a64:de7f2247bdf3fb97",
+        "statuses": [
+          {
+            "status": "COMMITTING",
+            "tick": 102
+          },
+          {
+            "status": "RUNNING",
+            "tick": 102
+          }
+        ],
+        "pauseTokens": []
+      },
+      "stopped": {
+        "runId": "save-quota-browser-fixture-indexeddb",
+        "tick": 166,
+        "revision": 67,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "RUNNING",
+        "viewStatus": "PAUSED",
+        "saveStatus": "本机已存档 20:28:26",
+        "saveLabel": "本机已存档 20:28:26",
+        "error": "",
+        "historyWarning": "本机历史存储失败；本次会话内仍可查看，刷新可能丢失。",
+        "worldHash": "fnv1a64:e8d83c1318bcd6f3",
+        "statuses": [
+          {
+            "status": "COMMITTING",
+            "tick": 102
+          },
+          {
+            "status": "RUNNING",
+            "tick": 102
+          },
+          {
+            "status": "COMMITTING",
+            "tick": 142
+          },
+          {
+            "status": "RUNNING",
+            "tick": 142
+          }
+        ],
+        "pauseTokens": [
+          "USER_PAUSE"
+        ]
+      },
+      "durable": [
+        {
+          "sequence": 5,
+          "savedAt": 1791026906893,
+          "tick": 166,
+          "runId": "save-quota-browser-fixture-indexeddb",
+          "stock": {
+            "wood": 91,
+            "stone": 27,
+            "food": 73
+          },
+          "worldHash": "fnv1a64:e8d83c1318bcd6f3"
+        },
+        {
+          "sequence": 4,
+          "savedAt": 1791026906886,
+          "tick": 166,
+          "runId": "save-quota-browser-fixture-indexeddb",
+          "stock": {
+            "wood": 91,
+            "stone": 27,
+            "food": 73
+          },
+          "worldHash": "fnv1a64:e8d83c1318bcd6f3"
+        }
+      ],
+      "reloaded": {
+        "runId": "save-quota-browser-fixture-indexeddb",
+        "tick": 166,
+        "revision": 67,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "READY",
+        "viewStatus": "READY",
+        "saveStatus": "本机已存档 20:28:26",
+        "saveLabel": "本机已存档 20:28:26",
+        "error": "",
+        "historyWarning": "",
+        "worldHash": "fnv1a64:e8d83c1318bcd6f3",
+        "statuses": [],
+        "pauseTokens": [
+          "BOOTSTRAP",
+          "NOT_STARTED"
+        ]
+      },
+      "assertions": {
+        "realLocalStorageQuotaReached": true,
+        "productionControllerAndSimulation": true,
+        "decisionCommitsWithoutErrorPause": true,
+        "simulationTicksAdvance": true,
+        "legacySlotsPreservedOnFailure": null,
+        "verifiedMigratedLegacySlotsRemoved": true,
+        "durableReload": true,
+        "failedWritesDoNotClaimSaved": null,
+        "lastGoodReloadAfterFailure": null
+      },
+      "errors": [],
+      "missing": [],
+      "remoteCalls": 0,
+      "screenshots": [
+        "local-evidence/save-quota-indexeddb-running.png",
+        "local-evidence/save-quota-indexeddb-save-status.png",
+        "local-evidence/save-quota-indexeddb-reloaded.png"
+      ]
+    },
+    {
+      "config": {
+        "name": "unavailable",
+        "width": 844,
+        "height": 390,
+        "dpr": 2
+      },
+      "seed": {
+        "runId": "save-quota-browser-fixture-failure",
+        "tick": 102,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "slots": [
+          {
+            "key": "survive_camp_a_v1",
+            "length": 17931,
+            "hash": "fnv1a64:6f4fceb69f6e4d4c"
+          },
+          {
+            "key": "survive_camp_b_v1",
+            "length": 17931,
+            "hash": "fnv1a64:726f3d44b388342e"
+          }
+        ],
+        "fillerCharacters": 5206837,
+        "quotaName": "QuotaExceededError"
+      },
+      "quotaAtCommit": {
+        "fillerCharacters": 5206837,
+        "quotaName": "QuotaExceededError"
+      },
+      "migratedSlots": [
+        {
+          "key": "survive_camp_a_v1",
+          "length": 17931,
+          "hash": "fnv1a64:6f4fceb69f6e4d4c"
+        },
+        {
+          "key": "survive_camp_b_v1",
+          "length": 17931,
+          "hash": "fnv1a64:726f3d44b388342e"
+        }
+      ],
+      "initial": {
+        "runId": "save-quota-browser-fixture-failure",
+        "tick": 102,
+        "revision": 1,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "READY",
+        "viewStatus": "READY",
+        "saveStatus": "本机已存档 20:28:32",
+        "saveLabel": "本机已存档 20:28:32",
+        "error": "",
+        "historyWarning": "",
+        "worldHash": "fnv1a64:4bcad3a5bf3ca033",
+        "statuses": [],
+        "pauseTokens": [
+          "BOOTSTRAP",
+          "NOT_STARTED"
+        ]
+      },
+      "running": {
+        "runId": "save-quota-browser-fixture-failure",
+        "tick": 132,
+        "revision": 32,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "RUNNING",
+        "viewStatus": "RUNNING",
+        "saveStatus": "本机存储空间不足，当前进度未保存；上一份完整存档仍保留，游戏可继续。",
+        "saveLabel": "本机存储空间不足，当前进度未保存；上一份完整存档仍保留，游戏可继续。",
+        "error": "",
+        "historyWarning": "本机历史存储失败；本次会话内仍可查看，刷新可能丢失。",
+        "worldHash": "fnv1a64:41368df707ba7660",
+        "statuses": [
+          {
+            "status": "COMMITTING",
+            "tick": 102
+          },
+          {
+            "status": "RUNNING",
+            "tick": 102
+          }
+        ],
+        "pauseTokens": []
+      },
+      "stopped": {
+        "runId": "save-quota-browser-fixture-failure",
+        "tick": 159,
+        "revision": 60,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "RUNNING",
+        "viewStatus": "PAUSED",
+        "saveStatus": "本机存储空间不足，当前进度未保存；上一份完整存档仍保留，游戏可继续。",
+        "saveLabel": "本机存储空间不足，当前进度未保存；上一份完整存档仍保留，游戏可继续。",
+        "error": "",
+        "historyWarning": "本机历史存储失败；本次会话内仍可查看，刷新可能丢失。",
+        "worldHash": "fnv1a64:de5d47732379e658",
+        "statuses": [
+          {
+            "status": "COMMITTING",
+            "tick": 102
+          },
+          {
+            "status": "RUNNING",
+            "tick": 102
+          },
+          {
+            "status": "COMMITTING",
+            "tick": 142
+          },
+          {
+            "status": "RUNNING",
+            "tick": 142
+          }
+        ],
+        "pauseTokens": [
+          "USER_PAUSE"
+        ]
+      },
+      "durable": null,
+      "reloaded": {
+        "runId": "save-quota-browser-fixture-failure",
+        "tick": 102,
+        "revision": 1,
+        "stock": {
+          "wood": 91,
+          "stone": 27,
+          "food": 73
+        },
+        "zoneIds": [
+          "zone-1"
+        ],
+        "status": "READY",
+        "viewStatus": "READY",
+        "saveStatus": "本机已存档 20:28:32",
+        "saveLabel": "本机已存档 20:28:32",
+        "error": "",
+        "historyWarning": "",
+        "worldHash": "fnv1a64:4bcad3a5bf3ca033",
+        "statuses": [],
+        "pauseTokens": [
+          "BOOTSTRAP",
+          "NOT_STARTED"
+        ]
+      },
+      "assertions": {
+        "realLocalStorageQuotaReached": true,
+        "productionControllerAndSimulation": true,
+        "decisionCommitsWithoutErrorPause": true,
+        "simulationTicksAdvance": true,
+        "legacySlotsPreservedOnFailure": true,
+        "verifiedMigratedLegacySlotsRemoved": null,
+        "durableReload": null,
+        "failedWritesDoNotClaimSaved": true,
+        "lastGoodReloadAfterFailure": true
+      },
+      "errors": [],
+      "missing": [],
+      "remoteCalls": 0,
+      "screenshots": [
+        "local-evidence/save-quota-unavailable-running.png",
+        "local-evidence/save-quota-unavailable-save-status.png",
+        "local-evidence/save-quota-unavailable-reloaded.png"
+      ]
+    }
+  ],
+  "warningFontRefresh": {
+    "label": "本机存储空间不足，当前进度未保存；上一份完整存档仍保留，游戏可继续。",
+    "extensionLoaded": true,
+    "containsCompleteWarning": true,
+    "viewport": {
+      "name": "unavailable",
+      "width": 844,
+      "height": 390,
+      "dpr": 2
+    },
+    "screenshot": "local-evidence/save-quota-unavailable-save-status.png",
+    "errors": [],
+    "missing": []
+  }
+}

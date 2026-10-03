@@ -41,6 +41,28 @@ export function rememberObservation(resident: Resident, observation: Observation
   resident.memories.push({ ref, kind, text, evidenceRefs: [observation.obsRef], experiencedWhen: observation.experiencedWhen });
 }
 
+export const RECENT_OBSERVATION_LIMIT = 256;
+/** Forget only old sensory samples with no surviving personal evidence dependency.
+ * Text memories, their source chains, known places and the private map stay intact.
+ * Call during sensory sampling, never from an observer or a frozen transaction.
+ */
+export function retainRecentObservations(resident: Resident): void {
+  const retained = new Set(resident.observations.slice(-RECENT_OBSERVATION_LIMIT).map(o => o.obsRef));
+  const keepEvidence = (refs: unknown): void => {
+    if (Array.isArray(refs)) for (const ref of refs) if (typeof ref === 'string') retained.add(ref);
+  };
+  // Every memory survives, so retaining each direct source also preserves arbitrary
+  // memory-to-memory summary chains without changing any resident belief.
+  for (const memory of resident.memories) keepEvidence(memory.evidenceRefs);
+  for (const progress of [...resident.plan, ...resident.suspendedPlan]) keepEvidence(progress.action.params.evidenceRefs);
+  for (const action of resident.lastDecision?.actions ?? []) keepEvidence(action.params.evidenceRefs);
+  for (const suggestion of resident.lastDecision?.memorySuggestions ?? []) keepEvidence(suggestion.evidenceRefs);
+  resident.observations = resident.observations.filter(o => retained.has(o.obsRef));
+  const surviving = new Set(resident.observations.map(o => o.obsRef));
+  resident.consumedObservationRefs = resident.consumedObservationRefs.filter(ref => surviving.has(ref));
+  // observationSequence is intentionally unchanged: discarded IDs are never reused.
+}
+
 /** Suggestions may add a belief/summary, never a direct observation. */
 export function addModelMemories(resident: Resident, suggestions: Decision['memorySuggestions'], tick: number): void {
   const ownedSources = new Set([

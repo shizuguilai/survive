@@ -1,5 +1,6 @@
 import {UiNotice} from './ui-notice.ts';
-import {CampSaves,type CampSaveState} from './camp-save.ts';
+import type {CampSaveState} from './camp-save.ts';
+import {AsyncCampSaves} from './camp-storage.ts';
 import {ColonyProvider} from '../../../packages/sim-core/src/colony.ts';
 import {controlSettings,type ControlSettings,type CommandProvider,type CommandRequest,type CommandResponse} from '../../../packages/contracts/src/command.ts';
 import {Simulation} from '../../../packages/sim-core/src/cognition.ts';
@@ -27,7 +28,7 @@ class GatewayCommander implements CommandProvider{
  async plan(request:CommandRequest,signal?:AbortSignal):Promise<CommandResponse>{const r=await gatewayRequest('/api/command',{method:'POST',body:request,signal});const v=await r.json();if(!r.ok)throw Error(v.message??'统筹网关请求失败');return v;}
 }
 function persist(key:string,value:unknown):void{
-  // Storage is observer infrastructure; failures propagate and keep cognition frozen.
+  // Observer storage failures are reported separately from cognition and never freeze the world.
   const wx=(globalThis as any).wx;
   if(wx?.setStorageSync)wx.setStorageSync(key,JSON.stringify(value));
   else globalThis.localStorage.setItem(key,JSON.stringify(value));
@@ -36,9 +37,10 @@ export async function boot():Promise<void>{
   const notice=new UiNotice();
   let view:ObserverView;let configured=false;let canStart=false;let hosted=false;let diagnostic='';let started=false;
   let settings=controlSettings(null);try{const wx=(globalThis as any).wx;const raw=wx?.getStorageSync?wx.getStorageSync('survive_control_v1'):globalThis.localStorage.getItem('survive_control_v1');settings=controlSettings(raw?JSON.parse(raw):null);}catch{}
-  const saves=new CampSaves({getItem:key=>{const wx=(globalThis as any).wx;return (wx?.getStorageSync?wx.getStorageSync(key):globalThis.localStorage.getItem(key))||null;},setItem:(key,value)=>{const wx=(globalThis as any).wx;if(wx?.setStorageSync)wx.setStorageSync(key,value);else globalThis.localStorage.setItem(key,value);}});
-  const restored=saves.load(settings);if(restored.save)settings=restored.save.settings;
-  let saveBlocked=restored.blocked,saveWarning=restored.warning,lastSavedAt=restored.save?.savedAt??0,lastSaveWall=0,lastSaveKey='',restoreReady=!!restored.save,resumeSavedPlans=!!restored.save&&!restored.save.needsDecision;
+  const saves=new AsyncCampSaves({getItem:key=>{const wx=(globalThis as any).wx;return (wx?.getStorageSync?wx.getStorageSync(key):globalThis.localStorage.getItem(key))||null;},setItem:(key,value)=>{const wx=(globalThis as any).wx;if(wx?.setStorageSync)wx.setStorageSync(key,value);else globalThis.localStorage.setItem(key,value);},removeItem:key=>{const wx=(globalThis as any).wx;if(wx?.removeStorageSync)wx.removeStorageSync(key);else if(!wx?.setStorageSync)globalThis.localStorage.removeItem(key);}},(globalThis as any).wx?.setStorageSync?null:undefined);
+  const restored=await saves.load(settings);if(restored.save)settings=restored.save.settings;
+  let saveBlocked=restored.blocked,saveWarning=restored.warning,lastSavedAt=restored.save?.savedAt??0,lastSaveWall=performance.now(),lastSaveKey='',restoreReady=!!restored.save,resumeSavedPlans=!!restored.save&&!restored.save.needsDecision;
+  let saveEpoch=0,saveBusy=0,loadBusy=false;
   let colony:ColonyProvider|null=null;
   let selectedId=restored.save?.selectedId??'resident-a',showSenses=restored.save?.showSenses??false;
   let observedBarrier='';let barrierWallStart=0;let latestRequestMs=0;
@@ -63,7 +65,8 @@ export async function boot():Promise<void>{
   function makeSimulation(world?:World):Simulation{
     colony=settings.mode==='independent'?null:new ColonyProvider(settings,new GatewayCommander());
     return new Simulation(colony??provider,{world:world??createCrewWorld(settings.residents),allowMock:false,controlMode:settings.mode,allowLocalFallback:settings.fallback,requestTimeoutMs:settings.mode==='independent'?120000:30000,
-      onCommit:record=>{if(saveBlocked)throw Error('请先处理本机存档问题，或点击保存进度确认使用当前营地。');writeSave(record.nextWorld,false);}
+      // The complete decision batch commits in memory even when observer storage is unavailable.
+      onCommit:record=>{if(!saveBlocked&&!loadBusy)void writeSave(record.nextWorld,false);}
     });
   }
   let sim=makeSimulation(restored.save?.world);for(const task of restored.save?.queuedTasks??[])sim.queueTask(task);sim.pause('NOT_STARTED');
@@ -71,15 +74,37 @@ export async function boot():Promise<void>{
   function needsDecisionNow():boolean{return ['THINKING','COMMITTING','ERROR_PAUSED'].includes(sim.status)||((!started||sim.status==='STOPPED')&&!resumeSavedPlans);}
   function saveState(world=sim.world,needsDecision=needsDecisionNow()):CampSaveState{return {world,settings,queuedTasks:sim.queuedTasks,selectedId,showSenses,needsDecision};}
   function savedKey(world=sim.world,needsDecision=needsDecisionNow()){return [world.runId,world.tick,world.revision,needsDecision,JSON.stringify(sim.queuedTasks),selectedId,showSenses,JSON.stringify(settings)].join('|');}
-  function writeSave(world=sim.world,needsDecision=needsDecisionNow()):void{
-    try{const saved=saves.save(saveState(world,needsDecision));lastSavedAt=saved.savedAt;lastSaveKey=savedKey(world,needsDecision);lastSaveWall=performance.now();saveWarning='';}
-    catch(e){saveWarning=(e as Error).name==='QuotaExceededError'?'本机存储空间不足，进度未保存；上一份完整存档仍保留。':'本机存档写入失败，上一份完整存档仍保留。';console.warn('[Survive save]',{reason:(e as Error).name});throw e;}
+  async function writeSave(world=sim.world,needsDecision=needsDecisionNow(),force=false):Promise<boolean>{
+    const now=performance.now();
+    // Local decisions can commit several times a second. A failed save must not repeatedly
+    // serialize the entire world, nor turn each decision into another persistence attempt.
+    if(loadBusy||(!force&&(saveBusy>0||now-lastSaveWall<10000)))return false;
+    const epoch=saveEpoch,key=savedKey(world,needsDecision);lastSaveWall=now;saveBusy++;
+    try{
+      // AsyncCampSaves captures the state before its first await and serializes durable writes.
+      const saved=await saves.save(saveState(world,needsDecision));
+      if(epoch!==saveEpoch)return false;
+      lastSavedAt=saved.savedAt;lastSaveKey=key;saveWarning='';return true;
+    }catch(e){
+      if(epoch===saveEpoch)saveWarning=(e as Error).name==='QuotaExceededError'?'本机存储空间不足，当前进度未保存；上一份完整存档仍保留，游戏可继续。':'本机存档写入失败，上一份完整存档仍保留，游戏可继续。';
+      console.warn('[Survive save]',{reason:(e as Error).name});return false;
+    }finally{saveBusy--;}
   }
-  function saveCurrent(manual=false):void{if(sim.status==='COMMITTING')return;if(saveBlocked&&!manual)return;try{writeSave();if(manual){saveBlocked=false;notice.show('营地进度已保存在本机。',performance.now());}}catch{}}
-  function loadSavedCamp():void{
-    const loaded=saves.load(settings);if(!loaded.save){saveWarning=loaded.warning||'本机还没有营地存档。';return;}
-    const s=loaded.save;sim.stop();settings=s.settings;selectedId=s.world.residents.some(r=>r.id===s.selectedId)?s.selectedId:s.world.residents[0].id;showSenses=s.showSenses;
-    sim=makeSimulation(s.world);for(const task of s.queuedTasks)sim.queueTask(task);sim.pause('NOT_STARTED');started=false;restoreReady=true;resumeSavedPlans=!s.needsDecision;saveBlocked=false;saveWarning=loaded.warning;lastSavedAt=s.savedAt;lastSaveKey=savedKey();lastSaveWall=performance.now();diagnostic='';notice.show('营地已恢复，点击“继续营地”后运行。',performance.now());
+  async function saveCurrent(manual=false,checkpoint=false):Promise<void>{
+    if(sim.status==='COMMITTING'||loadBusy||(saveBlocked&&!manual))return;
+    const epoch=saveEpoch,saved=await writeSave(sim.world,needsDecisionNow(),manual||checkpoint);
+    if(saved&&manual&&epoch===saveEpoch){saveBlocked=false;notice.show('营地进度已保存在本机。',performance.now());}
+  }
+  async function loadSavedCamp():Promise<void>{
+    const epoch=++saveEpoch,previous=sim;loadBusy=true;previous.pause('LOAD_CAMP');
+    try{
+      // Reads are queued behind previously captured saves. A newer load/new camp wins.
+      const loaded=await saves.load(settings);if(epoch!==saveEpoch)return;
+      if(!loaded.save){saveWarning=loaded.warning||'本机还没有营地存档。';saveBlocked=loaded.blocked;return;}
+      const s=loaded.save;previous.stop();settings=s.settings;selectedId=s.world.residents.some(r=>r.id===s.selectedId)?s.selectedId:s.world.residents[0].id;showSenses=s.showSenses;
+      sim=makeSimulation(s.world);for(const task of s.queuedTasks)sim.queueTask(task);sim.pause('NOT_STARTED');started=false;restoreReady=true;resumeSavedPlans=!s.needsDecision;saveBlocked=false;saveWarning=loaded.warning;lastSavedAt=s.savedAt;lastSaveKey=savedKey();lastSaveWall=performance.now();diagnostic='';notice.show('营地已恢复，点击“继续营地”后运行。',performance.now());
+    }catch{if(epoch===saveEpoch)saveWarning='本机存档暂时无法读取，当前营地仍可继续。';}
+    finally{if(epoch===saveEpoch){loadBusy=false;if(sim===previous)previous.resume('LOAD_CAMP');}}
   }
   observer.observe(sim.world);
   async function health():Promise<void>{
@@ -92,31 +117,35 @@ export async function boot():Promise<void>{
       else if(!started)diagnostic=restoreReady?'已恢复本机营地，点击「继续营地」后运行。':'点击「开始运行」，或在「运行设置」选择模式和居民数量。';
     }catch{configured=false;canStart=false;diagnostic='无法连接模型网关，请稍后重试。';}
   }
-  function pause():void{sim.pause('USER_PAUSE');saveCurrent();}
+  function pause():void{sim.pause('USER_PAUSE');void saveCurrent(false,true);}
   function resume():void{sim.resume('USER_PAUSE');}
   async function start():Promise<void>{
+    if(loadBusy)return;const epoch=saveEpoch;
     if(settings.mode!=='local'){if(!configured||!canStart)await health();if(!configured||!canStart){if(settings.mode==='commander'&&settings.fallback)colony?.useLocal('网关尚未配置或不可连接，可在设置中重试远程。');else return;}}
+    if(epoch!==saveEpoch||loadBusy)return;
     if(started&&sim.status!=='STOPPED'){diagnostic='本轮已启动；失败时可重试，暂停时可继续。';return;}
     if(started){const world=sim.world,queued=sim.queuedTasks;sim=makeSimulation(world);for(const task of queued)sim.queueTask(task);}
     if(settings.mode==='commander'&&settings.fallback&&(!configured||!canStart))colony?.useLocal('网关尚未配置或不可连接，可在设置中重试远程。');
     started=true;diagnostic='';sim.resume('NOT_STARTED');
-    const resumePlans=resumeSavedPlans;restoreReady=false;resumeSavedPlans=false;await sim.bootstrap(resumePlans);saveCurrent();
+    const resumePlans=resumeSavedPlans;restoreReady=false;resumeSavedPlans=false;const active=sim;await active.bootstrap(resumePlans);if(epoch===saveEpoch&&sim===active)void saveCurrent(false,true);
   }
   async function configure(next:ControlSettings,newCamp=false):Promise<void>{
+    const epoch=++saveEpoch;loadBusy=false;
     const keepPaused=sim.pauseTokens.has('USER_PAUSE'),continuePlans=!newCamp&&!needsDecisionNow();const world=sim.world,queued=sim.queuedTasks;sim.stop();settings=controlSettings(next);
     try{persist('survive_control_v1',settings);}catch{historyWarning='运行设置未能保存，当前会话仍有效';}
     if(newCamp){selectedId='resident-a';restoreReady=false;resumeSavedPlans=false;saveBlocked=false;}
     sim=makeSimulation(newCamp?undefined:world);if(!newCamp)for(const task of queued)sim.queueTask(task);if(keepPaused)sim.pause('USER_PAUSE');
     diagnostic='';notice.show(newCamp?'已建立新营地。':'模式已更新，现有居民、任务和私人记忆保留。',performance.now());
-    if(started)await sim.bootstrap(continuePlans);else{resumeSavedPlans=continuePlans;sim.pause('NOT_STARTED');}saveCurrent();
+    const active=sim;if(!saveBlocked)void writeSave(sim.world,!continuePlans,true);
+    if(started)await active.bootstrap(continuePlans);else{resumeSavedPlans=continuePlans;active.pause('NOT_STARTED');}if(epoch===saveEpoch&&sim===active)void saveCurrent(false,true);
   }
   view=await initialize({
-    onSave:()=>saveCurrent(true),onLoad:loadSavedCamp,
+    onSave:()=>{void saveCurrent(true);},onLoad:()=>{void loadSavedCamp();},
     onControl:(next,newCamp)=>{void configure(next,newCamp).catch(e=>{diagnostic=e.message;});},onRemoteRetry:()=>{colony?.retryRemote();},
     onSummarize:request=>{void summarize(request);},
     onPause:pause,onResume:resume,onRetry:()=>{void health().then(()=>sim.retry());},
-    onTask:draft=>{try{sim.queueTask(draft);saveCurrent();notice.show('规划已接收；世界恢复运行后写入公告板。',performance.now(),true);return true;}catch(e){diagnostic=(e as Error).message;return false;}},
-    onStop:()=>{resumeSavedPlans=!needsDecisionNow();saveCurrent();sim.stop();saveJournal();},
+    onTask:draft=>{try{sim.queueTask(draft);void saveCurrent(false,true);notice.show('规划已接收；世界恢复运行后写入公告板。',performance.now(),true);return true;}catch(e){diagnostic=(e as Error).message;return false;}},
+    onStop:()=>{resumeSavedPlans=!needsDecisionNow();void saveCurrent(false,true);sim.stop();saveJournal();},
     onSelect:id=>{selectedId=id;},onToggleSenses:()=>{showSenses=!showSenses;},
     onStart:()=>{void start().catch(e=>{diagnostic=e.message;});},
     onConnect:token=>{void gatewayRequest('/api/session',{method:'POST',body:{token}}).then(health).catch(()=>{diagnostic='本地登录失败，请使用服务端提供的登录链接。';});}
@@ -137,7 +166,7 @@ export async function boot():Promise<void>{
         latestRequestMs=now-barrierWallStart;
       }else if(started)cognitionDetail=`上轮等待 ${(latestRequestMs/1000).toFixed(1)}秒 · 正在执行已提交动作`;
       if(now-lastJournalSave>2000){saveJournal();lastJournalSave=now;}
-      if(now-lastSaveWall>=10000){lastSaveWall=now;if(savedKey()!==lastSaveKey)saveCurrent();}
+      if(now-lastSaveWall>=10000&&savedKey()!==lastSaveKey)void saveCurrent();
       const saveStatus=saveWarning||(lastSavedAt?'本机已存档 '+new Date(lastSavedAt).toLocaleTimeString('zh-CN',{hour12:false}):'本机自动存档 · 每10秒及关键操作保存');
       const s:ViewState={saveStatus,resumeReady:restoreReady&&!started,control:settings,controlDetail:colony?.detail,controlNotice:colony?.notice,fallbackActive:colony?.fallbackActive,summaries,summaryBusy,summaryError,summaryVersion,world,overlays:cover,cognitionDetail,history:journal.rows,historyVersion:journal.version,historyWarning,pendingTasks:sim.pendingTaskCount,selectedId,showSenses,hosted,
         mode:settings.mode==='local'||colony?.fallbackActive?'LOCAL_ALGORITHM':configured?'REAL_MODEL':'UNCONFIGURED',status:liveStatus,
@@ -147,7 +176,7 @@ export async function boot():Promise<void>{
   }
   const L=(globalThis as any).Laya;L.timer.frameLoop(1,null,frame);
   const wx=(globalThis as any).wx;
-  const saveOnLeave=()=>{saveCurrent();saveJournal();};
+  const saveOnLeave=()=>{void saveCurrent(false,true);saveJournal();};
   if(wx?.onHide){wx.onHide(()=>{sim.pause('APP_BACKGROUND');saveOnLeave();});wx.onShow(()=>sim.resume('APP_BACKGROUND'));}
   else {globalThis.addEventListener('pagehide',saveOnLeave);document.addEventListener('visibilitychange',()=>{if(document.hidden){sim.pause('APP_BACKGROUND');saveOnLeave();}else sim.resume('APP_BACKGROUND');});}
   if(settings.mode!=='local')await health();frame();
