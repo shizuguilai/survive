@@ -20,7 +20,47 @@ export function crossesWall(a:Vec3,b:Vec3,o:WorldObject,padding=.42):boolean{
   }
   return hi>=0&&lo<=1;
 }
-export const movementBlocked=(w:World,a:Vec3,b:Vec3)=>w.objects.some(o=>solidWalls(o).some(wall=>crossesWall(a,b,wall)));
+/** The pond's painted footprint and native water are circular (the legacy depth is smaller). */
+export const POND_CLEARANCE=.6;
+export const pondWaterRadius=(pond:WorldObject)=>Math.max(pond.width,pond.depth)/2;
+export const pondCollisionRadius=(pond:WorldObject)=>pondWaterRadius(pond)+POND_CLEARANCE;
+const pondDistanceSquared=(p:Vec3,pond:WorldObject)=>(p.x-pond.position.x)**2+(p.z-pond.position.z)**2;
+export function insidePond(p:Vec3,pond:WorldObject):boolean{return pond.kind==='pond'&&pondDistanceSquared(p,pond)<pondCollisionRadius(pond)**2;}
+/** Swept-body contact, so even long steps cannot tunnel through water. Old water positions may only move outwards. */
+export function crossesPond(a:Vec3,b:Vec3,pond:WorldObject,allowEscape=false):boolean{
+  if(pond.kind!=='pond')return false;
+  const x=a.x-pond.position.x,z=a.z-pond.position.z,dx=b.x-a.x,dz=b.z-a.z,d2=dx*dx+dz*dz,r2=pondCollisionRadius(pond)**2;
+  if(allowEscape&&x*x+z*z<r2&&d2>1e-12&&x*dx+z*dz>=-1e-10&&pondDistanceSquared(b,pond)>x*x+z*z+1e-12)return false;
+  const t=d2>1e-12?Math.max(0,Math.min(1,-(x*dx+z*dz)/d2)):0;
+  return (x+t*dx)**2+(z+t*dz)**2<r2;
+}
+/** A stable dry shoreline destination for walking, resting or collecting water. */
+export function pondApproachPoint(pond:WorldObject,from:Vec3):Vec3{
+  const x=from.x-pond.position.x,z=from.z-pond.position.z,d=Math.hypot(x,z),radius=pondCollisionRadius(pond)+.12;
+  return {x:pond.position.x+(d>1e-9?x/d:0)*radius,y:0,z:pond.position.z+(d>1e-9?z/d:1)*radius};
+}
+export const movementBlocked=(w:World,a:Vec3,b:Vec3)=>w.objects.some(o=>crossesPond(a,b,o,true)||solidWalls(o).some(wall=>crossesWall(a,b,wall)));
+function knownObstacles(w:World,r:Resident):WorldObject[]{
+  const known=new Set(Object.values(r.known).map(k=>k.entityId));
+  return w.objects.filter(o=>['wall','house','plot','pond'].includes(o.kind)&&(known.has(o.id)||known.has(o.projectId??'')));
+}
+/** Resolve personally known water targets once at action start; never walk towards the submerged centre. */
+export function walkDestination(w:World,r:Resident,target:Vec3):Vec3{
+  const pond=knownObstacles(w,r).find(o=>insidePond(target,o));
+  if(!pond)return {...target};
+  const shore=pondApproachPoint(pond,r.position);
+  // Walk actions normally stop .8 before the destination. A legacy resident already
+  // in water needs that extra distance to finish on dry land, rather than stop short.
+  if(insidePond(r.position,pond)){
+    const dx=shore.x-pond.position.x,dz=shore.z-pond.position.z,d=Math.hypot(dx,dz);
+    shore.x+=dx/d*.8;shore.z+=dz/d*.8;
+  }
+  return shore;
+}
+/** A newly observed obstacle invalidates an old direct path without revealing unseen obstacles. */
+export function navigationKey(w:World,r:Resident):string{
+  return knownObstacles(w,r).map(o=>[o.id,o.kind,o.buildStage,o.width,o.depth,o.position.x,o.position.z].join(':')).join('|');
+}
 export function floorHeight(w:World,p:Vec3):number{
   for(const o of w.objects)if(['house','plot'].includes(o.kind)&&(o.buildStage??3)>=1){
     const x=Math.abs(p.x-o.position.x),z=p.z-o.position.z;
@@ -29,17 +69,29 @@ export function floorHeight(w:World,p:Vec3):number{
   }
   return 0;
 }
-/** Path planning uses personally known buildings only; actual collision is always checked. */
+/** Paths use personally known obstacles. Contact always checks real water and walls. */
 export function navigationPath(w:World,r:Resident,target:Vec3):Vec3[]{
-  const known=new Set(Object.values(r.known).map(k=>k.entityId));
-  const houses=w.objects.filter(o=>['house','plot'].includes(o.kind)&&(known.has(o.id)||known.has(o.projectId??'')));
-  const walls=houses.flatMap(solidWalls);
-  const clear=(a:Vec3,b:Vec3)=>!walls.some(o=>crossesWall(a,b,o));
-  if(clear(r.position,target))return [{...target}];
-  const nodes=[{...r.position},{...target}];
+  const obstacles=knownObstacles(w,r),walls=obstacles.flatMap(solidWalls);
+  const ponds=obstacles.filter(o=>o.kind==='pond');
+  // A pre-fix save can begin in water. Bodily contact permits a gradual outward escape,
+  // but does not reveal any other unobserved pond or allow crossing deeper through this one.
+  for(const pond of w.objects)if(insidePond(r.position,pond)&&!ponds.includes(pond))ponds.push(pond);
+  const destination=walkDestination(w,r,target);
+  const clear=(a:Vec3,b:Vec3)=>!walls.some(o=>crossesWall(a,b,o))&&!ponds.some(o=>crossesPond(a,b,o,true));
+  if(clear(r.position,destination))return [destination];
+  const nodes=[{...r.position},destination];
   for(const wall of walls)for(const x of [-1,1])for(const z of [-1,1]){
     const p={x:wall.position.x+x*(wall.width/2+.45),y:0,z:wall.position.z+z*(wall.depth/2+.45)};
     if(clear(p,p))nodes.push(p);
+  }
+  for(const pond of ponds){
+    // The circumscribed ring keeps straight chords outside the padded water boundary.
+    const radius=pondCollisionRadius(pond)/Math.cos(Math.PI/16)+.04;
+    for(let i=0;i<16;i++){
+      const a=i*Math.PI/8,p={x:pond.position.x+Math.cos(a)*radius,y:0,z:pond.position.z+Math.sin(a)*radius};
+      if(clear(p,p))nodes.push(p);
+    }
+    const shore=pondApproachPoint(pond,r.position);if(clear(shore,shore))nodes.push(shore);
   }
   const costs=nodes.map(()=>Infinity),parent=nodes.map(()=>-1),seen=new Set<number>();costs[0]=0;
   for(let count=0;count<nodes.length;count++){
@@ -49,7 +101,7 @@ export function navigationPath(w:World,r:Resident,target:Vec3):Vec3[]{
       const cost=costs[i]+Math.hypot(nodes[i].x-nodes[n].x,nodes[i].z-nodes[n].z);if(cost<costs[n]){costs[n]=cost;parent[n]=i;}
     }
   }
-  return [{...target}]; // The real contact check produces a private obstruction event.
+  return [destination]; // The real contact check produces a private obstruction event.
 }
 /** Newly completed walls cannot enclose a builder's body inside the wall slab. */
 export function clearNewWalls(w:World,o:WorldObject):void{

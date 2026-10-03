@@ -61,7 +61,7 @@ const contextSchema = object({
   observations:array(observationSchema,128),
   memories:array(object({ref,kind:{enum:['direct','hearsay','belief','summary']},text:text(2000),evidenceRefs:array(ref,64),experiencedWhen:text(80)}),128),
   knownTargets:array({...object({ref,description:text(1000),lastObservedWhen:text(80),atLastKnownPosition:{type:'boolean'}}),required:['ref','description','lastObservedWhen']},128),
-  allowedActions:{type:'array',items:{enum:decisionSchema.properties.actions.items.oneOf.map(a=>a.properties.op.const)},minItems:1,maxItems:24}
+  allowedActions:{type:'array',items:{enum:decisionSchema.properties.actions.items.oneOf.map(a=>a.properties.op.const)},minItems:1,maxItems:26}
 });
 // Additive personal-map field: older contexts remain readable.
 contextSchema.required=contextSchema.required.filter((key:string)=>key!=='spatialMemory');
@@ -85,7 +85,7 @@ export function validateBrainRequest(value: unknown): BrainRequest {
   if(request.metadata.contextHash!==hashCanonical(request.context))fail('$.metadata.contextHash','context fingerprint mismatch');
   return request;
 }
-const channels:Record<string,string[]>={home_care:['hands','locomotion'],survey:['head'],craft:['hands','locomotion'],exchange:['hands','locomotion'],withdraw:['hands','locomotion'],walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
+const channels:Record<string,string[]>={farm:['hands','locomotion'],fetch_water:['hands','locomotion'],home_care:['hands','locomotion'],survey:['head'],craft:['hands','locomotion'],exchange:['hands','locomotion'],withdraw:['hands','locomotion'],walk:['locomotion'],look:['head'],listen:['hearing'],gather:['hands','locomotion'],haul:['hands','locomotion'],build:['hands','locomotion'],eat:['hands','mouth'],rest:['locomotion','hands'],speak:['mouth'],read_notice:['head'],write_notice:['hands'],propose_project:['mouth'],accept_task:[],decline_task:[],continue:[],equip_item:['hands'],unequip_item:['hands']};
 export function validateDecision(value: unknown, context: CharacterContext): Decision {
   // Give the model a safe, specific field error for a recognized operation.
   // The generic oneOf error otherwise hides what its repair must change.

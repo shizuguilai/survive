@@ -7,16 +7,16 @@ import {finishHomeCare} from './home-care.ts';
 import {onBreak,isInside,restRecovery} from './living.ts';
 import {HOUSE_STEPS,houseSteps,taskTitle} from './recipes.ts';
 import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS,claimHome} from './camp.ts';
-import {navigationPath,movementBlocked,floorHeight} from './navigation.ts';
+import {navigationPath,movementBlocked,floorHeight,walkDestination,navigationKey,pondApproachPoint} from './navigation.ts';
 import {rememberMapCell,rememberLandmark} from './spatial-memory.ts';
 import { applyEquipmentAction } from './character.ts';
-import {harvestCrop} from './agriculture.ts';
-export const IMPLEMENTED_ACTIONS = ['home_care','survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
+import {harvestCrop,farmError,finishFarm,FARM_WORK_TICKS,FETCH_WATER_TICKS,WATER_CAPACITY,type FarmWork} from './agriculture.ts';
+export const IMPLEMENTED_ACTIONS = ['farm','fetch_water','home_care','survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
 const distance=(a:Vec3,b:Vec3)=>Math.hypot(a.x-b.x,a.z-b.z);
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
 function channels(action:Action):string[] {
   switch(action.op){
-    case 'home_care':case 'craft':case 'exchange':case 'withdraw':case 'build':
+    case 'farm':case 'fetch_water':case 'home_care':case 'craft':case 'exchange':case 'withdraw':case 'build':
     case 'haul':return ['hands','locomotion'];
     case 'read_notice':return ['head'];case 'eat':return ['hands','mouth'];
     case 'equip_item':case 'unequip_item':return ['hands'];
@@ -66,18 +66,18 @@ export function stepActions(world:World,nextTick:number):string[] {
       if(first)progress.startedTick=nextTick;
       progress.elapsedTicks++;
       const params=progress.action.params;const feedbackBefore=resident.actionFeedback.length;
-      const targetRef=params.targetRef??params.placeRef??params.towardRef??params.noticeRef??params.taskRef??params.foodRef;
+      const targetRef=params.targetRef??params.placeRef??params.towardRef??params.noticeRef??params.taskRef??params.foodRef??(progress.action.op==='fetch_water'?params.sourceRef:undefined);
       const knowledge=targetRef?resident.known[targetRef]:undefined;
       if(targetRef&&!knowledge){fail(world,resident,progress,nextTick,'我无法确认这个目标。');due.add(resident.id);continue;}
       // Freeze navigation destination at start to a personally observed location, never a hidden live position.
-      if(first&&knowledge)progress.targetPosition={...knowledge.lastPosition};
+      if(first&&knowledge)progress.targetPosition=['walk','rest'].includes(progress.action.op)?walkDestination(world,resident,knowledge.lastPosition):{...knowledge.lastPosition};
       switch(progress.action.op){
         case 'walk':{
-          const target=progress.targetPosition!;const remaining=distance(resident.position,target);
+          let target=progress.targetPosition!;const remaining=distance(resident.position,target);
           if(remaining<=0.80001){fail(world,resident,progress,nextTick,'我已在该目标最后已知位置附近，本次没有移动，不能算作新的移动进展。应根据已有感官决定下一步；目标当前状态不明时先观察。');due.add(resident.id);break;}
           const speed=(params.gait==='run'?2.6:1.4)*((resident.health??100)<30?.5:1);
-          const key=world.objects.filter(o=>['plot','house'].includes(o.kind)).map(o=>o.id+':'+o.buildStage+':'+o.width+':'+o.depth+':'+o.position.x+':'+o.position.z).join('|');
-          if(!progress.waypoints||progress.navigationKey!==key){progress.waypoints=navigationPath(world,resident,target);progress.navigationKey=key;}
+          const key=navigationKey(world,resident);
+          if(!progress.waypoints||progress.navigationKey!==key){target=walkDestination(world,resident,target);progress.targetPosition=target;progress.waypoints=navigationPath(world,resident,target);progress.navigationKey=key;}
           while(progress.waypoints.length>1&&distance(resident.position,progress.waypoints[0])<.025)progress.waypoints.shift();
           const waypoint=progress.waypoints[0]??target,wayDistance=distance(resident.position,waypoint);
           const step=Math.min(speed*FIXED_DT_MS/1000,progress.waypoints.length>1?wayDistance:Math.max(0,wayDistance-.8));
@@ -112,11 +112,37 @@ export function stepActions(world:World,nextTick:number):string[] {
           if(progress.elapsedTicks*FIXED_DT_MS>=Math.max(600,letters.length*250))progress.done=true;
           break;
         }
+        case 'farm':{
+          const object=world.objects.find(o=>o.id===knowledge!.entityId),work=params.work as FarmWork;
+          if(object?.kind==='crop'&&distance(resident.position,object.position)<=1.8){knowledge!.description=object.appearance;knowledge!.lastSeenTick=nextTick;knowledge!.descriptionSeenTick=nextTick;rememberLandmark(resident,knowledge!.ref,'crop',object.position,nextTick,object.resources<=0);}
+          const error=farmError(object,resident,work);
+          if(error){fail(world,resident,progress,nextTick,error);due.add(resident.id);break;}
+          resident.heading=Math.atan2(object!.position.z-resident.position.z,object!.position.x-resident.position.x);
+          resident.fatigue=Math.min(1,resident.fatigue+.00004);
+          if(progress.elapsedTicks>=FARM_WORK_TICKS[work]){
+            finishFarm(object!,resident,work,nextTick);progress.done=true;
+            knowledge!.description=object!.appearance;knowledge!.lastSeenTick=nextTick;knowledge!.descriptionSeenTick=nextTick;
+            rememberLandmark(resident,knowledge!.ref,'crop',object!.position,nextTick,true);
+            ownReceipt(resident,world,`我实际完成了${work==='till'?'开垦':work==='sow'?'播种':'浇水'}；${object!.appearance}目前携水${resident.water??0}/${WATER_CAPACITY}份。`);
+          }
+          break;
+        }
+        case 'fetch_water':{
+          const pond=world.objects.find(o=>o.id===knowledge!.entityId&&o.kind==='pond');
+          if(!pond){fail(world,resident,progress,nextTick,'这个本人已知的目标不是取水池塘。');due.add(resident.id);break;}
+          if(distance(resident.position,pondApproachPoint(pond,resident.position))>1.05||movementBlocked(world,resident.position,resident.position)){
+            fail(world,resident,progress,nextTick,'离池塘安全岸边太远，需要先沿陆地走到岸边取水。');due.add(resident.id);break;
+          }
+          resident.heading=Math.atan2(pond.position.z-resident.position.z,pond.position.x-resident.position.x);
+          if(progress.elapsedTicks>=FETCH_WATER_TICKS){resident.water=WATER_CAPACITY;progress.done=true;ownReceipt(resident,world,`我在池塘岸边实际取水，现在携水${WATER_CAPACITY}份，可给农地浇水。`);}
+          break;
+        }
         case 'gather':{
           const object=world.objects.find(o=>o.id===knowledge!.entityId);
           if(!object||!['tree','rock','berry','crop'].includes(object.kind)){fail(world,resident,progress,nextTick,'这个目标不是可采集资源，不能对它执行gather。');due.add(resident.id);break;}
-          if(object.kind==='crop'&&object.crop?.stage!=='mature'){fail(world,resident,progress,nextTick,'眼前的作物尚未成熟，需要等到成熟后再收割。');due.add(resident.id);break;}
           if(distance(resident.position,object.position)>1.8){fail(world,resident,progress,nextTick,'我距离这个采集目标太远，需要先实际走到它附近。');due.add(resident.id);break;}
+          if(object.kind==='crop'){knowledge!.description=object.appearance;knowledge!.lastSeenTick=nextTick;knowledge!.descriptionSeenTick=nextTick;rememberLandmark(resident,knowledge!.ref,'crop',object.position,nextTick,object.resources<=0);}
+          if(object.kind==='crop'&&object.crop?.stage!=='mature'){fail(world,resident,progress,nextTick,'眼前的作物尚未成熟，需要等到成熟后再收割。');due.add(resident.id);break;}
           resident.heading=Math.atan2(object.position.z-resident.position.z,object.position.x-resident.position.x);
           const period=gatherPeriod(resident,object.resourceKind??'wood');
           if(progress.elapsedTicks%period===0){

@@ -37,7 +37,7 @@ export class Minimap{
    this.staticKey=key;const g=this.terrain.graphics;g.clear();g.drawRect(-2,-2,this.size+4,this.size+4,'#dfc79a','#eddbb2',3);const grass=grassTexture();if(grass)g.drawTexture(grass,0,0,this.size,this.size);else g.drawRect(0,0,this.size,this.size,'#a6c775');
 
    if(showZones)for(const zone of w.camp?.zones??[]){const a=point({x:zone.bounds.minX,z:zone.bounds.minZ}),b=point({x:zone.bounds.maxX,z:zone.bounds.maxZ}),color=zone.kind==='planting'?'#8dad68':zone.kind==='pasture'?'#cfaf6b':'#b6a0c4';g.drawRect(a.x,a.y,b.x-a.x,b.y-a.y,null,color,1);}
-   for(const o of w.objects){if(o.kind==='animal')continue;const p=point(o.position);if(o.kind==='crop'){g.drawCircle(p.x,p.y,1.6,o.crop?.stage==='mature'?'#e0bd60':o.crop?.stage==='harvested'?'#a88857':'#648745');continue;}if(o.resourceKind&&o.resources<=0)continue;
+   for(const o of w.objects){if(o.kind==='animal')continue;const p=point(o.position);if(o.kind==='crop'){if(['fallow','tilled','sown'].includes(o.crop?.stage??'')&&!showZones)continue;g.drawCircle(p.x,p.y,1.6,o.crop?.stage==='mature'?'#e0bd60':['fallow','tilled','sown','harvested'].includes(o.crop?.stage??'')?'#a88857':'#648745');continue;}if(o.resourceKind&&o.resources<=0)continue;
     if(o.kind==='house'||o.kind==='plot'||o.kind==='wall')g.drawRect(p.x-o.width*scale/2,p.y-o.depth*scale/2,o.width*scale,o.depth*scale,o.kind==='house'?'#d6b57f':null,o.kind==='wall'?'#333e36':'#edce93',1);
     else if(o.kind==='pond')g.drawCircle(p.x,p.y,o.width*scale/2,'#567f89');
     else if(o.kind==='board'){g.drawCircle(p.x,p.y,4,'#f3e7ba','#344d3e',1);g.drawLine(p.x-3,p.y,p.x+3,p.y,'#665238',1);g.drawLine(p.x,p.y-3,p.x,p.y+3,'#665238',1);}

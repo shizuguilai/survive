@@ -7,8 +7,12 @@ const clamp=(n:number,min=0,max=1)=>Math.max(min,Math.min(max,n));
 /** Render poses use the authoritative simulation tick. Pausing the world freezes every detail. */
 export function cropPose(crop:Crop,tick:number,offset=0){
  const harvested=crop.stage==='harvested',growth=clamp(crop.growth),age=Math.max(0,tick-(crop.harvestedTick??tick));
- return {height:harvested?.13:.22+growth*.78,spread:harvested?.72:.56+growth*.44,
-  sway:harvested?0:Math.sin(tick*.075+offset)*(.8+growth*2.3),
+ const prepared=crop.stage!=='fallow',sprouted=!['fallow','tilled','sown'].includes(crop.stage);
+ // Older saves had no moisture field. Their established plants retain their previous appearance.
+ const moisture=clamp(crop.moisture??(sprouted?1:0)),wet=prepared&&moisture>.18,dry=sprouted&&!harvested&&moisture<=0;
+ return {prepared,sprouted,seeds:crop.stage==='sown',wet,dry,
+  height:harvested?.13:.22+growth*.78,spread:harvested?.72:.56+growth*.44,
+  sway:harvested?0:(dry?7:0)+Math.sin(tick*.075+offset)*(dry?.4:.8+growth*2.3),
   grain:!harvested&&crop.stage!=='seedling'&&growth>.45?clamp((growth-.45)/.45):0,
   gold:crop.stage==='mature'||growth>.8,
   harvest:harvested&&age<22?1-age/22:0,harvestAge:age};
@@ -33,6 +37,7 @@ export class AgricultureMesh{
  private readonly L:any;private readonly palette:Palette;private disposed=false;
  private plants:{node:any;stem?:any;head?:any;leaves:any[];offset:number}[]=[];
  private sparks:{node:any;angle:number}[]=[];private glints:any[]=[];
+ private bed:any;private soil:any;private seeds:any[]=[];
  private body:any;private birdHead:any;private wings:any[]=[];private legs:any[]=[];
  private cropKind?:Crop['kind'];private animalKind?:Animal['kind'];private headBase=0;
  constructor(object:WorldObject){
@@ -63,10 +68,12 @@ export class AgricultureMesh{
  private turn(node:any,x:number,y:number,z:number):void{node.transform.localRotationEuler=this.vector(x,y,z);}
  private createCrop(object:WorldObject):void{
   const kind=this.cropKind!,rice=kind==='rice',w=Math.max(.85,object.width),d=Math.max(.85,object.depth);
-  this.part('planting bed rim','box','#968259',0,.016,0,w,.052,d);
-  this.part(rice?'shallow rice paddy':'tilled earth','box',rice?'#6e9891':'#79694c',0,.048,0,w-.09,.025,d-.09);
-  for(const side of [-1,1])this.part(rice?'paddy bank':'soil furrow','box',rice?'#adad73':'#a28b5d',side*w*.28,.065,0,rice?.045:.07,.014,d-.13);
-  if(rice)for(let i=0;i<2;i++)this.glints.push(this.part('paddy water glint','box','#a5c1af',-.23+i*.43,.07,-.28+i*.54,.24,.008,.025));
+  this.bed=this.group('prepared planting bed');
+  this.part('planting bed rim','box','#968259',0,.016,0,w,.052,d,this.bed);
+  this.soil=this.part(rice?'shallow rice paddy':'tilled earth','box','#79694c',0,.048,0,w-.09,.025,d-.09,this.bed);
+  for(const side of [-1,1])this.part(rice?'paddy bank':'soil furrow','box',rice?'#adad73':'#a28b5d',side*w*.28,.065,0,rice?.045:.07,.014,d-.13,this.bed);
+  if(rice)for(let i=0;i<2;i++)this.glints.push(this.part('paddy water glint','box','#c1ddd5',-.23+i*.43,.07,-.28+i*.54,.24,.008,.025,this.bed));
+  for(let i=0;i<3;i++)this.seeds.push(this.part('sown seed','sphere','#e5c278',(i-1)*w*.25,.082,(i%2?1:-1)*d*.16,.047,.023,.067,this.bed));
   const count=kind==='corn'?2:3;
   for(let i=0;i<count;i++){
    const angle=i*Math.PI*2/count+.4,x=Math.cos(angle)*w*.22,z=Math.sin(angle)*d*.22;
@@ -113,16 +120,18 @@ export class AgricultureMesh{
   if(this.disposed)return;
   this.node.transform.position=this.vector(object.position.x,object.position.y,object.position.z);
   if(object.kind==='crop'&&object.crop){
-   const crop=object.crop,carrot=this.cropKind==='carrot';
+   const crop=object.crop,carrot=this.cropKind==='carrot',pose=cropPose(crop,tick);
+   this.bed.active=pose.prepared;
+   this.soil.meshRenderer.sharedMaterial=this.material(pose.wet?(this.cropKind==='rice'?'#6e9891':'#61533c'):'#95805a');
+   for(const seed of this.seeds)seed.active=pose.seeds;
    for(const plant of this.plants){
-    const pose=cropPose(crop,tick,plant.offset);plant.node.transform.localScale=this.vector(pose.spread,pose.height,pose.spread);this.turn(plant.node,pose.sway*.45,0,pose.sway);
-    if(plant.stem)plant.stem.meshRenderer.sharedMaterial=this.material(pose.gold?'#b6a75c':'#82924c');
-    for(const leaf of plant.leaves)leaf.meshRenderer.sharedMaterial=this.material(pose.gold&&!carrot?'#a6a05a':'#759149');
+    const pose=cropPose(crop,tick,plant.offset);plant.node.active=pose.sprouted;plant.node.transform.localScale=this.vector(pose.spread,pose.height,pose.spread);this.turn(plant.node,pose.sway*.45,0,pose.sway);
+    if(plant.stem)plant.stem.meshRenderer.sharedMaterial=this.material(pose.gold?'#b6a75c':pose.dry?'#a49a62':'#82924c');
+    for(const leaf of plant.leaves)leaf.meshRenderer.sharedMaterial=this.material(pose.gold&&!carrot?'#a6a05a':pose.dry?'#989366':'#759149');
     if(plant.head){plant.head.active=carrot?crop.stage!=='harvested':pose.grain>0;const headScale=carrot?1:Math.max(.12,pose.grain);plant.head.transform.localScale=this.vector(carrot?.105:(this.cropKind==='corn'?.085:this.cropKind==='rice'?.063:.067)*headScale,carrot?.25:(this.cropKind==='corn'?.23:this.cropKind==='rice'?.175:.19)*headScale,carrot?.105:(this.cropKind==='corn'?.085:.052)*headScale);if(!carrot)plant.head.meshRenderer.sharedMaterial=this.material(pose.gold?'#ddbd66':'#acb96a');}
    }
-   const pose=cropPose(crop,tick);
    for(const spark of this.sparks){spark.node.active=pose.harvest>0;const distance=(1-pose.harvest)*.5;spark.node.transform.localPosition=this.vector(Math.cos(spark.angle)*distance,.25+Math.sin((1-pose.harvest)*Math.PI)*.6,Math.sin(spark.angle)*distance);spark.node.transform.localScale=this.vector(.04*pose.harvest,.075*pose.harvest,.04*pose.harvest);this.turn(spark.node,pose.harvestAge*11,spark.angle*90,pose.harvestAge*7);}
-   for(let i=0;i<this.glints.length;i++)this.glints[i].transform.localScale=this.vector(.20+Math.sin(tick*.045+i)*.04,.008,.025);
+   for(let i=0;i<this.glints.length;i++){this.glints[i].active=pose.wet;this.glints[i].transform.localScale=this.vector(.20+Math.sin(tick*.045+i)*.04,.008,.025);}
   }else if(object.kind==='animal'&&object.animal&&this.body){
    const animal=object.animal,pose=animalPose(animal,tick),goose=this.animalKind==='goose';
    this.node.transform.rotationEuler=this.vector(0,90-animal.heading*180/Math.PI,0);

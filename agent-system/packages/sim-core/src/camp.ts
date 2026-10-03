@@ -20,8 +20,8 @@ export function postTask(world:World,draft:TaskDraft):void{
     const zone={id,taskId,bounds,kind,...(kind==='planting'?{cropKind}:{animalKind})};
     world.camp.zones.push(zone);const count=populateAgriculture(world,zone);
     if(!count){world.camp.zones.pop();world.camp.sequence--;throw Error('这片区域没有可用空地，请避开资源和已划定区域');}
-    const note=kind==='planting'?`已播种${CROP_LABELS[cropKind]}幼苗，成熟后居民会走近收割食物，再搬入仓储。收割后休耕并重新发苗。`:`已放养${ANIMAL_LABELS[animalKind]}，在畜牧区内散步、啄食和扑翅；当前不产出食物。`;
-    world.camp.tasks.push({id:taskId,kind,zoneId:id,...(kind==='planting'?{cropKind}:{animalKind}),resource:'food',amount:count,progress:count,note,acceptedBy:[],status:'done',postedTick:world.tick});
+    const note=kind==='planting'?`划定${CROP_LABELS[cropKind]}荒地，居民需实际开垦→播种→池塘岸边取水→浇水，生长中缺水需补浇，成熟后收割入库；下一轮重新开垦播种。`:`已放养${ANIMAL_LABELS[animalKind]}，在畜牧区内散步、啄食和扑翅；当前不产出食物。`;
+    world.camp.tasks.push({id:taskId,kind,zoneId:id,...(kind==='planting'?{cropKind}:{animalKind}),resource:'food',amount:count,progress:kind==='planting'?0:count,note,acceptedBy:[],status:kind==='planting'?'open':'done',postedTick:world.tick});
     updateBoard(world);world.events.push({tick:world.tick,kind:'planner_task',agentId:'planner',text:`划定${kind==='planting'?'种植区':'畜牧区'} ${bounds.maxX-bounds.minX}×${bounds.maxZ-bounds.minZ}格；${note}`});return;
   }
   if(draft.kind==='residential'){
@@ -38,7 +38,7 @@ export function postTask(world:World,draft:TaskDraft):void{
     updateBoard(world);world.events.push({tick:world.tick,kind:'planner_task',agentId:'planner',text:`划定居住区 ${bounds.maxX-bounds.minX}×${bounds.maxZ-bounds.minZ}格；居民阅读公告后按需安家。`});return;
   }
   if(!['wood','stone','food'].includes(draft.resource)||!Number.isInteger(draft.amount)||draft.amount<1||draft.amount>50)throw Error('采集目标必须为1—50份');
-  if(world.camp.tasks.filter(t=>t.status==='open'&&!t.ownerId&&t.kind!=='residential').length>=6)throw Error('最多保留6项未完成目标');
+  if(world.camp.tasks.filter(t=>t.status==='open'&&!t.ownerId&&!['residential','planting','pasture'].includes(t.kind??'')).length>=6)throw Error('最多保留6项未完成目标');
   const kind=draft.kind??'gather';
   if(!['gather','craft','house'].includes(kind))throw Error('目标类型不支持');
   if(kind==='craft'&&!RECIPES.some(r=>r.id===draft.recipeId&&r.kind==='craft'))throw Error('制作目标配方不存在');
@@ -65,15 +65,23 @@ export function readBoard(world:World,resident:Resident,board:WorldObject):void{
   for(const task of world.camp?.tasks??[]){
     let entry=Object.values(resident.known).find(k=>k.entityId===task.id);
     if(!entry){const ref=`known_${++resident.knowledgeSequence}`;entry={ref,entityId:task.id,description:'',lastPosition:{...board.position},lastSeenTick:world.tick,visible:false,recognizedName:null};resident.known[ref]=entry;}
-    const instruction=task.kind==='planting'||task.kind==='pasture'?'区域已划定，无需accept_task；具体动植物位置和状态仍需亲自观察。':'这是已读任务，直接accept_task，无需对任务引用read_notice。';
+    const instruction=task.kind==='pasture'?'区域已划定，无需accept_task；具体动物位置和状态仍需亲自观察。':task.kind==='planting'?'这是一片长期农田，可以accept_task自愿照料；需先去公告标注的农地区域亲自查看，再按实际状态开垦、播种、取水、浇水、收割。':'这是已读任务，直接accept_task，无需对任务引用read_notice。';
     const description=`公告任务：${taskTitle(task)}；进度${task.progress}/${task.amount}；${task.status==='done'?'已完成':task.acceptedBy.includes(resident.id)?'你已自愿接受':'可自愿接受或拒绝'}。${instruction}${task.note}`;
     entry.description=description;entry.lastSeenTick=world.tick;entry.lastPosition={...board.position};
     const obs={obsRef:`observation_${++resident.observationSequence}`,experiencedWhen:experiencedWhen(world.tick),certainty:'clear' as const,modality:'visual' as const,detail:{level:'described',relativeDirection:'front',distanceBand:'near',appearance:description.match(/.{1,120}/gu)??[],recognizedName:null,knownRef:entry.ref}};
     resident.observations.push(obs);rememberObservation(resident,obs);
     if(task.kind==='house')learnHouse(world,resident,task);
+    if(task.kind==='planting'){
+      const zone=world.camp?.zones?.find(z=>z.id===task.zoneId);
+      if(zone){const b=zone.bounds;grantKnown(resident,'field-'+zone.id,`公告标注的${CROP_LABELS[zone.cropKind??'rice']}种植区位置，现场状态未知。先walk到这片区域、survey查看各地块；开垦farm(till)→播种farm(sow)→在自己知道的池塘岸边fetch_water→farm(water)；缺水时补浇，成熟后gather并haul入库。`,{x:(b.minX+b.maxX)/2,y:0,z:(b.minZ+b.maxZ)/2},world.tick);}
+    }
     if(task.kind==='residential')entry.description+='；这是一片长期居住区，不是单间房。无住房时可用accept_task自主申请自己的小屋；随后为自己的新建房任务备料、build。已拥有或正在建设自己的房屋时无需再申请。';
     if(task.kind==='craft')entry.description+=`；需自行在工作台读配方再制作，不会凭空获得工具。`;
   }
+  // The camp notice publishes its fixed public water point. This is a read
+  // location clue, never a scan of arbitrary ponds or their current condition.
+  const waterPoint=world.objects.find(o=>o.id==='camp-pond'&&o.kind==='pond');
+  if(waterPoint)grantKnown(resident,waterPoint.id,'公告标注的营地池塘取水点，未亲见当前情况；沿陆地走到岸边后实际fetch_water，每次装满6份。',waterPoint.position,world.tick);
   const notice=grantKnown(resident,board.id,`公告板实体兼公共仓储；刚看到库存：${materialText(world.camp?.stock??{})||'空'}。可haul存入，withdraw领取；这是此次亲见快照。`,board.position,world.tick);
   ownReceipt(resident,world,`我亲眼读到公共仓储库存：${materialText(world.camp?.stock??{})||'空'}。这是此刻的快照，之后他人可能存取。公告板实体引用为${notice.ref}，重读公告用它作为noticeRef；已读任务引用直接accept_task，建房再使用build。`,'memory_stock_notice');
   ownReceipt(resident,world,'我走近并读完了公告板。接受任务需accept_task。采集任务要实际gather；制作任务需craft；建房需按已读步骤build并消耗仓储材料，备料不足时再采集搬运。');

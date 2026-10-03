@@ -4,6 +4,7 @@ import type {World,Resident,KnowledgeEntry,ResourceKind} from './domain.ts';
 import {dayClock,FURNITURE,ownHouse,isInside,onBreak,residentThought} from './living.ts';
 import {nextHomeCare} from './home-care.ts';
 import {homeSites} from './housing.ts';
+import {pondApproachPoint} from './navigation.ts';
 import {HOUSE_STEPS,houseSteps,houseCost,RECIPES,taskTitle} from './recipes.ts';
 import {hashCanonical} from '../../contracts/src/canonical.ts';
 
@@ -25,13 +26,14 @@ export class ColonyProvider implements BrainProvider{
   return {requestId:`command-${world.runId}-${this.phase+1}-${world.tick}`,runId:world.runId,tick:world.tick,phaseUnits:this.settings.phaseUnits,tasks:tasks.map(t=>({id:t.id,title:t.ownerId?(world.residents.find(r=>r.id===t.ownerId)?.name+'的住处 · '+taskTitle(t)):taskTitle(t),progress:t.progress,amount:t.amount})),stock:{wood:world.camp?.stock?.wood??0,stone:world.camp?.stock?.stone??0,food:world.camp?.stock?.food??0},reports:world.residents.filter(r=>(r.health??100)>0).map(r=>({residentId:r.id,name:r.name,body:`${dayClock(world.tick).label} 饱腹感${Math.round((1-r.hunger)*100)}% 精力${Math.round((1-r.fatigue)*100)}% 心情${Math.round((r.mood??.75)*100)}% 生命${r.health??100}；${residentThought(world,r)}`,working:r.goal||'暂无安排',recentResults:r.memories.filter(m=>m.ref.startsWith('memory_action_')||m.ref.startsWith('memory_task_')).slice(-4).map(m=>m.text.slice(0,500)),knownLandmarks:Object.values(r.known).filter(k=>k.descriptionSeenTick!==undefined).slice(-16).map(k=>k.description.slice(0,160)),options:[...tasks.filter(t=>t.kind!=='residential'||(!r.homeId&&!world.camp?.tasks.some(h=>h.ownerId===r.id)&&!!world.camp?.zones?.some(z=>z.id===t.zoneId&&homeSites(world,z.bounds).length))).map(t=>({id:t.id,label:taskTitle(t)})),{id:'stock-wood',label:'采集并入库木材'},{id:'stock-stone',label:'采集并入库石料'},{id:'stock-food',label:'采集并入库口粮'},...(nextHomeCare(world,r)?[{id:'home-care',label:'满足自己的家具、清洁或扩建需求'}]:[]),{id:'rest',label:'休息恢复'},{id:'explore',label:'观察附近、探索已知方向'}]}))};
  }
  private localPlan(r:CommandRequest):CommandPlan{
-  const tasks=[...r.tasks].reverse();
-  return {summary:'本地算法：优先新任务，按缺料补给、实际加工与施工执行',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:p.knownLandmarks.some(k=>k.includes('已成熟')&&k.includes('收割'))&&r.stock.food<24?'stock-food':tasks.find(t=>t.title.includes(p.name+'的住处'))?.id??p.options.find(o=>o.id==='home-care')?.id??tasks.find(t=>p.options.some(o=>o.id===t.id))?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
+  const tasks=[...r.tasks].reverse(),farms=tasks.filter(t=>t.title.startsWith('种植区')),otherTasks=tasks.filter(t=>!t.title.startsWith('种植区'));
+  const farmerCount=farms.length?(r.reports.length===1?(this.phase%2===0||!otherTasks.length?1:0):Math.ceil(r.reports.length/2)):0;
+  return {summary:'本地算法：分配农田照料，同时保留备料、加工与施工人手',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:i<farmerCount?farms[(Math.floor(this.phase/2)+i)%farms.length].id:p.knownLandmarks.some(k=>k.includes('已成熟')&&k.includes('收割'))&&r.stock.food<24?'stock-food':otherTasks.find(t=>t.title.includes(p.name+'的住处'))?.id??p.options.find(o=>o.id==='home-care')?.id??otherTasks.find(t=>p.options.some(o=>o.id===t.id))?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
  }
  async decideBatch(requests:BrainRequest[],world:World,signal?:AbortSignal):Promise<BrainResponse[]>{
   signal?.throwIfAborted();this.lastTick=world.tick;
   for(const r of world.residents){const o=this.orders.get(r.id);if(!o)continue;const task=world.camp?.tasks.find(t=>t.id===o.objective);
-   if(task&&(task.status==='done'||task.progress>=o.startProgress+(task.kind==='house'||task.kind==='craft'?1:this.settings.phaseUnits)))o.done=true;
+   if(task&&task.kind!=='planting'&&(task.status==='done'||task.progress>=o.startProgress+(task.kind==='house'||task.kind==='craft'?1:this.settings.phaseUnits)))o.done=true;
    if(world.events.some(e=>e.agentId===r.id&&e.tick>o.startTick&&e.kind==='action_completed'&&(e.text==='haul'&&o.objective.startsWith('stock-')||e.text==='rest'&&o.objective==='rest')))o.done=true;
    if(world.tick-o.startTick>=2400||o.failures>=5)o.done=true;
   }
@@ -48,8 +50,8 @@ export class ColonyProvider implements BrainProvider{
    if(this.settings.mode==='local'||this.fallbackActive)for(const a of plan.assignments){
     const person=world.residents.find(r=>r.id===a.residentId)!;
     const own=world.camp?.tasks.find(t=>t.ownerId===person.id&&t.status==='open');
-    if(own)a.objective=own.id;
-    else if(nextHomeCare(world,person)&&a.objective!=='stock-food')a.objective='home-care';
+    if(own&&world.camp?.tasks.find(t=>t.id===a.objective)?.kind!=='planting')a.objective=own.id;
+    else if(nextHomeCare(world,person)&&a.objective!=='stock-food'&&world.camp?.tasks.find(t=>t.id===a.objective)?.kind!=='planting')a.objective='home-care';
     else if(person.homeId&&world.camp?.tasks.find(t=>t.id===a.objective)?.kind==='residential')a.objective='stock-wood';
    }
    this.orders=new Map(plan.assignments.map(a=>[a.residentId,{objective:a.objective,startProgress:world.camp?.tasks.find(t=>t.id===a.objective)?.progress??0,startTick:world.tick,done:false,failures:0,blocked:new Set<string>()}]));
@@ -70,17 +72,44 @@ export class ColonyProvider implements BrainProvider{
   const at=(k:KnowledgeEntry,a:Action)=>near(k)?[a]:[action('walk',{targetRef:k.ref,gait:'walk'}),a];
   const board=known.find(k=>k.entityId==='camp-board'),station=known.find(k=>k.entityId==='camp-workbench');
   const supply=(kind:ResourceKind)=>find(`supply-${kind}-${r.id}`);
-  if(r.actionFeedback.length){o.failures++;const last=[...r.plan].reverse().find(p=>p.done)?.action;const ref=last?.params.targetRef;if(ref&&!r.actionFeedback.some(x=>x.includes('太远')))o.blocked.add(ref);}
+  if(r.actionFeedback.length){o.failures++;const last=[...r.plan].reverse().find(p=>p.done)?.action;const ref=last?.params.targetRef;if(ref&&last?.op!=='farm'&&!r.actionFeedback.some(x=>x.includes('太远')))o.blocked.add(ref);}
   const gather=(kind:ResourceKind,amount:number):Action[]=>{
    const type=kind==='wood'?'tree':kind==='stone'?'rock':'berry';
    const refs=new Set(Object.values(r.spatialMemory?.landmarks??{}).filter(l=>(l.kind===type||kind==='food'&&l.kind==='crop')&&l.state!=='depleted').map(l=>l.knownRef));
-   const target=known.filter(k=>refs.has(k.ref)&&!o.blocked.has(k.ref)&&!k.description.includes('采空')).sort((a,b)=>(kind==='food'?Number(b.description.includes('已成熟'))-Number(a.description.includes('已成熟')):0)||dist(r,a)-dist(r,b))[0];
-   if(!target)return explore();return at(target,action('gather',{targetRef:target.ref,amount:Math.max(1,Math.min(amount,8,30-r.inventory))}));
+   const target=known.filter(k=>refs.has(k.ref)&&!o.blocked.has(k.ref)&&!k.description.includes('采空')&&(kind!=='food'||!r.spatialMemory?.landmarks[k.ref]||r.spatialMemory.landmarks[k.ref].kind!=='crop'||k.description.includes('已成熟'))).sort((a,b)=>(kind==='food'?Number(b.description.includes('已成熟'))-Number(a.description.includes('已成熟')):0)||dist(r,a)-dist(r,b))[0];
+   if(!target)return kind==='food'?(farming()??explore()):explore();return at(target,action('gather',{targetRef:target.ref,amount:Math.max(1,Math.min(amount,8,30-r.inventory))}));
   };
   const explore=():Action[]=>{
    const target=known.filter(k=>!o.blocked.has(k.ref)&&dist(r,k)>2&&dist(r,k)<24&&!k.entityId.startsWith('supply-')&&!k.entityId.startsWith('item_')&&!k.description.includes('墙')).sort((a,b)=>a.lastSeenTick-b.lastSeenTick||dist(r,a)-dist(r,b))[0];
    if(target)return [action('walk',{targetRef:target.ref,gait:'walk'})];
    // Survey is physical turning, not a hidden map scan or cognition call.
+   return [action('survey',{durationSimMs:2000})];
+  };
+  const farming=(zoneId?:string):Action[]|null=>{
+   // Work only from personally observed descriptions. The announcement provides
+   // a destination, never live crop state or hidden water sources.
+   const crops=known.filter(k=>r.spatialMemory?.landmarks[k.ref]?.kind==='crop'&&(!zoneId||k.entityId.startsWith(zoneId+'-crop-')));
+   const priority=(k:KnowledgeEntry)=>k.description.includes('已成熟')?0:k.description.includes('缺水')||k.description.includes('已播种')?1:k.description.includes('土壤偏干')?2:k.description.includes('已开垦')?3:k.description.includes('待开垦')||k.description.includes('已收割')?4:9;
+   const rank=w.residents.indexOf(r),count=w.residents.length;
+   const lane=(k:KnowledgeEntry)=>Number(k.entityId.split('-').at(-1))%count===rank?0:1;
+   const target=crops.filter(k=>priority(k)<9).sort((a,b)=>priority(a)-priority(b)||lane(a)-lane(b)||dist(r,a)-dist(r,b))[0];
+   if(target){
+    const work=priority(target)===0?'harvest':priority(target)<=2?'water':priority(target)===3?'sow':'till';
+    if(work==='harvest')return at(target,action('gather',{targetRef:target.ref,amount:8}));
+    if(work==='water'&&(r.water??0)<1){
+     const pond=known.filter(k=>(r.spatialMemory?.landmarks[k.ref]?.kind==='pond'||k.entityId==='camp-pond'&&k.description.includes('公告标注'))).sort((a,b)=>dist(r,a)-dist(r,b))[0];
+     if(!pond)return explore();
+     const source=w.objects.find(object=>object.id===pond.entityId&&object.kind==='pond');
+     const shore=source?pondApproachPoint(source,r.position):pond.lastPosition;
+     return Math.hypot(r.position.x-shore.x,r.position.z-shore.z)<=1.05?[action('fetch_water',{sourceRef:pond.ref})]:[action('walk',{targetRef:pond.ref,gait:'walk'}),action('fetch_water',{sourceRef:pond.ref})];
+    }
+    return at(target,action('farm',{targetRef:target.ref,work}));
+   }
+   if(!zoneId)return null;
+   const location=find('field-'+zoneId);
+   if(location&&dist(r,location)>2)return [action('walk',{targetRef:location.ref,gait:'walk'}),action('survey',{durationSimMs:2000})];
+   // Periodically turn to inspect known plants; dry soil and maturity must be
+   // observed before the planner can decide to irrigate or harvest them.
    return [action('survey',{durationSimMs:2000})];
   };
   const deposit=(kind:ResourceKind):Action[]=>{const k=supply(kind);if(!board)return explore();if(!k||!r.supplies?.[kind])return gather(kind,this.settings.phaseUnits);return at(board,action('haul',{sourceRef:k.ref,destinationRef:board.ref,amount:Math.min(r.supplies[kind]!,this.settings.phaseUnits)}));};
@@ -106,6 +135,10 @@ export class ColonyProvider implements BrainProvider{
   const tk=find(task.id);
   if(!tk){if(!board)return explore();return at(board,action('read_notice',{noticeRef:board.ref}));}
   if(!task.acceptedBy.includes(r.id)){const evidence=context.observations.filter(x=>x.detail.knownRef===tk.ref).slice(-1).map(x=>x.obsRef);if(!evidence.length)return board?at(board,action('read_notice',{noticeRef:board.ref})):explore();return [action('accept_task',{taskRef:tk.ref,evidenceRefs:evidence})];}
+  if(task.kind==='planting'){
+   if((r.supplies?.food??0)>0)return deposit('food');
+   return farming(task.zoneId)??explore();
+  }
   if(task.kind==='house'){
    const step=houseSteps(task)[task.progress];if(!step){o.done=true;return [wait()];}
    const missing=(['wood','stone'] as const).filter(k=>((task.reserved??w.camp?.stock)?.[k]??0)<(step.cost[k]??0));

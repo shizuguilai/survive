@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {pawnPose} from '../apps/laya-client/src/pawn-pose.ts';
+import {pawnPose,farmingPose} from '../apps/laya-client/src/pawn-pose.ts';
 import {createCrewWorld} from '../packages/sim-core/src/world.ts';
 
 const walker=()=>{
@@ -19,4 +19,12 @@ test('queued, unstarted, stationary and dead residents do not walk in place',()=
   r.plan[0].startedTick=1;r.health=0;assert.equal(pawnPose(r).moving,false);r.health=100;
   r.plan.unshift({action:{op:'wait',stage:0,params:{durationSimMs:500}},elapsedTicks:3,startedTick:1,emittedChars:0,done:false});assert.equal(pawnPose(r).moving,false);
   r.plan=[];assert.equal(pawnPose(r).moving,false);
+});
+
+test('Farming animation requires actual started work, freezes on simulation pause and keeps carried water visible',()=>{
+ const r=walker();r.plan=[{action:{op:'farm',stage:1,params:{targetRef:'private-crop',work:'till'}},elapsedTicks:7,startedTick:1,emittedChars:0,done:false}];
+ const before=JSON.stringify(r),pose=farmingPose(r);assert.equal(pose.work,'till');for(let i=0;i<100;i++)assert.deepEqual(farmingPose(r),pose);assert.equal(JSON.stringify(r),before);
+ r.plan[0].elapsedTicks=15;assert.notDeepEqual(farmingPose(r),pose);r.plan[0].startedTick=null;assert.equal(farmingPose(r).active,false);
+ r.plan[0].startedTick=1;r.plan.unshift({action:{op:'walk',stage:0,params:{targetRef:'private-crop'}},elapsedTicks:3,startedTick:1,emittedChars:0,done:false});assert.equal(farmingPose(r).active,false);
+ r.plan=[];r.water=4;assert.equal(farmingPose(r).carrying,true);assert.equal(farmingPose(r).waterLevel,4/6);r.health=0;assert.equal(farmingPose(r).carrying,false);
 });

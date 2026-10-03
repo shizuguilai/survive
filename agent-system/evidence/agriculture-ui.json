@@ -1,45 +1,210 @@
 {
   "mode": "EXPLICIT_VISUAL_FIXTURE",
-  "simulation": "postTask + advanceAgriculture + applyDecision(gather) + stepActions",
+  "simulation": "postTask + applyDecision(walk, farm, fetch_water, gather) + stepActions + advanceAgriculture; no injected crop stage",
+  "knownTargets": "explicit fixture knowledge; independent local-algorithm integration is tested separately",
   "results": [
     {
       "width": 1536,
       "height": 864,
       "dpr": 1,
       "initial": {
-        "agricultureFontLoaded": true,
+        "fontLoaded": true,
         "zoneShown": false,
         "zoneCommands": 0,
         "zoom": 32,
         "expectedZoom": 32,
         "mapSize": 96,
-        "crops": 24,
-        "animals": 8,
+        "crops": 16,
+        "animals": 9,
         "stages": [
-          "seedling",
-          "growing",
-          "mature"
+          "fallow"
         ],
+        "resources": 0,
         "nativeResidents": 4,
-        "paintedResidents": 0
+        "paintedResidents": 0,
+        "visibleRice": [
+          "zone-1-crop-0"
+        ]
       },
-      "motion": {
+      "pond": {
+        "from": {
+          "x": -18,
+          "y": 0,
+          "z": -10
+        },
+        "to": {
+          "x": -6.680144741143978,
+          "y": 0,
+          "z": -9.578807489271009
+        },
+        "steps": 185,
+        "pathLength": 12.929558830875331,
+        "straightDistance": 12,
+        "minCenterDistance": 3.1363265436303545,
+        "collisionRadius": 3.1,
+        "waterRadius": 2.5,
+        "segmentsClear": true,
+        "feedback": []
+      },
+      "workAnimations": {
+        "till": {
+          "moves": true,
+          "pauseFreezes": true,
+          "toolVisible": true,
+          "startStage": "fallow",
+          "endStage": "tilled"
+        },
+        "sow": {
+          "moves": true,
+          "pauseFreezes": true,
+          "toolVisible": true,
+          "startStage": "tilled",
+          "endStage": "sown"
+        }
+      },
+      "fetchWater": {
+        "moves": true,
+        "pauseFreezes": true,
+        "capacity": 6
+      },
+      "firstWater": {
+        "id": "zone-1-crop-0",
+        "kind": "rice",
+        "stage": "seedling",
+        "growth": 0.0005,
+        "plantedTick": 8757,
+        "cycles": 0,
+        "moisture": 0.999,
+        "lastWateredTick": 8757,
+        "resources": 0,
+        "water": 5,
+        "tick": 8757
+      },
+      "pendingAndUnwateredDoNotAutoGrow": true,
+      "dryGrowthPauses": true,
+      "grown": {
+        "start": 10267,
+        "sownTick": 13057,
+        "tick": 47032,
+        "crops": [
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          }
+        ],
+        "actions": {
+          "walk": 40,
+          "till": 16,
+          "sow": 16,
+          "fetch_water": 9,
+          "water": 51
+        },
+        "actualMovementSteps": 2482,
+        "feedback": []
+      },
+      "stable": {
         "sameInstances": true,
-        "animalMoves": true,
-        "poseMoves": true,
-        "cropGrows": true,
+        "sameResident": true,
         "nativeAgriculture": true
       },
-      "pauseFreezesTickWorldAndNativePoses": true,
       "zoneToggle": {
         "shown": true,
-        "commands": 63,
+        "commands": 45,
         "aboveArt": true,
-        "passThrough": true,
-        "clipWidth": 1280,
-        "viewportWidth": 1280
+        "passThrough": true
       },
-      "drawingAutoShowsZones": true,
       "viewControlsDoNotMutateWorld": true,
       "confirmedUiZones": [
         {
@@ -47,6 +212,7 @@
           "variant": "corn",
           "objects": 4,
           "allExpected": true,
+          "allFallow": true,
           "drawingClosed": true
         },
         {
@@ -54,40 +220,59 @@
           "variant": "goose",
           "objects": 4,
           "allExpected": true,
+          "allFallow": null,
           "drawingClosed": true
         }
       ],
       "harvest": {
         "id": "zone-1-crop-0",
+        "kind": "rice",
         "stage": "harvested",
-        "resources": 0,
-        "harvestedTick": 8065,
-        "tick": 8065,
+        "growth": 0,
+        "plantedTick": 8757,
         "cycles": 1,
-        "foodGained": 3,
+        "moisture": 0,
+        "lastWateredTick": 14102,
+        "harvestedTick": 47358,
+        "resources": 0,
+        "water": 3,
+        "tick": 47358,
         "amount": 3,
+        "foodGained": 3,
         "stockUnchanged": true,
         "completed": true,
-        "errors": [],
-        "steps": 60
+        "errors": []
       },
-      "harvestVisual": {
-        "sameInstance": true,
-        "grainHidden": true,
-        "flecks": 3
+      "noAutomaticRegrowth": true,
+      "poultry": {
+        "species": [
+          "chicken",
+          "duck",
+          "goose"
+        ],
+        "posesMove": true
       },
       "errors": [],
       "missing": [],
       "screenshots": [
-        "local-evidence/agriculture-default-1536.png",
-        "local-evidence/agriculture-overview-1536.png",
-        "local-evidence/agriculture-zones-1536.png",
-        "local-evidence/agriculture-planting-planner-1536.png",
-        "local-evidence/agriculture-drawing-1536.png",
-        "local-evidence/agriculture-pasture-planner-1536.png",
-        "local-evidence/agriculture-harvest-1536.png",
-        "local-evidence/agriculture-rice-closeup-1536.png",
-        "local-evidence/agriculture-poultry-closeup-1536.png"
+        "local-evidence/farming-default-1536.png",
+        "local-evidence/farming-pending-field-1536.png",
+        "local-evidence/farming-pond-route-1536.png",
+        "local-evidence/farming-till-working-1536.png",
+        "local-evidence/farming-till-finished-1536.png",
+        "local-evidence/farming-sow-working-1536.png",
+        "local-evidence/farming-sow-finished-1536.png",
+        "local-evidence/farming-fetching-water-1536.png",
+        "local-evidence/farming-fetched-water-1536.png",
+        "local-evidence/farming-watering-1536.png",
+        "local-evidence/farming-first-water-1536.png",
+        "local-evidence/farming-dry-growth-paused-1536.png",
+        "local-evidence/farming-cultivated-field-1536.png",
+        "local-evidence/farming-zones-1536.png",
+        "local-evidence/farming-planting-planner-1536.png",
+        "local-evidence/farming-pasture-planner-1536.png",
+        "local-evidence/farming-harvest-1536.png",
+        "local-evidence/farming-poultry-1536.png"
       ]
     },
     {
@@ -95,39 +280,203 @@
       "height": 390,
       "dpr": 2,
       "initial": {
-        "agricultureFontLoaded": true,
+        "fontLoaded": true,
         "zoneShown": false,
         "zoneCommands": 0,
         "zoom": 32,
         "expectedZoom": 32,
         "mapSize": 96,
-        "crops": 24,
-        "animals": 8,
+        "crops": 16,
+        "animals": 9,
         "stages": [
-          "seedling",
-          "growing",
-          "mature"
+          "fallow"
         ],
+        "resources": 0,
         "nativeResidents": 4,
-        "paintedResidents": 0
+        "paintedResidents": 0,
+        "visibleRice": [
+          "zone-1-crop-0"
+        ]
       },
-      "motion": {
+      "pond": {
+        "from": {
+          "x": -18,
+          "y": 0,
+          "z": -10
+        },
+        "to": {
+          "x": -6.680144741143978,
+          "y": 0,
+          "z": -9.578807489271009
+        },
+        "steps": 185,
+        "pathLength": 12.929558830875331,
+        "straightDistance": 12,
+        "minCenterDistance": 3.1363265436303545,
+        "collisionRadius": 3.1,
+        "waterRadius": 2.5,
+        "segmentsClear": true,
+        "feedback": []
+      },
+      "workAnimations": {
+        "till": {
+          "moves": true,
+          "pauseFreezes": true,
+          "toolVisible": true,
+          "startStage": "fallow",
+          "endStage": "tilled"
+        },
+        "sow": {
+          "moves": true,
+          "pauseFreezes": true,
+          "toolVisible": true,
+          "startStage": "tilled",
+          "endStage": "sown"
+        }
+      },
+      "fetchWater": {
+        "moves": true,
+        "pauseFreezes": true,
+        "capacity": 6
+      },
+      "firstWater": {
+        "id": "zone-1-crop-0",
+        "kind": "rice",
+        "stage": "seedling",
+        "growth": 0.0005,
+        "plantedTick": 8757,
+        "cycles": 0,
+        "moisture": 0.999,
+        "lastWateredTick": 8757,
+        "resources": 0,
+        "water": 5,
+        "tick": 8757
+      },
+      "pendingAndUnwateredDoNotAutoGrow": true,
+      "dryGrowthPauses": true,
+      "grown": {
+        "start": 10267,
+        "sownTick": 13057,
+        "tick": 47032,
+        "crops": [
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "rice",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "wheat",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 3
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "corn",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 4
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          },
+          {
+            "kind": "carrot",
+            "stage": "mature",
+            "growth": 1,
+            "resources": 2
+          }
+        ],
+        "actions": {
+          "walk": 40,
+          "till": 16,
+          "sow": 16,
+          "fetch_water": 9,
+          "water": 51
+        },
+        "actualMovementSteps": 2482,
+        "feedback": []
+      },
+      "stable": {
         "sameInstances": true,
-        "animalMoves": true,
-        "poseMoves": true,
-        "cropGrows": true,
+        "sameResident": true,
         "nativeAgriculture": true
       },
-      "pauseFreezesTickWorldAndNativePoses": true,
       "zoneToggle": {
         "shown": true,
-        "commands": 63,
+        "commands": 45,
         "aboveArt": true,
-        "passThrough": true,
-        "clipWidth": 1280,
-        "viewportWidth": 1280
+        "passThrough": true
       },
-      "drawingAutoShowsZones": true,
       "viewControlsDoNotMutateWorld": true,
       "confirmedUiZones": [
         {
@@ -135,6 +484,7 @@
           "variant": "corn",
           "objects": 4,
           "allExpected": true,
+          "allFallow": true,
           "drawingClosed": true
         },
         {
@@ -142,40 +492,59 @@
           "variant": "goose",
           "objects": 4,
           "allExpected": true,
+          "allFallow": null,
           "drawingClosed": true
         }
       ],
       "harvest": {
         "id": "zone-1-crop-0",
+        "kind": "rice",
         "stage": "harvested",
-        "resources": 0,
-        "harvestedTick": 8065,
-        "tick": 8065,
+        "growth": 0,
+        "plantedTick": 8757,
         "cycles": 1,
-        "foodGained": 3,
+        "moisture": 0,
+        "lastWateredTick": 14102,
+        "harvestedTick": 47358,
+        "resources": 0,
+        "water": 3,
+        "tick": 47358,
         "amount": 3,
+        "foodGained": 3,
         "stockUnchanged": true,
         "completed": true,
-        "errors": [],
-        "steps": 60
+        "errors": []
       },
-      "harvestVisual": {
-        "sameInstance": true,
-        "grainHidden": true,
-        "flecks": 3
+      "noAutomaticRegrowth": true,
+      "poultry": {
+        "species": [
+          "chicken",
+          "duck",
+          "goose"
+        ],
+        "posesMove": true
       },
       "errors": [],
       "missing": [],
       "screenshots": [
-        "local-evidence/agriculture-default-844.png",
-        "local-evidence/agriculture-overview-844.png",
-        "local-evidence/agriculture-zones-844.png",
-        "local-evidence/agriculture-planting-planner-844.png",
-        "local-evidence/agriculture-drawing-844.png",
-        "local-evidence/agriculture-pasture-planner-844.png",
-        "local-evidence/agriculture-harvest-844.png",
-        "local-evidence/agriculture-rice-closeup-844.png",
-        "local-evidence/agriculture-poultry-closeup-844.png"
+        "local-evidence/farming-default-844.png",
+        "local-evidence/farming-pending-field-844.png",
+        "local-evidence/farming-pond-route-844.png",
+        "local-evidence/farming-till-working-844.png",
+        "local-evidence/farming-till-finished-844.png",
+        "local-evidence/farming-sow-working-844.png",
+        "local-evidence/farming-sow-finished-844.png",
+        "local-evidence/farming-fetching-water-844.png",
+        "local-evidence/farming-fetched-water-844.png",
+        "local-evidence/farming-watering-844.png",
+        "local-evidence/farming-first-water-844.png",
+        "local-evidence/farming-dry-growth-paused-844.png",
+        "local-evidence/farming-cultivated-field-844.png",
+        "local-evidence/farming-zones-844.png",
+        "local-evidence/farming-planting-planner-844.png",
+        "local-evidence/farming-pasture-planner-844.png",
+        "local-evidence/farming-harvest-844.png",
+        "local-evidence/farming-poultry-844.png"
       ]
     }
   ],

@@ -1,4 +1,4 @@
-import {pawnPose,workPose} from './pawn-pose.ts';
+import {pawnPose,workPose,farmingPose} from './pawn-pose.ts';
 import type { Resident } from '../../../packages/sim-core/src/domain.ts';
 import {createCharacterState,equippedItem} from '../../../packages/sim-core/src/character.ts';
 import type {CharacterState,EquipmentSlot} from '../../../packages/sim-core/src/character.ts';
@@ -9,7 +9,10 @@ export class CharacterMesh {
   height=1.9;
   private signature='';private visuals:any;private shadow:any;
   private hands:{node:any;side:number;x:number;y:number;z:number}[]=[];private sharedGrip:any;private twoHanded=false;
+  private handheld:any[]=[];private hoe:any;private seedPouch:any;private bucket:any;private bucketWater:any;
+  private seedParticles:any[]=[];private waterDrops:any[]=[];
   private geometries:any[]=[];private materials:any[]=[];private ink:any;private disposed=false;
+  private materialByColor=new Map<string,any>();
   private readonly L:any;
   constructor(resident:Resident){
     this.L=(globalThis as any).Laya;
@@ -27,17 +30,21 @@ export class CharacterMesh {
     this.node.transform.rotationEuler=new L.Vector3(0,90-resident.heading*180/Math.PI,(resident.health??100)<=0?90:0);
     const pose=pawnPose(resident);this.visuals.transform.localPosition=new L.Vector3(0,pose.bob,0);
     this.shadow.transform.localPosition=new L.Vector3(.07,.015-pose.bob,-.04);
-    const work=workPose(resident),sleeping=resident.plan?.some(p=>!p.done&&p.action.op==='rest'&&p.bedSettled)??false;if(sleeping)this.visuals.transform.localPosition=new L.Vector3(0,.43,.78);this.visuals.transform.localRotationEuler=new L.Vector3(sleeping?-90:work.lean,0,0);
+    const work=workPose(resident),farm=farmingPose(resident);farm.carrying&&=!work.active;
+    const farming=farm.active||farm.carrying,sleeping=resident.plan?.some(p=>!p.done&&p.action.op==='rest'&&p.bedSettled)??false;if(sleeping)this.visuals.transform.localPosition=new L.Vector3(0,.43,.78);this.visuals.transform.localRotationEuler=new L.Vector3(sleeping?-90:work.lean,0,0);
     for(const h of this.hands){const lift=work.active?(this.twoHanded||h.side>0?work.right:work.left):0;const swing=pose.stride*(this.twoHanded?.045:h.side*.26);h.node.transform.localPosition=new L.Vector3(h.x,h.y+(this.twoHanded?0:Math.abs(pose.stride)*.045)+lift,h.z+swing+(work.active?.24-lift*.3:0));h.node.transform.localRotationEuler=new L.Vector3(work.active?-25-lift*100:this.twoHanded?0:pose.stride*h.side*14,0,0);}
-    if(this.sharedGrip)this.sharedGrip.transform.localPosition=new L.Vector3(0,work.active?work.right:0,pose.stride*.045+(work.active?.18:0));
+    if(this.sharedGrip){this.sharedGrip.active=!farming;this.sharedGrip.transform.localPosition=new L.Vector3(0,work.active?work.right:0,pose.stride*.045+(work.active?.18:0));}
+    for(const held of this.handheld)held.active=!farming;
+    this.updateFarming(farm,pose.stride);
   }
   private color(hex:string):any{const n=parseInt(hex.slice(1),16);return new this.L.Color((n>>16&255)/255,(n>>8&255)/255,(n&255)/255,1);}
   private part(name:string,geometry:any,color:string,x:number,y:number,z:number,sx=1,sy=1,sz=1,parent=this.visuals):any{
-    const L=this.L,mesh=new L.MeshSprite3D(geometry,name);this.geometries.push(geometry);
+    const L=this.L,mesh=new L.MeshSprite3D(geometry,name);if(!this.geometries.includes(geometry))this.geometries.push(geometry);
     mesh.transform.localPosition=new L.Vector3(x,y,z);mesh.transform.localScale=new L.Vector3(sx,sy,sz);
-    const material=new (L.UnlitMaterial??L.BlinnPhongMaterial)();material.albedoColor=this.color(color);material.specularColor=new L.Color(0,0,0,1);this.materials.push(material);
+    let material=this.materialByColor.get(color);if(!material){material=new (L.UnlitMaterial??L.BlinnPhongMaterial)();material.albedoColor=this.color(color);material.specularColor=new L.Color(0,0,0,1);this.materials.push(material);this.materialByColor.set(color,material);}
     mesh.meshRenderer.sharedMaterial=material;parent.addChild(mesh);
-    if(!/eye|nose|belt|strap|collar|lapel|binding|guard|flap|shadow/.test(name)){
+    if(this.hands.some(h=>h.node===parent)&&!name.startsWith('round hand'))this.handheld.push(mesh);
+    if(!/eye|nose|belt|strap|collar|lapel|binding|guard|flap|shadow|droplet|seed particle|water surface/.test(name)){
       if(!this.ink){this.ink=new (L.UnlitMaterial??L.BlinnPhongMaterial)();this.ink.albedoColor=this.color('#292c29');this.ink.cull=L.RenderState?.CULL_FRONT??1;this.materials.push(this.ink);}
       const outline=new L.MeshSprite3D(geometry,'ink silhouette');outline.transform.localScale=new L.Vector3(1.055,1.055,1.055);outline.meshRenderer.sharedMaterial=this.ink;mesh.addChild(outline);
     }
@@ -49,7 +56,8 @@ export class CharacterMesh {
     if(this.visuals){this.visuals.destroy(true);this.visuals=null;}
     for(const geometry of this.geometries)geometry.destroy();
     for(const material of this.materials)material.destroy();
-    this.geometries=[];this.materials=[];this.ink=null;this.hands=[];this.sharedGrip=null;this.shadow=null;
+    this.geometries=[];this.materials=[];this.materialByColor.clear();this.ink=null;this.hands=[];this.handheld=[];this.sharedGrip=null;this.shadow=null;
+    this.hoe=null;this.seedPouch=null;this.bucket=null;this.bucketWater=null;this.seedParticles=[];this.waterDrops=[];
   }
   private rebuild(character:CharacterState):void{
     this.clearVisuals();const L=this.L,a=character.appearance;
@@ -117,12 +125,70 @@ export class CharacterMesh {
         this.box('knife guard','#877e65',.15,.035,.075,0,.18,.02,grip);
       }
     }
+    this.createFarmingProps();
     const pack=equippedItem(character,'back');
     if(pack){
       const big=pack.definition.id==='expedition_pack',pw=width*(big?1.25:1),ph=bodyH*(big?.8:.59),color=pack.definition.color;
       this.sphere('backpack',color,1,0,.1+bodyH*.58,-width*.87,pw,ph/2,width*.48);
       this.box('backpack flap',a.trimColor,pw*1.45,.07,.06,0,.1+bodyH*.58+ph*.17,-width*1.37);
       for(const side of [-1,1])this.box(`shoulder strap ${side}`,color,.045,bodyH*.55,.045,side*width*.48,.1+bodyH*.64,width*.76);
+    }
+  }
+  private createFarmingProps():void{
+    const L=this.L,group=(name:string,parent:any)=>{const node=new L.Sprite3D(name);parent.addChild(node);return node;};
+    this.hoe=group('farm hoe',this.hands.find(h=>h.side===1)!.node);
+    this.part('farm hoe shaft',L.PrimitiveMesh.createCylinder(.035,1.12,6),'#9b7348',0,.16,0,1,1,1,this.hoe);
+    this.box('farm hoe blade','#b5c2b9',.44,.10,.18,.13,.69,0,this.hoe);
+    this.box('farm hoe binding','#d4be81',.09,.11,.12,0,.63,0,this.hoe);
+    this.seedPouch=group('farm seed pouch',this.hands.find(h=>h.side===-1)!.node);
+    this.sphere('farm seed sack','#c5a96a',.19,0,-.10,.02,1,1.2,.85,this.seedPouch);
+    this.bucket=group('farm water bucket',this.hands.find(h=>h.side===1)!.node);
+    this.part('farm bucket body',L.PrimitiveMesh.createCylinder(.20,.34,10),'#557c91',0,-.20,.08,1,1,1,this.bucket);
+    this.part('farm bucket rim',L.PrimitiveMesh.createCylinder(.22,.05,10),'#c3cfc8',0,-.026,.08,1,1,1,this.bucket);
+    this.bucketWater=this.part('farm bucket water surface',L.PrimitiveMesh.createCylinder(.18,.012,10),'#9fe6ed',0,.004,.08,1,1,1,this.bucket);
+    for(const side of [-1,1])this.box('farm bucket handle','#a7b9b8',.03,.18,.035,side*.16,.065,.08,this.bucket);
+    this.box('farm bucket handle grip','#d2c68f',.35,.035,.035,0,.155,.08,this.bucket);
+    const particleGeometry=L.PrimitiveMesh.createSphere(.047,6,8);
+    for(let i=0;i<3;i++)this.seedParticles.push(this.part('farm seed particle',particleGeometry,'#f4d884',0,0,0,1,.65,1));
+    for(let i=0;i<6;i++)this.waterDrops.push(this.part('farm water droplet',particleGeometry,i%2?'#b7f6ff':'#64c5e1',0,0,0,.9,1.9,.9));
+  }
+  private updateFarming(farm:ReturnType<typeof farmingPose>,stride:number):void{
+    const L=this.L,work=farm.work,active=farm.active||farm.carrying,right=this.hands.find(h=>h.side===1)!,left=this.hands.find(h=>h.side===-1)!;
+    this.hoe.active=work==='till';this.seedPouch.active=work==='sow';this.bucket.active=work==='fetch'||work==='water'||farm.carrying&&!work;
+    this.bucketWater.active=farm.waterLevel>0||work==='fetch'&&farm.time>1.2;
+    if(active){
+      // Temporarily put held equipment away visually; the resident's actual loadout is untouched.
+      right.node.transform.localPosition=new L.Vector3(Math.abs(right.x),right.y,right.z+stride*.06);
+      right.node.transform.localRotationEuler=new L.Vector3(0,0,0);
+      left.node.transform.localPosition=new L.Vector3(-Math.abs(left.x),left.y,left.z+stride*-.20);
+      left.node.transform.localRotationEuler=new L.Vector3(stride*-14,0,0);
+      if(work==='till'){
+        right.node.transform.localPosition=new L.Vector3(Math.abs(right.x)*.66,right.y+farm.stroke*.44,.34);
+        right.node.transform.localRotationEuler=new L.Vector3(-104+farm.stroke*85,0,-8);
+        left.node.transform.localPosition=new L.Vector3(-Math.abs(left.x)*.65,left.y+.08,.28);
+        this.visuals.transform.localRotationEuler=new L.Vector3(4+(1-farm.stroke)*8,0,0);
+      }else if(work==='sow'){
+        right.node.transform.localPosition=new L.Vector3(.20+farm.seed*.16,right.y+.15,.35+(farm.seed+1)*.15);
+        right.node.transform.localRotationEuler=new L.Vector3(-28-farm.seed*18,0,-farm.seed*22);
+        left.node.transform.localPosition=new L.Vector3(-.35,left.y+.08,.23);
+        this.visuals.transform.localRotationEuler=new L.Vector3(8,0,0);
+      }else if(work==='water'){
+        right.node.transform.localPosition=new L.Vector3(.31,right.y+.16,.52);
+        right.node.transform.localRotationEuler=new L.Vector3(55+farm.stroke*7,0,-8);
+        this.visuals.transform.localRotationEuler=new L.Vector3(9,0,0);
+      }else if(work==='fetch'){
+        right.node.transform.localPosition=new L.Vector3(.31,right.y-farm.scoop*.18,.30+farm.scoop*.35);
+        right.node.transform.localRotationEuler=new L.Vector3(-farm.scoop*20,0,0);
+        this.visuals.transform.localRotationEuler=new L.Vector3(farm.scoop*26,0,0);
+      }
+    }
+    for(let i=0;i<this.seedParticles.length;i++){
+      const node=this.seedParticles[i],phase=(farm.time*1.15+i/3)%1;node.active=work==='sow';
+      node.transform.localPosition=new L.Vector3(.16+(i-1)*.17+phase*.11,.78*(1-phase)+Math.sin(phase*Math.PI)*.15,.52+phase*.75);
+    }
+    for(let i=0;i<this.waterDrops.length;i++){
+      const node=this.waterDrops[i],phase=(farm.time*1.8+i/6)%1;node.active=work==='water'||work==='fetch'&&farm.scoop>.45;
+      node.transform.localPosition=new L.Vector3(.33+(i%3-1)*.052,work==='fetch'?.12+Math.sin(phase*Math.PI)*.22:.80*(1-phase),work==='fetch'?.83+phase*.13:.63+phase*.57);
     }
   }
   dispose():void{if(this.disposed)return;this.disposed=true;this.clearVisuals();this.node.destroy(true);}

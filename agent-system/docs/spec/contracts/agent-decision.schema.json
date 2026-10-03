@@ -691,6 +691,82 @@
               "stage",
               "params"
             ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "farm"
+              },
+              "stage": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "targetRef": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  },
+                  "work": {
+                    "enum": [
+                      "till",
+                      "sow",
+                      "water"
+                    ]
+                  }
+                },
+                "required": [
+                  "targetRef",
+                  "work"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "stage",
+              "params"
+            ]
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "op": {
+                "const": "fetch_water"
+              },
+              "stage": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              },
+              "params": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "sourceRef": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 80,
+                    "pattern": "^[A-Za-z0-9_-]+$"
+                  }
+                },
+                "required": [
+                  "sourceRef"
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "stage",
+              "params"
+            ]
           }
         ]
       },

@@ -24,6 +24,16 @@ const snapshot=(node:Node)=>JSON.stringify(all(node).map(n=>({name:n.name,active
 const crop=(kind='rice'):any=>({id:`crop-${kind}`,kind:'crop',position:{x:3,y:0,z:4},width:1.2,depth:1.2,height:.95,appearance:kind,resources:0,crop:{kind,stage:'seedling',growth:0,plantedTick:10,cycles:0}});
 const animal=(kind='chicken'):any=>({id:`animal-${kind}`,kind:'animal',position:{x:3,y:0,z:4},width:.5,depth:.7,height:.6,appearance:kind,resources:0,animal:{kind,heading:0,activity:'walk',phaseStartedTick:10,phaseUntilTick:100,phase:1}});
 
+test('A reserved field has no prepared ground or plants until the corresponding real work stage',()=>{
+ install();const object=crop();Object.assign(object.crop,{stage:'fallow',moisture:0});const mesh=new WorldMesh(object),parts=all(mesh.node),bed=parts.find(n=>n.name==='prepared planting bed')!,plants=parts.filter(n=>n.name==='rice growth'),seeds=parts.filter(n=>n.name==='sown seed'),glints=parts.filter(n=>n.name==='paddy water glint');
+ const geometryCount=geometries.length,before=hashCanonical(object);assert.equal(bed.active,false);assert.ok(plants.every(n=>!n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));assert.equal(hashCanonical(object),before);
+ object.crop.stage='tilled';mesh.update(object,20);assert.equal(bed.active,true);assert.ok(plants.every(n=>!n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));
+ object.crop.stage='sown';mesh.update(object,30);assert.ok(seeds.every(n=>n.active));assert.ok(plants.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));
+ Object.assign(object.crop,{stage:'seedling',moisture:1,lastWateredTick:40});mesh.update(object,40);assert.ok(plants.every(n=>n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>n.active));
+ const soil=parts.find(n=>n.name==='shallow rice paddy')!,wet=soil.meshRenderer.sharedMaterial.albedoColor;object.crop.moisture=0;mesh.update(object,45);assert.ok(glints.every(n=>!n.active));assert.notDeepEqual(soil.meshRenderer.sharedMaterial.albedoColor,wet);
+ const frame=snapshot(mesh.node);mesh.update(object,45);assert.equal(snapshot(mesh.node),frame);assert.deepEqual(all(mesh.node),parts);assert.equal(geometries.length,geometryCount);mesh.dispose();
+});
+
 test('Crop growth, golden ripeness and brief harvest flecks update without rebuilding or mutating world state',()=>{
  install();const object=crop(),mesh=new WorldMesh(object),parts=all(mesh.node),growth=parts.find(n=>n.name==='rice growth')!,head=parts.find(n=>n.name==='drooping rice panicle')!,initialScale=growth.transform.localScale.y,created=geometries.length;
  assert.equal(head.active,false);assert.ok(parts.some(n=>n.name==='shallow rice paddy'));assert.ok(parts.filter(n=>n.geometry).length<=30);

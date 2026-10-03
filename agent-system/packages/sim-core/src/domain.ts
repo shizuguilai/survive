@@ -9,6 +9,7 @@ export type Resident = {
   character?:CharacterState;
   skills?:{gathering:number;crafting:number;construction:number};
   supplies?:Partial<Record<ResourceKind,number>>;
+  water?:number;
   id:string;name:string;background:string;personality:string;personalGoal:string;position:Vec3;heading:number;
   health?:number;mood?:number;homeId?:string;
   living?:{housingWait:number;upgradeWait:number;desiredLevel:number;breakUntil?:number;breakKind?:'strike'|'tantrum';cooldownUntil?:number};
@@ -22,7 +23,7 @@ export type ResourceKind='wood'|'stone'|'food';
 export type CropKind='rice'|'wheat'|'corn'|'carrot';
 export type AnimalKind='chicken'|'duck'|'goose';
 export type ZoneKind='residential'|'planting'|'pasture';
-export type CropState={kind:CropKind;stage:'seedling'|'growing'|'mature'|'harvested';growth:number;plantedTick:number;harvestedTick?:number;cycles:number};
+export type CropState={kind:CropKind;stage:'fallow'|'tilled'|'sown'|'seedling'|'growing'|'mature'|'harvested';growth:number;plantedTick:number;harvestedTick?:number;cycles:number;moisture?:number;lastWateredTick?:number};
 export type AnimalState={kind:AnimalKind;heading:number;activity:'walk'|'peck'|'idle'|'flap';phaseStartedTick:number;phaseUntilTick:number;phase:number};
 export type FurnitureKind='bed'|'cabinet'|'lamp'|'mop';
 export type CampTask={kind?:'gather'|'craft'|'house'|'residential'|'planting'|'pasture';cropKind?:CropKind;animalKind?:AnimalKind|'mixed';ownerId?:string;zoneId?:string;recipeId?:string;siteId?:string;homeDesign?:string;homeLevel?:number;renovation?:boolean;reserved?:Partial<Record<ResourceKind,number>>;targetPosition?:Vec3;id:string;resource:ResourceKind;amount:number;progress:number;note:string;acceptedBy:string[];status:'open'|'done';postedTick:number};

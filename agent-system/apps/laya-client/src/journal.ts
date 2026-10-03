@@ -39,6 +39,6 @@ export function selectJournal(rows:JournalEntry[],residentId:string,category:Jou
 export function journalTime(tick:number):string{const s=Math.floor(tick/20);return `${Math.floor(s/60).toString().padStart(2,'0')}:${(s%60).toString().padStart(2,'0')}`;}
 export const JOURNAL_LABELS:Record<JournalCategory,string>={decision:'计划 · 尚未执行',action:'实际行动',speech:'已说出口',memory:'私人记忆',world:'营地公告'};
 export function readableAction(text:string):string{
- const names:Record<string,string>={home_care:'改善住处',read_notice:'阅读公告/配方',accept_task:'接取目标',decline_task:'拒绝目标',gather:'采集',walk:'移动',look:'观察',listen:'聆听',wait:'等待',rest:'休息',eat:'进食',haul:'存入仓储',withdraw:'领取材料',craft:'制作',exchange:'置换',build:'施工',speak:'说话',continue:'继续当前计划',equip_item:'装备物品',unequip_item:'收起装备'};
+ const names:Record<string,string>={farm:'耕作',fetch_water:'岸边取水',till:'开垦翻土',sow:'播种',water:'浇水',home_care:'改善住处',read_notice:'阅读公告/配方',accept_task:'接取目标',decline_task:'拒绝目标',gather:'采集',walk:'移动',look:'观察',listen:'聆听',wait:'等待',rest:'休息',eat:'进食',haul:'存入仓储',withdraw:'领取材料',craft:'制作',exchange:'置换',build:'施工',speak:'说话',continue:'继续当前计划',equip_item:'装备物品',unequip_item:'收起装备'};
  return text.replace(/\b[a-z_]+\b/g,word=>names[word]??word);
 }

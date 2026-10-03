@@ -22,7 +22,7 @@ const taskKinds=['gather','craft','house',...zoneKinds];
 const agricultureOptions=(x:any)=>
  (x.cropKind===undefined||(x.kind==='planting'&&cropKinds.includes(x.cropKind)))&&
  (x.animalKind===undefined||(x.kind==='pasture'&&[...animalKinds,'mixed'].includes(x.animalKind)));
-const cropState=(x:any)=>record(x)&&cropKinds.includes(x.kind)&&['seedling','growing','mature','harvested'].includes(x.stage)&&finite(x.growth)&&x.growth>=0&&x.growth<=1&&count(x.plantedTick)&&(x.harvestedTick===undefined||count(x.harvestedTick))&&count(x.cycles);
+const cropState=(x:any)=>record(x)&&cropKinds.includes(x.kind)&&['fallow','tilled','sown','seedling','growing','mature','harvested'].includes(x.stage)&&finite(x.growth)&&x.growth>=0&&x.growth<=1&&count(x.plantedTick)&&(x.harvestedTick===undefined||count(x.harvestedTick))&&count(x.cycles)&&(x.moisture===undefined||(finite(x.moisture)&&x.moisture>=0&&x.moisture<=1))&&(x.lastWateredTick===undefined||count(x.lastWateredTick));
 const animalState=(x:any)=>record(x)&&animalKinds.includes(x.kind)&&finite(x.heading)&&['walk','peck','idle','flap'].includes(x.activity)&&count(x.phaseStartedTick)&&count(x.phaseUntilTick)&&x.phaseUntilTick>=x.phaseStartedTick&&finite(x.phase);
 /** Corruption check, not authentication. A fast string checksum avoids hashing every frame. */
 function checksum(s:string):string{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0).toString(16);}
@@ -32,6 +32,7 @@ function validateWorld(w:any):asserts w is World{
  const ids=new Set<string>();
  for(const r of w.residents){
   if(!record(r)||typeof r.id!=='string'||ids.has(r.id)||!point(r.position)||!['heading','hunger','fatigue','pain','inventory','nextReviewTick','observationSequence','knowledgeSequence'].every(k=>finite(r[k]))||!['name','background','personality','personalGoal','goal','visualSignature'].every(k=>typeof r[k]==='string')||!['plan','suspendedPlan','observations','memories','consumedObservationRefs','actionFeedback'].every(k=>list(r[k]))||!['known','familiar','bodyBands'].every(k=>record(r[k])))bad();
+  if(r.water!==undefined&&(!finite(r.water)||r.water<0||r.water>6))bad();
   ids.add(r.id);if(r.character&&validateCharacterState(r.character,r.id))bad();
   for(const k of Object.values(r.known) as any[])if(!record(k)||!point(k.lastPosition)||typeof k.entityId!=='string'||typeof k.ref!=='string'||typeof k.description!=='string')bad();
   for(const p of [...r.plan,...r.suspendedPlan])if(!record(p)||!record(p.action)||typeof p.action.op!=='string'||!record(p.action.params)||!count(p.elapsedTicks)||!count(p.emittedChars)||typeof p.done!=='boolean')bad();

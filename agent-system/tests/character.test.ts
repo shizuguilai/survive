@@ -104,6 +104,18 @@ test('native mesh is stable across motion, rebuilds only on visible change, and 
   try{
     const resident:any={...make(),name:'居民A',position:{x:1,y:0,z:2},heading:0};const mesh=new CharacterMesh(resident);const initialCreations=creations;
     for(let n=0;n<50;n++){resident.position.x++;mesh.update(resident);}assert.equal(creations,initialCreations);assert.equal(mesh.node.transform.position.x,51);
+    const all=(node:any):any[]=>[node,...node.children.flatMap(all)],parts=all(mesh.node),find=(name:string)=>parts.find(n=>n.name===name),snapshot=()=>JSON.stringify(parts.map(n=>({name:n.name,active:n.active,transform:n.transform})));
+    assert.equal(parts.filter(n=>n.name.startsWith('round hand')).length,2);assert.equal(find('farm hoe').active,false);assert.equal(find('farm water bucket').active,false);
+    for(const work of ['till','sow','water','fetch']){
+      resident.plan=[{action:{op:work==='fetch'?'fetch_water':'farm',stage:1,params:work==='fetch'?{sourceRef:'pond'}:{targetRef:'field',work}},elapsedTicks:15,startedTick:1,emittedChars:0,done:false}];resident.water=work==='water'?4:0;
+      const before=JSON.stringify(resident);mesh.update(resident);assert.equal(JSON.stringify(resident),before);
+      assert.equal(find('farm hoe').active,work==='till');assert.equal(find('farm seed pouch').active,work==='sow');assert.equal(find('farm water bucket').active,work==='water'||work==='fetch');
+      assert.equal(find('farm seed particle').active,work==='sow');assert.equal(find('farm water droplet').active,work==='water'||work==='fetch');
+      const frame=snapshot();mesh.update(resident);assert.equal(snapshot(),frame);resident.plan[0].elapsedTicks=24;mesh.update(resident);assert.notEqual(snapshot(),frame);
+      assert.equal(creations,initialCreations);assert.deepEqual(all(mesh.node),parts);
+    }
+    resident.plan=[];resident.water=3;mesh.update(resident);assert.equal(find('farm water bucket').active,true);assert.equal(find('farm water droplet').active,false);assert.equal(find('farm bucket water surface').active,true);
+    resident.water=0;mesh.update(resident);assert.equal(find('farm water bucket').active,false);
     const firstResources=[...resources];resident.character.appearance.hairStyle=resident.character.appearance.hairStyle==='bald'?'bob':'bald';mesh.update(resident);
     assert.ok(creations>initialCreations);assert.ok(firstResources.every(r=>r.destroyed));mesh.dispose();assert.ok(resources.every(r=>r.destroyed));assert.equal(mesh.node.destroyed,true);mesh.dispose();
   }finally{(globalThis as any).Laya=prior;}

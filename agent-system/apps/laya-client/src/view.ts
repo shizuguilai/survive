@@ -67,7 +67,7 @@ export async function initialize(api:ViewCallbacks):Promise<ObserverView>{
   }
   L.stage.designWidth=WIDTH;L.stage.designHeight=HEIGHT;L.stage.scaleMode='showall';L.stage.screenMode='horizontal';
   L.stage.alignH='center';L.stage.alignV='middle';L.stage.bgColor=palette.paper;
-  if(typeof document!=='undefined'&&document.fonts)await Promise.all([document.fonts.load('14px Camp Sans'),document.fonts.load('14px Camp Extension','丰产养割卜啄幼影扑散植牧玉田畜禽种稻翅耕苗萝途鸡鸭鹅')]).catch(()=>{});
+  if(typeof document!=='undefined'&&document.fonts)await Promise.all([document.fonts.load('14px Camp Sans'),document.fonts.load('14px Camp Extension','丰产偏养农割卜啄土垦壤幼影扑护掉散桶植毁浇湿牧玉田畜禽种稻绕翅耕芽苗荒萝跳途都陆首鸡鸭鹅')]).catch(()=>{});
   const loading=new L.Text();loading.text='正在载入营地…';loading.font='Camp Extension, Camp Sans, Arial';loading.fontSize=22;loading.color='#edf4da';loading.width=WIDTH;loading.align='center';loading.y=HEIGHT/2-15;L.stage.addChild(loading);
   try{await loadCampArt();loading.destroy();}catch(error){loading.text='营地素材加载未完成，请刷新重试。';throw error;}
   return new ObserverView(api);
@@ -250,22 +250,22 @@ export class ObserverView {
       this.labels.objectStock.text=`${RESOURCE_LABELS[resource]}剩余 ${o.resources} / ${capacity}`;
       this.labels.objectDetail.text=(o.resources<=0?'已经采空。':`还可采集 ${o.resources} 份。\n剩余 ${Math.round(o.resources/capacity*100)}% · ${resourceStage(o)<=2?'已明显减少':'资源充足'}`)+'\n\n'+(o.kind==='tree'?'采伐后树冠减少，树干出现切口并倾斜；采空留下树桩。':o.kind==='rock'?'采掘后岩石逐步缩小，采空留下碎石。':'采收后枝上的浆果逐步减少。');
     }else if(o.crop){
-      const c=o.crop,stage={seedling:'幼苗',growing:'生长中',mature:'已成熟',harvested:'已收割'}[c.stage];
-      this.labels.objectType.text='种植区 · '+stage;this.labels.objectStock.text=c.stage==='mature'?`可收割食物 ${o.resources} 份`:c.stage==='harvested'?'休耕 · 等待重新发苗':`生长进度 ${Math.round(c.growth*100)}%`;
-      this.labels.objectDetail.text='幼苗 → 生长 → 成熟 → 收割\n\n居民发现成熟作物后，可以走近收割并搬运入库。收完后休耕，再重新生长。\n已收割 '+c.cycles+' 轮';
+      const c=o.crop,stage={fallow:'待开垦',tilled:'待播种',sown:'待浇水',seedling:'幼苗',growing:'生长中',mature:'已成熟',harvested:'待重新耕作'}[c.stage],moisture=Math.round((c.moisture??1)*100);
+      this.labels.objectType.text='种植区 · '+stage;this.labels.objectStock.text=c.stage==='mature'?`可收割食物 ${o.resources} 份`:c.stage==='fallow'?'荒地 · 等待居民开垦':c.stage==='tilled'?'已翻土 · 等待播种':c.stage==='sown'?'已播种 · 等待首次浇水':c.stage==='harvested'?'田茬 · 等待重新翻土':`生长 ${Math.round(c.growth*100)}% · ${moisture<=0?'缺水停长':'水分 '+moisture+'%'}`;
+      this.labels.objectDetail.text='开垦 → 播种 → 取水浇灌\n养护 → 成熟 → 收割\n\n每一步都由居民到场完成。生长期需补水，缺水时停长；收割后需要重新耕作。\n已收割 '+c.cycles+' 轮';
     }else if(o.animal){
       this.labels.objectType.text='畜牧区 · 自由活动';this.labels.objectStock.text={walk:'正在散步',peck:'正在啄食',idle:'正在休息',flap:'正在扑翅'}[o.animal.activity];this.labels.objectDetail.text='在划定的畜牧区内散步、啄食和扑翅。\n\n活动随营地时间推进，暂停时一起停下。';
     }else if(['house','plot'].includes(o.kind)){
       this.labels.objectStock.text=o.kind==='house'?'已竣工 · 可进入休息':`施工 ${o.buildStage??0} / 3`;
       const project=state.world.camp?.tasks.find(t=>t.id===o.projectId);this.labels.objectDetail.text=`大小 ${o.width}×${o.depth} · ${o.homeLevel??1}级\n`+(o.kind==='house'?`整洁度 ${Math.round((o.cleanliness??1)*100)}%\n家具：${Object.entries(FURNITURE).filter(([k])=>o.furniture?.[k as keyof typeof FURNITURE]).map(([,f])=>f.label).join('、')||'尚未添置'}\n柜内：${materialText(o.stored??{})||'空'}`:`下一步：${project?houseSteps(project)[project.progress]?.label:'地基'}\n材料${project?.reserved?'已预留':'从仓储扣除'}`)+'\n\n右上角可隐藏屋顶，观察屋内生活。';
-    }else{this.labels.objectStock.text=o.kind==='board'?materialText(state.world.camp?.stock??{})||'仓储暂无物资':o.kind==='pond'?'岸边可以休息':o.kind==='workbench'?'工具制作 / 物资置换':'阻挡通行与视线';this.labels.objectDetail.text=o.appearance;}
+    }else{this.labels.objectStock.text=o.kind==='board'?materialText(state.world.camp?.stock??{})||'仓储暂无物资':o.kind==='pond'?'岸边取水 · 绕岸通行':o.kind==='workbench'?'工具制作 / 物资置换':'阻挡通行与视线';this.labels.objectDetail.text=o.appearance;}
     this.labels.objectLocation.text=`位置 ${o.position.x.toFixed(1)}, ${o.position.z.toFixed(1)}`;
   }
   private renderResident(r:Resident,state:ViewState):void{
     const values=[(r.health??100)/100,1-r.hunger,r.mood??.75,1-r.fatigue];
     values.forEach((v,i)=>{v=Math.max(0,Math.min(1,v));this.statValues[i].text=Math.round(v*100)+(i===0?' / 100':'%');const g=this.statBars[i].graphics;g.clear();g.drawRect(0,0,79,6,'#222b2e');g.drawRect(0,0,79*v,6,['#9fbf97','#d5b376','#afbf89','#9cb4cb'][i]);});
     for(const kind of ['wood','stone','food'] as const)this.labels['carry-'+kind].text=String(r.supplies?.[kind]??0);
-    const gear=r.character?listOwnEquipment(r.character,r.id):[];this.labels.equipment.text=`采集袋 ${r.inventory} / 30 · 物品 ${gear.length}件`;
+    const gear=r.character?listOwnEquipment(r.character,r.id):[];this.labels.equipment.text=`采集袋 ${r.inventory}/30 · 水桶 ${r.water??0}/6 · 物品${gear.length}件`;
     const stacked=state.world.residents.filter(x=>Math.hypot(x.position.x-r.position.x,x.position.z-r.position.z)<.9).length;
     this.labels.person.text=r.name;this.labels.personality.text=stacked>1?`${stacked}人重叠 · 再点角色切换`:r.homeId?'已有住处 · 可进屋休息':r.personality;
     this.labels.goal.text=residentThought(state.world,r);this.labels.goal.color=onBreak(state.world,r)?'#edb097':palette.ink;
@@ -284,7 +284,7 @@ export class ObserverView {
     const gear=r.character?listOwnEquipment(r.character,r.id):[],worn=gear.filter(g=>g.equippedSlots.length),bag=gear.filter(g=>!g.equippedSlots.length);
     const slots:Record<string,string>={leftHand:'左手',rightHand:'右手',head:'头部',torso:'身体',back:'背部'};
     this.labels.inventoryTitle.text=r.name+' · 随身物品';
-    const text=`采集袋  ${r.inventory} / 30\n木材 ${r.supplies?.wood??0}    石料 ${r.supplies?.stone??0}    食物 ${r.supplies?.food??0}\n\n已装备\n${worn.map(g=>g.equippedSlots.map(s=>slots[s]).join(' / ')+' · '+g.label).join('\n')||'无'}\n\n背包内\n${bag.map(g=>'· '+g.label).join('\n')||'暂无未装备物品'}\n\n状态条越满越好：饱腹感与精力100%表示吃饱、精神充沛。`;
+    const text=`采集袋  ${r.inventory} / 30\n木材 ${r.supplies?.wood??0}    石料 ${r.supplies?.stone??0}    食物 ${r.supplies?.food??0}\n水桶 ${r.water??0} / 6 · 到池塘岸边补水\n\n已装备\n${worn.map(g=>g.equippedSlots.map(s=>slots[s]).join(' / ')+' · '+g.label).join('\n')||'无'}\n\n背包内\n${bag.map(g=>'· '+g.label).join('\n')||'暂无未装备物品'}\n\n状态条越满越好：饱腹感与精力100%表示吃饱、精神充沛。`;
     if(this.labels.inventoryBody.text!==text){const scroll=this.labels.inventoryBody.scrollY;this.labels.inventoryBody.text=text;this.labels.inventoryBody.scrollY=scroll;this.inventoryScroll?.refresh();}
   }
   private buildLifeDetails():void{
@@ -318,7 +318,7 @@ export class ObserverView {
     this.buttons.zoneToggle.root.mouseEnabled=!this.zoneDrawing;
     if(!this.zoneDrawing)return;const kind=this.draftZoneKind(),error=this.zoneDraft?this.zoneError(this.zoneDraft):'单指拖出范围，再确认';
     this.buttons.zoneConfirm.set('确认'+ZONE_LABELS[kind]);this.buttons.zoneConfirm.root.mouseEnabled=!!this.zoneDraft&&!error;this.buttons.zoneConfirm.root.alpha=error ? .45 : 1;
-    const detail=kind==='residential'?`约${this.state&&this.zoneDraft?homeSites(this.state.world,this.zoneDraft).length:0}间基础小屋`:kind==='planting'?CROP_LABELS[this.draftCrop]+' · 确认后播种':ANIMAL_LABELS[this.draftAnimal]+' · 确认后放养';
+    const detail=kind==='residential'?`约${this.state&&this.zoneDraft?homeSites(this.state.world,this.zoneDraft).length:0}间基础小屋`:kind==='planting'?CROP_LABELS[this.draftCrop]+' · 确认后待开垦':ANIMAL_LABELS[this.draftAnimal]+' · 确认后放养';
     this.labels.zoneHint.text=(error??`${this.zoneDraft!.maxX-this.zoneDraft!.minX}×${this.zoneDraft!.maxZ-this.zoneDraft!.minZ}格 · ${detail}`)+'\n金色当前选区 · 同类可重叠';
   }
   private drawZones():void{
@@ -390,7 +390,14 @@ export class ObserverView {
     this.modalButton(this.workshopPanel,'closeWorkshop','返回观察',881,545,147,()=>{this.workshopPanel.visible=false;});
   }
   private renderTaskList(state:ViewState):void{
-    const text=[...(state.world.camp?.tasks??[])].reverse().map(t=>`${t.status==='done'?'✓':'○'} ${taskTitle(t)} ${t.progress}/${t.amount}${t.kind==='house'&&t.status==='open'?' · 待'+(houseSteps(t)[t.progress]?.label??'下一阶段'):''}\n   ${t.kind==='planting'?'已播种':t.kind==='pasture'?'已放养':t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'尚无人接受'}${t.note?' · '+t.note:''}`).join('\n\n')||'还没有发布目标。';
+    const text=[...(state.world.camp?.tasks??[])].reverse().map(t=>{
+      if(t.kind==='planting'){
+        const crops=state.world.objects.filter(o=>o.kind==='crop'&&o.zoneId===t.zoneId).map(o=>o.crop!),count=(stages:string[])=>crops.filter(c=>stages.includes(c.stage)).length;
+        const thirsty=crops.filter(c=>c.stage==='sown'||['seedling','growing'].includes(c.stage)&&(c.moisture??1)<=.35).length;
+        return `▦ ${taskTitle(t)} · ${crops.length}片田\n   待垦${count(['fallow','harvested'])} · 待种${count(['tilled'])} · 待浇${thirsty} · 成熟${count(['mature'])}\n   ${t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'等居民阅读公告并接取照料'}${t.note?' · '+t.note:''}`;
+      }
+      return `${t.status==='done'?'✓':'○'} ${taskTitle(t)} ${t.progress}/${t.amount}${t.kind==='house'&&t.status==='open'?' · 待'+(houseSteps(t)[t.progress]?.label??'下一阶段'):''}\n   ${t.kind==='pasture'?'已放养':t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'尚无人接受'}${t.note?' · '+t.note:''}`;
+    }).join('\n\n')||'还没有发布目标。';
     if(this.labels.taskList.text!==text){const y=this.labels.taskList.scrollY;this.labels.taskList.text=text;this.taskScroll?.set(y);}
   }
   private residentPage():number{return Math.floor(Math.max(0,this.state?.world.residents.findIndex(r=>r.id===this.state?.selectedId)??0)/2)*2;}
@@ -629,7 +636,7 @@ export class ObserverView {
     this.labels.mode.text=mode;const statusText=(state.controlDetail&&!['THINKING','ERROR_PAUSED'].includes(state.status)?state.controlDetail:this.humanStatus(state.status)+(state.cognitionDetail?' · '+state.cognitionDetail:''));this.labels.status.text=statusText.length>82?statusText.slice(0,76)+'… 点此展开':statusText+' · 点此展开';this.labels.statusDetails.text=mode+'\n\n'+statusText+(state.controlNotice?'\n\n'+state.controlNotice:'')+(state.error?'\n\n'+state.error:'');this.statusScroll?.refresh();
     this.buttons.start.set(state.resumeReady?'继续营地':'开始运行');this.labels.saveStatus.text=state.saveStatus??'本机自动存档';this.labels.saveDetail.text=(state.saveStatus??'本机自动存档')+'\n存于此设备此浏览器，换设备不会同步。';
     if(this.controlPanel.visible){const d=this.controlDraft;for(const m of ['commander','independent','local']){const t=this.buttons['mode-'+m].label;t.color=m===d.mode?'#14271b':'#314030';t.bold=m===d.mode;t.underline=m===d.mode;}this.labels.controlHelp.text=d.mode==='commander'?'一个glm-4.5-air统筹阶段目标；执行器持续完成走路、采集、搬运和施工。每人记忆独立。阶段结束、新任务或持续受阻时汇总复查；最短间隔按模拟时间计算。':d.mode==='independent'?'每名居民独立调用真实模型，只读自己的感官与记忆。保留原有认知触发；模型失败保持暂停，可手动切换本地模式。':'完全本地任务算法，免密钥、免远程请求；不是大模型。根据任务和有限感知执行采集、备料、制作与分步建房。';this.buttons.phaseSize.set('阶段工作量：'+d.phaseUnits+'份');this.buttons.reviewGap.set('模型最短间隔：'+d.reviewSeconds+'秒');this.buttons.crewCount.set('新营地人数：'+d.residents);this.buttons.localFallback.set('统筹失败自动转本地：'+(d.fallback?'开':'关'));}
-    const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
+    const action=r?.plan.find(p=>!p.done);this.labels.action.text=action?`实际动作：${action.action.op==='farm'?({till:'开垦翻土',sow:'播种',water:'浇水'} as Record<string,string>)[action.action.params.work]??'耕作':readableAction(action.action.op)} · 已执行${(action.elapsedTicks*.05).toFixed(1)}秒${['THINKING','COMMITTING','ERROR_PAUSED'].includes(state.status)?'（冻结）':''}`:'实际动作：等待下一项计划';
     const seconds=Math.floor(state.world.tick*defaults.simulation.fixedDtMs/1000);this.labels.time.fontSize=21;this.labels.time.text=(dayClock(state.world.tick).night?'夜 · ':'日 · ')+dayClock(state.world.tick).label;
     for(let i=0;i<2;i++){const person=state.world.residents[this.residentPage()+i];this.buttons['resident'+i].set(person?`${person.id===state.selectedId?'●  ':''}${person.name}`:'暂无居民');this.buttons['memoryPerson'+i].set(person?person.name+'的地图':'暂无居民');}
     if(r){this.renderResident(r,state);if(this.lifePanel.visible)this.renderLifeDetails(r,state);}this.renderObject(state);this.renderResources(state);
@@ -647,11 +654,11 @@ export class ObserverView {
     for(const a of ['chicken','duck','goose','mixed'] as const){this.buttons['animal-'+a].root.visible=this.draftKind==='pasture';this.buttons['animal-'+a].set((a===this.draftAnimal?'● ':'')+(a==='mixed'?'混养':ANIMAL_LABELS[a]));}
     this.labels.zonePlanner.visible=this.draftKind==='residential';this.labels.zonePlanner.text='单指拖出矩形区域 · 自由选择位置和大小\n双指同向平移 · 张合缩放地图';
     this.buttons.amount.root.visible=!isZone;this.buttons.amount.set('数量 '+(this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount));
-    this.labels.draftTitle.text=this.draftKind==='planting'?'选择作物 · 从幼苗长到丰收':this.draftKind==='pasture'?'选择家禽 · 散步、啄食与扑翅':this.draftKind==='residential'?'居住区 · 居民按需申请自己的住处':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
+    this.labels.draftTitle.text=this.draftKind==='planting'?'规划作物 · 居民亲自开垦种植':this.draftKind==='pasture'?'选择家禽 · 散步、啄食与扑翅':this.draftKind==='residential'?'居住区 · 居民按需申请自己的住处':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
     this.labels.requirements.pos(isZone?344:469,379);this.labels.requirements.width=isZone?374:250;
-    this.labels.requirements.text=this.draftKind==='planting'?'幼苗 → 生长 → 成熟 → 收割 → 重新发苗\n区域至少4×4格 · 避开建筑和其他用途区域':this.draftKind==='pasture'?'单一品种或鸡鸭鹅混养 · 区域至少4×4格\n家禽在区内自由活动，暂停时一起停下':this.draftKind==='residential'?'住处大小和用料因人而异 · 区域至少6×6格':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
+    this.labels.requirements.text=this.draftKind==='planting'?'开垦 → 播种 → 取水浇灌 → 养护 → 收割\n区域至少4×4格 · 划区只预留荒地':this.draftKind==='pasture'?'单一品种或鸡鸭鹅混养 · 区域至少4×4格\n家禽在区内自由活动，暂停时一起停下':this.draftKind==='residential'?'住处大小和用料因人而异 · 区域至少6×6格':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
     this.taskNote.visible=!isZone;
-    this.labels.draftHelp.text=this.draftKind==='planting'?'确认后播种；成熟后居民可亲自收割食物并搬入仓储。区域标记可用右上角开关显示或隐藏。':this.draftKind==='pasture'?'确认后放养；家禽会走动、低头啄食和扑翅。区域标记可随时隐藏，不影响它们的活动。':this.draftKind==='residential'?'划区后确认，居民自主申请、备料与建房。同类区域可重叠圈选，重复范围不新增。':this.draftKind==='craft'?'先读工作台配方；消耗自己的随身材料。成品归制作者，需要自行持握。':'采集计入目标，入库由居民自主搬运。';
+    this.labels.draftHelp.text=this.draftKind==='planting'?'划区后由居民亲自开垦、播种并去岸边取水浇灌。缺水暂停生长；收割后需要重新耕作。':this.draftKind==='pasture'?'确认后放养；家禽会走动、低头啄食和扑翅。区域标记可随时隐藏，不影响它们的活动。':this.draftKind==='residential'?'划区后确认，居民自主申请、备料与建房。同类区域可重叠圈选，重复范围不新增。':this.draftKind==='craft'?'先读工作台配方；消耗自己的随身材料。成品归制作者，需要自行持握。':'采集计入目标，入库由居民自主搬运。';
     const goals=tasks.filter(t=>!['residential','planting','pasture'].includes(t.kind??'')),zones=state.world.camp?.zones??[];
     this.labels.taskSummary.text=`目标 ${goals.filter(t=>t.status==='done').length}/${goals.length} · 住${zones.filter(z=>zoneKind(z)==='residential').length} 种${zones.filter(z=>zoneKind(z)==='planting').length} 牧${zones.filter(z=>zoneKind(z)==='pasture').length}${state.pendingTasks?` · 待发布${state.pendingTasks}`:''}`;
 
