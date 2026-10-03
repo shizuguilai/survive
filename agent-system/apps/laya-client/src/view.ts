@@ -517,7 +517,7 @@ export class ObserverView {
     if(this.zoneDrawing){this.zoneStart=null;this.updateZoneHint();return;}if(drag.moved)return;
     const x=e?.stageX??L.stage.mouseX,y=e?.stageY??L.stage.mouseY;
     if(x<this.sceneLeft||y<TOP||y>BOTTOM)return;
-    const hits=this.state.world.residents.map(r=>{const painted=this.art.residentBounds(r.id);if(painted){const nearX=Math.max(painted.x,Math.min(painted.x+painted.width,x)),nearY=Math.max(painted.y,Math.min(painted.y+painted.height,y));return {id:r.id,distance:Math.hypot(nearX-x,nearY-y)};}const top=this.project({...r.position,y:r.position.y+1.95}),base=this.project(r.position),nearY=Math.max(top.y,Math.min(base.y,y));return {id:r.id,distance:Math.hypot(top.x-x,nearY-y)};}).filter(h=>h.distance<24);
+    const hits=this.state.world.residents.map(r=>{const top=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.95)}),base=this.project(r.position),nearY=Math.max(top.y,Math.min(base.y,y));return {id:r.id,distance:Math.hypot(top.x-x,nearY-y)};}).filter(h=>h.distance<24);
     const id=cycleHit(hits,this.state.selectedId);if(id){this.selectedObject=null;this.api.onSelect(id);}else{
       const candidates=this.state.world.objects.map(o=>{const base=this.project(o.position),edges=[this.project({...o.position,x:o.position.x+o.width/2}),this.project({...o.position,z:o.position.z+(o.depth??o.width)/2})];const radius=Math.max(22,edges.reduce((sum,p)=>sum+Math.abs(p.x-base.x),0)+12);const top=this.project({...o.position,y:o.height}),nearY=Math.max(top.y,Math.min(base.y,y));const d=Math.hypot(base.x-x,nearY-y);return {o,d,radius};}).filter(v=>v.d<v.radius).sort((a,b)=>a.d-b.d);
       if(!candidates.length)return;this.selectedObject=candidates[0].o.id;
@@ -551,7 +551,7 @@ export class ObserverView {
     this.drawZones();this.positionLabels();
   }
   private project(p:{x:number;y:number;z:number}):{x:number;y:number}{return projectToStage(p,this.mapCamera(),this.mapViewport());}
-  private positionLabels():void{if(!this.state)return;this.drawMinimap();this.art.render(this.state.world,this.mapCamera(),this.mapViewport(),this.showRoofs,this.state.selectedId);for(const [id,node] of this.residents)node.node.active=!this.art.hasResident(id);for(const [id,node] of this.objects)node.node.active=!this.art.hasObject(id);for(const r of this.state.world.residents){const p=this.art.residentTop(r.id)??this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
+  private positionLabels():void{if(!this.state)return;this.drawMinimap();this.art.render(this.state.world,this.mapCamera(),this.mapViewport(),this.showRoofs);for(const [id,node] of this.objects)node.node.active=!this.art.hasObject(id);for(const r of this.state.world.residents){const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});const t=this.nameLabels.get(r.id);if(t){t.pos(p.x-60,p.y-10);t.visible=p.x>this.sceneLeft+10&&p.x<WIDTH-10&&p.y>TOP+24&&p.y<BOTTOM-20;}
     }this.positionBubbles();
     for(const object of this.state.world.objects){const label=this.placeLabels.get(object.id);if(!label)continue;const p=this.project({...object.position,y:0,z:object.position.z+(object.kind==='house'||object.kind==='plot'?object.depth/2+1:object.kind==='pond'?3.1:1)});label.pos(p.x-75,p.y+7);label.visible=p.x>this.sceneLeft+85&&p.x<WIDTH-85&&p.y>TOP+64&&p.y<BOTTOM-30;}
   }
@@ -565,7 +565,7 @@ export class ObserverView {
       const words=spoken.get(r.id),wish=thought?.id===r.id?thought:null;
       if(!words&&!wish){bubble.hide();continue;}
       bubble.show(words?`“${words}”`:wish!.text,!words,words?1:wish!.alpha);
-      const p=this.art.residentTop(r.id)??this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});
+      const p=this.project({...r.position,y:r.position.y+(this.residents.get(r.id)?.height??1.9)+.25});
       bubble.root.pos(Math.max(this.sceneLeft+12,Math.min(WIDTH-bubble.width-12,p.x-bubble.width/2)),Math.max(TOP+12,p.y-bubble.height-26));
     }
   }

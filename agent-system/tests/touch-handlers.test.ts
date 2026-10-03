@@ -9,7 +9,7 @@ const {ObserverView}=await import('data:text/javascript;base64,'+Buffer.from(bun
 function viewFixture(){
  const v:any=Object.create(ObserverView.prototype),w=createCrewWorld(2);
  w.residents.forEach(r=>r.position={x:600,y:0,z:0});
- Object.assign(v,{art:{residentBounds(){return null;}},zoom:18,camera:{},offset:{x:0,z:0},sceneInput:{},pinch:null,suppressTap:false,drag:null,zoneDrawing:false,sidebarCollapsed:true,state:{world:w,selectedId:w.residents[0].id},api:{onSelect:(id:string)=>v.state.selectedId=id},groundAt:(x:number,y:number)=>({x,z:y}),project:(p:any)=>({x:p.x,y:350-p.y*20}),positionLabels:()=>{},moveCamera:()=>{},layoutInspector:()=>{}});
+ Object.assign(v,{residents:new Map(),zoom:18,camera:{},offset:{x:0,z:0},sceneInput:{},pinch:null,suppressTap:false,drag:null,zoneDrawing:false,sidebarCollapsed:true,state:{world:w,selectedId:w.residents[0].id},api:{onSelect:(id:string)=>v.state.selectedId=id},groundAt:(x:number,y:number)=>({x,z:y}),project:(p:any)=>({x:p.x,y:350-p.y*20}),positionLabels:()=>{},moveCamera:()=>{},layoutInspector:()=>{}});
  return v;
 }
 test('A complete two-finger pinch and release never becomes a character tap',()=>{
@@ -26,7 +26,7 @@ test('Repeated scene taps cycle overlapping people, open details, and slow drags
  v.state.world.objects=[{id:'clicked-tree',kind:'tree',position:{x:900,y:0,z:0},height:4,width:1}];const tree={stageX:900,stageY:300};v.pointerDown(tree);v.pointerUp(tree);assert.equal(v.selectedObject,'clicked-tree');
 });
 
-test('A tap near a zoomed painted head selects the visible resident',()=>{
- const v=viewFixture();v.art.residentBounds=(id:string)=>id==='resident-b'?{x:568,y:230,width:64,height:120}:null;
+test('A tap near a tall native head selects the visible resident',()=>{
+ const v=viewFixture();v.residents.set('resident-b',{height:5.8});
  const e={stageX:600,stageY:238};v.pointerDown(e);v.pointerUp(e);assert.equal(v.state.selectedId,'resident-b');
 });

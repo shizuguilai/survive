@@ -8,7 +8,11 @@
       "worldUnchanged": true,
       "errors": [],
       "missing": [],
-      "paintedResidents": 4
+      "nativeResidents": 4,
+      "paintedResidents": 0,
+      "animatedHands": 2,
+      "handSwingVerified": true,
+      "pauseFreezesPose": true
     },
     {
       "width": 844,
@@ -17,7 +21,11 @@
       "worldUnchanged": true,
       "errors": [],
       "missing": [],
-      "paintedResidents": 4
+      "nativeResidents": 4,
+      "paintedResidents": 0,
+      "animatedHands": 2,
+      "handSwingVerified": true,
+      "pauseFreezesPose": true
     }
   ],
   "physicalDevice": "not_run",
