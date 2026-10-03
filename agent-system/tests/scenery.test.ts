@@ -38,7 +38,9 @@ test('Personal houses have distinct native roof shapes, colors and furniture pos
   assert.equal(Math.abs(roof.transform.localRotationEuler.z),d.pitch);assert.equal(frame.transform.localRotationEuler.y,d.across==='depth'?90:0);
   assert.equal(bed.transform.localPosition.x,layout.bed.x);assert.equal(bed.transform.localPosition.z,layout.bed.z);assert.equal(cabinet.transform.localPosition.x,layout.cabinet.x);assert.equal(find('lamp foot').transform.localPosition.z,layout.lamp.z);
   assert.equal(parts.some(n=>n.name==='window shutter'),d.shutters);assert.ok(find('chimney cap').transform.localPosition.y+.065<homeHeight(object));
-  mesh.setRoofVisible(false);for(const p of parts.filter(n=>/sloping roof|roof ridge|roof shingle seam|chimney/.test(n.name)))assert.equal(p.active,false);assert.equal(bed.active,true);assert.equal(hashCanonical(object),before);
+  const geometry=()=>JSON.stringify(parts.map(p=>({name:p.name,geometry:p.geometry,transform:p.transform}))),structure=geometry(),roofParts=parts.filter(n=>/sloping roof|roof ridge|roof shingle seam|chimney/.test(n.name));
+  for(const visible of [false,true]){mesh.setRoofVisible(visible);for(const p of roofParts)assert.equal(p.active,visible);for(const p of parts.filter(n=>!roofParts.includes(n)))assert.equal(p.active,true);assert.equal(geometry(),structure);assert.deepEqual(all(mesh.node),parts);}
+  assert.equal(hashCanonical(object),before);
  }
  assert.equal(colors.size,6);assert.equal(shapes.size,6);
 });

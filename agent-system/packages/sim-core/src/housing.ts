@@ -9,6 +9,22 @@ export function validateZone(bounds:ResidentialBounds):string|null{
   if(bounds.maxX-bounds.minX<6||bounds.maxZ-bounds.minZ<6)return '区域至少需要6×6格，给小屋和出入口留出空间';
   return null;
 }
+/** Repainting existing residential land does not create another notice or zone. */
+export function zoneCoveredBy(bounds:ResidentialBounds,existing:ResidentialBounds[]):boolean{
+  const overlapping=existing.filter(b=>b.minX<bounds.maxX&&b.maxX>bounds.minX&&b.minZ<bounds.maxZ&&b.maxZ>bounds.minZ);
+  const edges=[...new Set([bounds.minX,bounds.maxX,...overlapping.flatMap(b=>[Math.max(bounds.minX,b.minX),Math.min(bounds.maxX,b.maxX)])])].sort((a,b)=>a-b);
+  for(let i=1;i<edges.length;i++){
+    const spans=overlapping.filter(b=>b.minX<=edges[i-1]&&b.maxX>=edges[i]).sort((a,b)=>a.minZ-b.minZ);
+    let coveredTo=bounds.minZ;
+    for(const span of spans){
+      if(span.minZ>coveredTo)break;
+      coveredTo=Math.max(coveredTo,span.maxZ);
+      if(coveredTo>=bounds.maxZ)break;
+    }
+    if(coveredTo<bounds.maxZ)return false;
+  }
+  return true;
+}
 /** Includes a front approach lane and separation from other houses and scenery. */
 export function homeSites(world:World,b:ResidentialBounds,size={width:4,depth:3},ignoreId?:string):{x:number;z:number}[]{
   const sites:{x:number;z:number}[]=[];

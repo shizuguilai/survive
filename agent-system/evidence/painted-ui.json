@@ -12,7 +12,11 @@
       "paintedResidents": 0,
       "animatedHands": 2,
       "handSwingVerified": true,
-      "pauseFreezesPose": true
+      "pauseFreezesPose": true,
+      "houseGeometryStable": true,
+      "roofToggleOnly": true,
+      "zoneOverlayAboveArt": true,
+      "zoneOverlayTracksCamera": true
     },
     {
       "width": 844,
@@ -25,7 +29,11 @@
       "paintedResidents": 0,
       "animatedHands": 2,
       "handSwingVerified": true,
-      "pauseFreezesPose": true
+      "pauseFreezesPose": true,
+      "houseGeometryStable": true,
+      "roofToggleOnly": true,
+      "zoneOverlayAboveArt": true,
+      "zoneOverlayTracksCamera": true
     }
   ],
   "physicalDevice": "not_run",

@@ -1,5 +1,4 @@
 import type {World} from '../../../packages/sim-core/src/domain.ts';
-import {homeDesign} from '../../../packages/sim-core/src/home-design.ts';
 import {resourceStage} from '../../../packages/sim-core/src/resources.ts';
 import {projectToStage,type MapCamera,type MapViewport} from './map-camera.ts';
 import atlas from './art-atlas.json' with {type:'json'};
@@ -30,7 +29,7 @@ export class PaintedWorld{
   gear.font='Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial';gear.fontSize=11;gear.color='#fffbe7';gear.stroke=2;gear.strokeColor='#2c3e32';gear.mouseEnabled=false;
   entry={root,shadow,image,gear,key:'',frame:''};this.sprites.set(id,entry);return entry;
  }
- render(world:World,camera:MapCamera,viewport:MapViewport,roofs:boolean):void{
+ render(world:World,camera:MapCamera,viewport:MapViewport,_roofs:boolean):void{
   const L=(globalThis as any).Laya,unit=viewport.height/camera.zoom,seen=new Set<string>();this.activeObjects.clear();
   this.root.pos(viewport.x,viewport.y);this.root.scrollRect=new L.Rectangle(0,0,viewport.width,viewport.height);
   const place=(id:string,name:string,p:{x:number;y:number;z:number},width:number,anchorY?:number,bob=0,angle=0,shadow=true)=>{
@@ -43,6 +42,8 @@ export class PaintedWorld{
   };
   for(const o of world.objects){
    const stage=resourceStage(o);let frame='',width=1.8,p={...o.position};
+   // Buildings keep their native geometry at every angle and roof setting.
+   // A single painted cottage cannot preserve their footprint or roof cutaway.
    switch(o.kind){
     case 'tree':frame=stage===0?'stump':['treeBroad','treeTall','treeBushy'][Math.abs([...o.id].reduce((v,c)=>v+c.charCodeAt(0),0))%3];width=stage===0?.88:4.3*(.6+stage*.1);break;
     case 'berry':if(!o.resources)continue;frame='berryBush';width=2.05*(.7+stage*.075);break;
@@ -50,14 +51,9 @@ export class PaintedWorld{
     case 'board':frame='bulletin';width=2.05;break;
     case 'workbench':frame='workbench';width=2.05;break;
     case 'pond':frame='pond';width=o.width*1.08;break;
-    case 'house':if(!roofs||Math.abs(camera.yaw??0)>.01||(o.buildStage??3)<3)continue;frame='cottage';width=o.width+1;p.z+=o.depth*.42;break;
     default:continue;
    }
    const result=place(o.id,frame,p,width,undefined,0,0,o.kind!=='pond');if(result){this.activeObjects.add(o.id);
-    if(o.kind==='house'){const d=homeDesign(o.homeDesign,o.ownerId),f=frames.get('cottage')!,item=result.item;const stretch=Math.max(.85,Math.min(1.35,o.depth/o.width*1.18));item.image.height*=stretch;item.image.y=-f.anchor[1]*result.scale*stretch;
-     if(!item.roof){item.roof=new L.Sprite();item.image.addChild(item.roof);item.roof.texture=L.Texture.createFromTexture(f.texture,0,0,f.width,Math.floor(f.height*.52));}
-     item.roof.size(item.image.width,item.image.height*.52);const rgb=[1,3,5].map(n=>parseInt(d.roof.slice(n,n+2),16)/255),filter=new L.ColorFilter([rgb[0]/.25,0,0,0,0,0,rgb[1]/.48,0,0,0,0,0,rgb[2]/.65,0,0,0,0,0,1,0]);item.roof.filters=[filter];
-    }
     // Painted scenery is above the native 3D layer; fade overlaps so hands and bodies stay readable.
     if(o.kind!=='pond'){
      const image=result.item.image,left=result.screen.x+image.x,top=result.screen.y+image.y;

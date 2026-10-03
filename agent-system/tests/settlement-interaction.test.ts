@@ -2,7 +2,7 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createCrewWorld,advanceEnvironment} from '../packages/sim-core/src/world.ts';
 import {postTask,readBoard,claimHome,grantKnown} from '../packages/sim-core/src/camp.ts';
-import {zoneBounds,homeSites} from '../packages/sim-core/src/housing.ts';
+import {zoneBounds,homeSites,homeFits,zoneCoveredBy} from '../packages/sim-core/src/housing.ts';
 import {finishBuild} from '../packages/sim-core/src/workshop.ts';
 import {houseSteps,houseCost} from '../packages/sim-core/src/recipes.ts';
 import {applyDecision,stepActions} from '../packages/sim-core/src/actions.ts';
@@ -17,11 +17,36 @@ import {resourceStage,resourceCapacity} from '../packages/sim-core/src/resources
 const decision=(actions:any[])=>({schemaVersion:'1.0.0' as const,decisionKind:'replace' as const,goal:'explicit regression fixture',reasonBrief:'test',actions,nextReviewAfterSimMs:10000,watch:[],memorySuggestions:[]});
 const ref=(r:any,id:string)=>(Object.values(r.known).find((k:any)=>k.entityId===id) as any).ref;
 function setup(count=4){const w=createCrewWorld(count);postTask(w,{kind:'residential',resource:'wood',amount:1,note:'test',bounds:{minX:-24,maxX:-5,minZ:-24,maxZ:-15}});return {w,zone:w.camp!.tasks.at(-1)!,board:w.objects.find(o=>o.kind==='board')!};}
-test('Player rectangles accept reverse drags, reject too-small/overlapping areas without mutation',()=>{
+test('Player rectangles accept reverse drags, reject small areas and keep repeated zoning idempotent',()=>{
  assert.deepEqual(zoneBounds({x:4.6,z:5.2},{x:-3.4,z:-2.8}),{minX:-4,maxX:5,minZ:-3,maxZ:6});
  const {w}=setup(),before=hashCanonical(w);
  assert.throws(()=>postTask(w,{kind:'residential',resource:'wood',amount:1,note:'',bounds:{minX:1,maxX:2,minZ:1,maxZ:2}}),/6×6/);
- assert.throws(()=>postTask(w,{kind:'residential',resource:'wood',amount:1,note:'',bounds:{minX:-24,maxX:-5,minZ:-24,maxZ:-15}}),/重叠/);
+ postTask(w,{kind:'residential',resource:'wood',amount:1,note:'',bounds:{minX:-24,maxX:-5,minZ:-24,maxZ:-15}});
+ postTask(w,{kind:'residential',resource:'wood',amount:1,note:'',bounds:{minX:-22,maxX:-10,minZ:-23,maxZ:-16}});
+ assert.equal(hashCanonical(w),before);
+});
+test('Overlapping residential rectangles preserve homes and boundaries and never claim occupied land twice',()=>{
+ const {w,zone,board}=setup(6);w.objects=w.objects.filter(o=>o.kind==='board');
+ const firstBounds={...w.camp!.zones![0].bounds};readBoard(w,w.residents[0],board);assert.equal(claimHome(w,w.residents[0],zone),null);
+ const firstPlot=w.objects.find(o=>o.ownerId===w.residents[0].id)!,beforePlot=hashCanonical(firstPlot),firstProject=w.camp!.tasks.at(-1)!,beforeProject=hashCanonical(firstProject);
+ const extraBounds={minX:-15,maxX:14,minZ:-24,maxZ:-5};postTask(w,{kind:'residential',resource:'wood',amount:1,note:'overlap',bounds:extraBounds});
+ const extraZone=w.camp!.tasks.at(-1)!;
+ assert.deepEqual(w.camp!.zones!.map(z=>z.bounds),[firstBounds,extraBounds]);assert.equal(w.camp!.zones![0].taskId,zone.id);
+ assert.equal(hashCanonical(firstPlot),beforePlot);assert.equal(hashCanonical(firstProject),beforeProject);
+ assert.equal(homeFits(w,extraBounds,firstPlot.position,firstPlot,firstPlot.id),true);assert.equal(homeFits(w,extraBounds,firstPlot.position,firstPlot),false);
+ for(const r of w.residents.slice(1,4)){readBoard(w,r,board);assert.equal(claimHome(w,r,extraZone),null);}
+ const plots=w.objects.filter(o=>o.kind==='plot');assert.equal(plots.length,4);
+ for(const plot of plots){const bounds=w.camp!.zones!.find(z=>z.id===plot.zoneId)!.bounds;assert.equal(homeFits(w,bounds,plot.position,plot,plot.id),true);}
+ assert.equal(zoneCoveredBy({minX:-24,maxX:-18,minZ:-15,maxZ:-9},w.camp!.zones!.map(z=>z.bounds)),false,'Unselected corner of the bounding box remains outside the residential area');
+ const before=hashCanonical(w);assert.ok(claimHome(w,w.residents[0],extraZone));assert.equal(hashCanonical(w),before);
+});
+test('Selections covered by the actual union are idempotent even when all eight zone slots are used',()=>{
+ const w=createCrewWorld(2),draft={kind:'residential' as const,resource:'wood' as const,amount:1,note:''};
+ for(let i=0;i<8;i++)postTask(w,{...draft,bounds:{minX:-24+i*6,maxX:-18+i*6,minZ:-24,maxZ:-12}});
+ assert.equal(w.camp!.zones!.length,8);const before=hashCanonical(w);
+ postTask(w,{...draft,bounds:{minX:-21,maxX:3,minZ:-22,maxZ:-14}});
+ assert.equal(hashCanonical(w),before,'Coverage spanning several rectangles adds no notice, event, task or sequence');
+ assert.throws(()=>postTask(w,{...draft,bounds:{minX:-24,maxX:-12,minZ:-18,maxZ:0}}),/最多保留8/);
  assert.equal(hashCanonical(w),before);
 });
 test('One residential zone supports distinct voluntary homes, avoids occupied lots and remains available',()=>{

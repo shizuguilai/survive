@@ -1,6 +1,6 @@
 import type {Resident,World,WorldObject,ResourceKind,CampTask,ResidentialBounds} from './domain.ts';
 import {BUILD_SITES,HOUSE_STEPS,houseSteps,houseCost,RECIPES,materialText,taskTitle} from './recipes.ts';
-import {homeSites,validateZone,ownHomeProject} from './housing.ts';
+import {homeSites,validateZone,zoneCoveredBy,ownHomeProject} from './housing.ts';
 import {experiencedWhen,rememberObservation} from './knowledge.ts';
 import {preferredHome,designedHomeSize} from './home-design.ts';
 export const RESOURCE_LABELS:Record<ResourceKind,string>={wood:'木材',stone:'石料',food:'浆果'};
@@ -10,8 +10,10 @@ export function postTask(world:World,draft:TaskDraft):void{
   if(draft.kind==='residential'){
     const error=validateZone(draft.bounds!);if(error)throw Error(error);
     const bounds={...draft.bounds!};world.camp.zones??=[];
+    if(zoneCoveredBy(bounds,world.camp.zones.map(z=>z.bounds)))return;
     if(world.camp.zones.length>=8)throw Error('最多保留8个居住区');
-    if(world.camp.zones.some(z=>bounds.minX<z.bounds.maxX&&bounds.maxX>z.bounds.minX&&bounds.minZ<z.bounds.maxZ&&bounds.maxZ>z.bounds.minZ))throw Error('这片区域与已有居住区重叠，请在空白处圈选');
+    // Preserve each rectangle and its references: overlap adds usable land without
+    // filling unselected corners or moving homes already claimed in either zone.
     const id=`zone-${world.camp.zones.length+1}`,taskId=`task-${++world.camp.sequence}`;
     world.camp.zones.push({id,taskId,bounds});
     world.camp.tasks.push({id:taskId,kind:'residential',zoneId:id,resource:'wood',amount:world.residents.length,progress:0,note:'没有住房的居民可自愿申请自己的小屋，已有住处不重复申请。',acceptedBy:[],status:'open',postedTick:world.tick});
