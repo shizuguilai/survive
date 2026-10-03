@@ -15,6 +15,15 @@ const finite=(x:any)=>typeof x==='number'&&Number.isFinite(x);
 const count=(x:any)=>Number.isSafeInteger(x)&&x>=0;
 const point=(x:any)=>record(x)&&['x','y','z'].every(k=>finite(x[k]));
 const list=(x:any)=>Array.isArray(x);
+const cropKinds=['rice','wheat','corn','carrot'];
+const animalKinds=['chicken','duck','goose'];
+const zoneKinds=['residential','planting','pasture'];
+const taskKinds=['gather','craft','house',...zoneKinds];
+const agricultureOptions=(x:any)=>
+ (x.cropKind===undefined||(x.kind==='planting'&&cropKinds.includes(x.cropKind)))&&
+ (x.animalKind===undefined||(x.kind==='pasture'&&[...animalKinds,'mixed'].includes(x.animalKind)));
+const cropState=(x:any)=>record(x)&&cropKinds.includes(x.kind)&&['seedling','growing','mature','harvested'].includes(x.stage)&&finite(x.growth)&&x.growth>=0&&x.growth<=1&&count(x.plantedTick)&&(x.harvestedTick===undefined||count(x.harvestedTick))&&count(x.cycles);
+const animalState=(x:any)=>record(x)&&animalKinds.includes(x.kind)&&finite(x.heading)&&['walk','peck','idle','flap'].includes(x.activity)&&count(x.phaseStartedTick)&&count(x.phaseUntilTick)&&x.phaseUntilTick>=x.phaseStartedTick&&finite(x.phase);
 /** Corruption check, not authentication. A fast string checksum avoids hashing every frame. */
 function checksum(s:string):string{let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);return (h>>>0).toString(16);}
 function validateWorld(w:any):asserts w is World{
@@ -27,19 +36,24 @@ function validateWorld(w:any):asserts w is World{
   for(const k of Object.values(r.known) as any[])if(!record(k)||!point(k.lastPosition)||typeof k.entityId!=='string'||typeof k.ref!=='string'||typeof k.description!=='string')bad();
   for(const p of [...r.plan,...r.suspendedPlan])if(!record(p)||!record(p.action)||typeof p.action.op!=='string'||!record(p.action.params)||!count(p.elapsedTicks)||!count(p.emittedChars)||typeof p.done!=='boolean')bad();
  }
- const objects=new Set<string>();for(const o of w.objects){if(!record(o)||typeof o.id!=='string'||objects.has(o.id)||!['tree','wall','rock','berry','board','pond','workbench','plot','house'].includes(o.kind)||!point(o.position)||!['width','height','depth'].every(k=>finite(o[k])&&o[k]>0)||!finite(o.resources)||o.resources<0||typeof o.appearance!=='string')bad();objects.add(o.id);}
+ const objects=new Set<string>();for(const o of w.objects){
+  if(!record(o)||typeof o.id!=='string'||objects.has(o.id)||!['tree','wall','rock','berry','board','pond','workbench','plot','house','crop','animal'].includes(o.kind)||!point(o.position)||!['width','height','depth'].every(k=>finite(o[k])&&o[k]>0)||!finite(o.resources)||o.resources<0||typeof o.appearance!=='string')bad();
+  if(o.kind==='crop'?!cropState(o.crop):o.crop!==undefined)bad();
+  if(o.kind==='animal'?!animalState(o.animal):o.animal!==undefined)bad();
+  objects.add(o.id);
+ }
  for(const s of w.sounds)if(!record(s)||!point(s.position)||typeof s.text!=='string'||!list(s.deliveredTo)||!finite(s.emittedTick))bad();
  for(const e of w.events)if(!record(e)||!count(e.tick)||typeof e.kind!=='string'||typeof e.text!=='string')bad();
  if(w.camp){if(!record(w.camp)||!list(w.camp.tasks)||!count(w.camp.sequence)||!count(w.camp.noticeVersion))bad();
-  for(const t of w.camp.tasks)if(!record(t)||typeof t.id!=='string'||!count(t.amount)||!count(t.progress)||!list(t.acceptedBy)||typeof t.note!=='string'||!['open','done'].includes(t.status))bad();
+  for(const t of w.camp.tasks)if(!record(t)||typeof t.id!=='string'||(t.kind!==undefined&&!taskKinds.includes(t.kind))||!agricultureOptions(t)||!count(t.amount)||!count(t.progress)||!list(t.acceptedBy)||typeof t.note!=='string'||!['open','done'].includes(t.status))bad();
   if(w.camp.stock&&!Object.values(w.camp.stock).every(n=>finite(n)&&(n as number)>=0))bad();
-  if(w.camp.zones)for(const z of w.camp.zones)if(!record(z)||!record(z.bounds)||!['minX','maxX','minZ','maxZ'].every(k=>finite(z.bounds[k])))bad();
+  if(w.camp.zones!==undefined){if(!list(w.camp.zones))bad();for(const z of w.camp.zones)if(!record(z)||(z.kind!==undefined&&!zoneKinds.includes(z.kind))||!agricultureOptions(z)||!record(z.bounds)||!['minX','maxX','minZ','maxZ'].every(k=>finite(z.bounds[k])))bad();}
  }
 }
 function validateState(data:any):asserts data is CampSaveState{
  validateWorld(data?.world);
  if(!list(data.queuedTasks)||data.queuedTasks.length>64||typeof data.selectedId!=='string'||typeof data.showSenses!=='boolean'||typeof data.needsDecision!=='boolean'||!record(data.settings))throw Error('营地存档设置不完整');
- if(data.queuedTasks.length){const probe=structuredClone(data.world);for(const task of data.queuedTasks)postTask(probe,task);}
+ if(data.queuedTasks.length){const probe=structuredClone(data.world);for(const task of data.queuedTasks){if(!record(task)||(task.kind!==undefined&&!taskKinds.includes(task.kind))||!agricultureOptions(task))throw Error('营地存档任务不完整');postTask(probe,task);}}
 }
 /** Alternating atomic slots retain the previous good camp if a write fails or one slot is damaged. */
 export class CampSaves{

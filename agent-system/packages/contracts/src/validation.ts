@@ -54,7 +54,7 @@ const actionSchema = decisionSchema.properties.actions.items;
 const mapCoordinate={type:'integer',minimum:-10000,maximum:10000};
 const mapPoint=object({x:mapCoordinate,z:mapCoordinate});
 const contextSchema = object({
-  spatialMemory:object({frame:{const:'personal_start_relative'},cellSize:{const:2},currentCell:mapPoint,cells:array(object({x:mapCoordinate,z:mapCoordinate,state:{enum:['seen','visited','blocked']}}),256),trail:array(mapPoint,64),landmarks:array(object({knownRef:ref,kind:{enum:['tree','wall','rock','berry','board','pond','workbench','plot','house','person']},x:mapCoordinate,z:mapCoordinate,state:{enum:['remembered','depleted']},lastObservedWhen:text(80)}),64)}),
+  spatialMemory:object({frame:{const:'personal_start_relative'},cellSize:{const:2},currentCell:mapPoint,cells:array(object({x:mapCoordinate,z:mapCoordinate,state:{enum:['seen','visited','blocked']}}),256),trail:array(mapPoint,64),landmarks:array(object({knownRef:ref,kind:{enum:['tree','wall','rock','berry','board','pond','workbench','plot','house','crop','animal','person']},x:mapCoordinate,z:mapCoordinate,state:{enum:['remembered','depleted']},lastObservedWhen:text(80)}),64)}),
   schemaVersion:{const:'1.0.0'}, identity:object({name:text(80),background:text(2000),personality:text(1000),personalGoal:text(1000)}),
   experiencedWhen:text(80), body:{...object({hunger:text(120),fatigue:text(120),pain:text(120),mood:text(120),need:text(400)}),required:['hunger','fatigue','pain']},
   currentPlan:object({goal:{type:'string',maxLength:300},actions:array(actionSchema,16),progress:{type:'string',maxLength:2000}}),

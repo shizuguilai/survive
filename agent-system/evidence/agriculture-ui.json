@@ -1,0 +1,184 @@
+{
+  "mode": "EXPLICIT_VISUAL_FIXTURE",
+  "simulation": "postTask + advanceAgriculture + applyDecision(gather) + stepActions",
+  "results": [
+    {
+      "width": 1536,
+      "height": 864,
+      "dpr": 1,
+      "initial": {
+        "agricultureFontLoaded": true,
+        "zoneShown": false,
+        "zoneCommands": 0,
+        "zoom": 32,
+        "expectedZoom": 32,
+        "mapSize": 96,
+        "crops": 24,
+        "animals": 8,
+        "stages": [
+          "seedling",
+          "growing",
+          "mature"
+        ],
+        "nativeResidents": 4,
+        "paintedResidents": 0
+      },
+      "motion": {
+        "sameInstances": true,
+        "animalMoves": true,
+        "poseMoves": true,
+        "cropGrows": true,
+        "nativeAgriculture": true
+      },
+      "pauseFreezesTickWorldAndNativePoses": true,
+      "zoneToggle": {
+        "shown": true,
+        "commands": 63,
+        "aboveArt": true,
+        "passThrough": true,
+        "clipWidth": 1280,
+        "viewportWidth": 1280
+      },
+      "drawingAutoShowsZones": true,
+      "viewControlsDoNotMutateWorld": true,
+      "confirmedUiZones": [
+        {
+          "kind": "planting",
+          "variant": "corn",
+          "objects": 4,
+          "allExpected": true,
+          "drawingClosed": true
+        },
+        {
+          "kind": "pasture",
+          "variant": "goose",
+          "objects": 4,
+          "allExpected": true,
+          "drawingClosed": true
+        }
+      ],
+      "harvest": {
+        "id": "zone-1-crop-0",
+        "stage": "harvested",
+        "resources": 0,
+        "harvestedTick": 8065,
+        "tick": 8065,
+        "cycles": 1,
+        "foodGained": 3,
+        "amount": 3,
+        "stockUnchanged": true,
+        "completed": true,
+        "errors": [],
+        "steps": 60
+      },
+      "harvestVisual": {
+        "sameInstance": true,
+        "grainHidden": true,
+        "flecks": 3
+      },
+      "errors": [],
+      "missing": [],
+      "screenshots": [
+        "local-evidence/agriculture-default-1536.png",
+        "local-evidence/agriculture-overview-1536.png",
+        "local-evidence/agriculture-zones-1536.png",
+        "local-evidence/agriculture-planting-planner-1536.png",
+        "local-evidence/agriculture-drawing-1536.png",
+        "local-evidence/agriculture-pasture-planner-1536.png",
+        "local-evidence/agriculture-harvest-1536.png",
+        "local-evidence/agriculture-rice-closeup-1536.png",
+        "local-evidence/agriculture-poultry-closeup-1536.png"
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dpr": 2,
+      "initial": {
+        "agricultureFontLoaded": true,
+        "zoneShown": false,
+        "zoneCommands": 0,
+        "zoom": 32,
+        "expectedZoom": 32,
+        "mapSize": 96,
+        "crops": 24,
+        "animals": 8,
+        "stages": [
+          "seedling",
+          "growing",
+          "mature"
+        ],
+        "nativeResidents": 4,
+        "paintedResidents": 0
+      },
+      "motion": {
+        "sameInstances": true,
+        "animalMoves": true,
+        "poseMoves": true,
+        "cropGrows": true,
+        "nativeAgriculture": true
+      },
+      "pauseFreezesTickWorldAndNativePoses": true,
+      "zoneToggle": {
+        "shown": true,
+        "commands": 63,
+        "aboveArt": true,
+        "passThrough": true,
+        "clipWidth": 1280,
+        "viewportWidth": 1280
+      },
+      "drawingAutoShowsZones": true,
+      "viewControlsDoNotMutateWorld": true,
+      "confirmedUiZones": [
+        {
+          "kind": "planting",
+          "variant": "corn",
+          "objects": 4,
+          "allExpected": true,
+          "drawingClosed": true
+        },
+        {
+          "kind": "pasture",
+          "variant": "goose",
+          "objects": 4,
+          "allExpected": true,
+          "drawingClosed": true
+        }
+      ],
+      "harvest": {
+        "id": "zone-1-crop-0",
+        "stage": "harvested",
+        "resources": 0,
+        "harvestedTick": 8065,
+        "tick": 8065,
+        "cycles": 1,
+        "foodGained": 3,
+        "amount": 3,
+        "stockUnchanged": true,
+        "completed": true,
+        "errors": [],
+        "steps": 60
+      },
+      "harvestVisual": {
+        "sameInstance": true,
+        "grainHidden": true,
+        "flecks": 3
+      },
+      "errors": [],
+      "missing": [],
+      "screenshots": [
+        "local-evidence/agriculture-default-844.png",
+        "local-evidence/agriculture-overview-844.png",
+        "local-evidence/agriculture-zones-844.png",
+        "local-evidence/agriculture-planting-planner-844.png",
+        "local-evidence/agriculture-drawing-844.png",
+        "local-evidence/agriculture-pasture-planner-844.png",
+        "local-evidence/agriculture-harvest-844.png",
+        "local-evidence/agriculture-rice-closeup-844.png",
+        "local-evidence/agriculture-poultry-closeup-844.png"
+      ]
+    }
+  ],
+  "physicalDevice": "not_run",
+  "realModel": "not_run_visual_only"
+}

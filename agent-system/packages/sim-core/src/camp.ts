@@ -1,17 +1,35 @@
-import type {Resident,World,WorldObject,ResourceKind,CampTask,ResidentialBounds} from './domain.ts';
+import type {Resident,World,WorldObject,ResourceKind,CampTask,ResidentialBounds,CropKind,AnimalKind} from './domain.ts';
 import {BUILD_SITES,HOUSE_STEPS,houseSteps,houseCost,RECIPES,materialText,taskTitle} from './recipes.ts';
 import {homeSites,validateZone,zoneCoveredBy,ownHomeProject} from './housing.ts';
 import {experiencedWhen,rememberObservation} from './knowledge.ts';
 import {preferredHome,designedHomeSize} from './home-design.ts';
-export const RESOURCE_LABELS:Record<ResourceKind,string>={wood:'木材',stone:'石料',food:'浆果'};
-export type TaskDraft={kind?:'gather'|'craft'|'house'|'residential';bounds?:ResidentialBounds;resource:ResourceKind;amount:number;note:string;recipeId?:string;siteId?:string};
+import {zoneKind,zoneConflict,populateAgriculture,CROP_LABELS,ANIMAL_LABELS} from './agriculture.ts';
+export const RESOURCE_LABELS:Record<ResourceKind,string>={wood:'木材',stone:'石料',food:'食物'};
+export type TaskDraft={kind?:'gather'|'craft'|'house'|'residential'|'planting'|'pasture';bounds?:ResidentialBounds;cropKind?:CropKind;animalKind?:AnimalKind|'mixed';resource:ResourceKind;amount:number;note:string;recipeId?:string;siteId?:string};
 export function postTask(world:World,draft:TaskDraft):void{
   if(!world.camp)throw Error('当前场景没有营地公告板');
+  if(draft.kind==='planting'||draft.kind==='pasture'){
+    const error=validateZone(draft.bounds!,4);if(error)throw Error(error);
+    const bounds={...draft.bounds!},kind=draft.kind,cropKind=draft.cropKind??'rice',animalKind=draft.animalKind??'mixed';
+    if(kind==='planting'&&!Object.hasOwn(CROP_LABELS,cropKind)||kind==='pasture'&&!Object.hasOwn(ANIMAL_LABELS,animalKind))throw Error('请选择支持的作物或家禽');
+    const conflict=zoneConflict(world,bounds,kind);if(conflict)throw Error(conflict);
+    world.camp.zones??=[];
+    if(zoneCoveredBy(bounds,world.camp.zones.filter(z=>zoneKind(z)===kind).map(z=>z.bounds)))return;
+    if(world.camp.zones.filter(z=>zoneKind(z)===kind).length>=8)throw Error('每种用途最多保留8个区域');
+    const id=`zone-${world.camp.zones.length+1}`,taskId=`task-${++world.camp.sequence}`;
+    const zone={id,taskId,bounds,kind,...(kind==='planting'?{cropKind}:{animalKind})};
+    world.camp.zones.push(zone);const count=populateAgriculture(world,zone);
+    if(!count){world.camp.zones.pop();world.camp.sequence--;throw Error('这片区域没有可用空地，请避开资源和已划定区域');}
+    const note=kind==='planting'?`已播种${CROP_LABELS[cropKind]}幼苗，成熟后居民会走近收割食物，再搬入仓储。收割后休耕并重新发苗。`:`已放养${ANIMAL_LABELS[animalKind]}，在畜牧区内散步、啄食和扑翅；当前不产出食物。`;
+    world.camp.tasks.push({id:taskId,kind,zoneId:id,...(kind==='planting'?{cropKind}:{animalKind}),resource:'food',amount:count,progress:count,note,acceptedBy:[],status:'done',postedTick:world.tick});
+    updateBoard(world);world.events.push({tick:world.tick,kind:'planner_task',agentId:'planner',text:`划定${kind==='planting'?'种植区':'畜牧区'} ${bounds.maxX-bounds.minX}×${bounds.maxZ-bounds.minZ}格；${note}`});return;
+  }
   if(draft.kind==='residential'){
     const error=validateZone(draft.bounds!);if(error)throw Error(error);
     const bounds={...draft.bounds!};world.camp.zones??=[];
-    if(zoneCoveredBy(bounds,world.camp.zones.map(z=>z.bounds)))return;
-    if(world.camp.zones.length>=8)throw Error('最多保留8个居住区');
+    const conflict=zoneConflict(world,bounds,'residential');if(conflict)throw Error(conflict);
+    if(zoneCoveredBy(bounds,world.camp.zones.filter(z=>zoneKind(z)==='residential').map(z=>z.bounds)))return;
+    if(world.camp.zones.filter(z=>zoneKind(z)==='residential').length>=8)throw Error('最多保留8个居住区');
     // Preserve each rectangle and its references: overlap adds usable land without
     // filling unselected corners or moving homes already claimed in either zone.
     const id=`zone-${world.camp.zones.length+1}`,taskId=`task-${++world.camp.sequence}`;
@@ -25,7 +43,7 @@ export function postTask(world:World,draft:TaskDraft):void{
   if(!['gather','craft','house'].includes(kind))throw Error('目标类型不支持');
   if(kind==='craft'&&!RECIPES.some(r=>r.id===draft.recipeId&&r.kind==='craft'))throw Error('制作目标配方不存在');
   const site=BUILD_SITES.find(s=>s.id===draft.siteId);
-  if(kind==='house'&&(!site||world.objects.some(o=>o.id===`plot-${site.id}`)))throw Error('请选一块尚未占用的居住地块');
+  if(kind==='house'&&(!site||world.objects.some(o=>o.id===`plot-${site.id}`)||zoneConflict(world,{minX:site.x-2.6,maxX:site.x+2.6,minZ:site.z-2.2,maxZ:site.z+3.2},'residential')))throw Error('请选一块尚未占用的居住地块');
   const task:CampTask={kind,...(kind==='craft'?{recipeId:draft.recipeId}:{}),...(kind==='house'?{siteId:site!.id}:{}),id:`task-${++world.camp.sequence}`,resource:draft.resource,amount:kind==='house'?3:draft.amount,progress:0,note:draft.note.trim().slice(0,120),acceptedBy:[],status:'open',postedTick:world.tick};
   world.camp.tasks.push(task);
   if(kind==='house')world.objects.push({id:`plot-${site!.id}`,kind:'plot',projectId:task.id,buildStage:0,position:{x:site!.x,y:0,z:site!.z},width:4,height:.5,depth:3,appearance:'划定的小屋建设地块，需读公告了解方案',resources:0});
@@ -47,7 +65,8 @@ export function readBoard(world:World,resident:Resident,board:WorldObject):void{
   for(const task of world.camp?.tasks??[]){
     let entry=Object.values(resident.known).find(k=>k.entityId===task.id);
     if(!entry){const ref=`known_${++resident.knowledgeSequence}`;entry={ref,entityId:task.id,description:'',lastPosition:{...board.position},lastSeenTick:world.tick,visible:false,recognizedName:null};resident.known[ref]=entry;}
-    const description=`公告任务：${taskTitle(task)}；进度${task.progress}/${task.amount}；${task.status==='done'?'已完成':task.acceptedBy.includes(resident.id)?'你已自愿接受':'可自愿接受或拒绝'}。这是已读任务，直接accept_task，无需对任务引用read_notice。${task.note}`;
+    const instruction=task.kind==='planting'||task.kind==='pasture'?'区域已划定，无需accept_task；具体动植物位置和状态仍需亲自观察。':'这是已读任务，直接accept_task，无需对任务引用read_notice。';
+    const description=`公告任务：${taskTitle(task)}；进度${task.progress}/${task.amount}；${task.status==='done'?'已完成':task.acceptedBy.includes(resident.id)?'你已自愿接受':'可自愿接受或拒绝'}。${instruction}${task.note}`;
     entry.description=description;entry.lastSeenTick=world.tick;entry.lastPosition={...board.position};
     const obs={obsRef:`observation_${++resident.observationSequence}`,experiencedWhen:experiencedWhen(world.tick),certainty:'clear' as const,modality:'visual' as const,detail:{level:'described',relativeDirection:'front',distanceBand:'near',appearance:description.match(/.{1,120}/gu)??[],recognizedName:null,knownRef:entry.ref}};
     resident.observations.push(obs);rememberObservation(resident,obs);
@@ -76,7 +95,7 @@ export function grantKnown(resident:Resident,entityId:string,description:string,
 /** A resident requests a home by accepting a personally read residential notice. */
 export function claimHome(world:World,resident:Resident,notice:CampTask):string|null{
   if(resident.homeId||ownHomeProject(world,resident))return '我已经有自己的住房或在建住处，无需重复申请。';
-  const zone=world.camp?.zones?.find(z=>z.id===notice.zoneId);if(!zone)return '这片居住区已不存在。';
+  const zone=world.camp?.zones?.find(z=>z.id===notice.zoneId&&zoneKind(z)==='residential');if(!zone)return '这片居住区已不存在。';
   const design=preferredHome(resident.id),size=designedHomeSize(1,design.id);
   const site=homeSites(world,zone.bounds,size).sort((a,b)=>Math.hypot(a.x-resident.position.x,a.z-resident.position.z)-Math.hypot(b.x-resident.position.x,b.z-resident.position.z))[0];
   if(!site)return '居住区暂无可用空地，需要扩大居住区或清理资源，原有房屋不会被覆盖。';

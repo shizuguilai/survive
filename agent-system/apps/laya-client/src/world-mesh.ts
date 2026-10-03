@@ -1,10 +1,12 @@
 import {resourceRatio,resourceStage} from '../../../packages/sim-core/src/resources.ts';
 import type {WorldObject} from '../../../packages/sim-core/src/domain.ts';
 import {homeDesign,homeLayout} from '../../../packages/sim-core/src/home-design.ts';
+import {AgricultureMesh} from './agriculture-mesh.ts';
 /** All scenery is native Laya geometry; these objects never advance the simulation. */
 export class WorldMesh{
- readonly node:any;private geometries:any[]=[];private materials:any[]=[];private ink:any;private roofs:any[]=[];private lampParts:any[]=[];private lampGlass:any[]=[];private night:boolean|undefined;private partParent:any;
+ readonly node:any;private geometries:any[]=[];private materials:any[]=[];private ink:any;private roofs:any[]=[];private lampParts:any[]=[];private lampGlass:any[]=[];private night:boolean|undefined;private partParent:any;private agriculture?:AgricultureMesh;private disposed=false;
  constructor(readonly object:WorldObject){
+  if(object.kind==='crop'||object.kind==='animal'){this.agriculture=new AgricultureMesh(object);this.node=this.agriculture.node;return;}
   const L=(globalThis as any).Laya;this.node=new L.Sprite3D(object.id);this.node.transform.position=new L.Vector3(object.position.x,object.position.y,object.position.z);
   const box=(name:string,w:number,h:number,d:number,x:number,y:number,z:number,c:string)=>this.part(name,L.PrimitiveMesh.createBox(w,h,d),x,y,z,c);
   const ball=(name:string,r:number,x:number,y:number,z:number,c:string,sx=1,sy=1,sz=1)=>{const p=this.part(name,L.PrimitiveMesh.createSphere(r,10,12),x,y,z,c);p.transform.localScale=new L.Vector3(sx,sy,sz);return p;};
@@ -81,5 +83,6 @@ export class WorldMesh{
  }
  setNight(night:boolean):void{if(this.night===night)return;this.night=night;for(const node of this.lampParts)node.active=night;const L=(globalThis as any).Laya;for(const mat of this.lampGlass)mat.albedoColor=night?new L.Color(1,.84,.48,.38):new L.Color(.82,.78,.65,.26);}
  setRoofVisible(visible:boolean):void{for(const roof of this.roofs)roof.active=visible;}
- dispose():void{this.node.destroy(true);for(const g of this.geometries)g.destroy();for(const m of this.materials)m.destroy();}
+ update(object:WorldObject,tick:number):void{if(!this.disposed)this.agriculture?.update(object,tick);}
+ dispose():void{if(this.disposed)return;this.disposed=true;if(this.agriculture){this.agriculture.dispose();return;}this.node.destroy(true);for(const g of this.geometries)g.destroy();for(const m of this.materials)m.destroy();}
 }

@@ -1,4 +1,6 @@
 import {boundedZoom} from './interaction.ts';
+import {MAP_HALF,DEFAULT_MAP_ZOOM,MAX_MAP_ZOOM} from '../../../packages/sim-core/src/map-config.ts';
+export {MAP_HALF,DEFAULT_MAP_ZOOM} from '../../../packages/sim-core/src/map-config.ts';
 
 export type MapPoint={x:number;z:number};
 export type ScreenPoint={x:number;y:number};
@@ -7,7 +9,6 @@ export type MapViewport={x:number;y:number;width:number;height:number};
 export type MapTouch={id:number;pos:ScreenPoint};
 export type MapPinch={ids:[number,number];distance:number;zoom:number;yaw:number;anchor:MapPoint};
 export type MapFootprint={minX:number;maxX:number;minZ:number;maxZ:number;corners?:MapPoint[]};
-export const MAP_HALF=28;
 // The camera orbits its ground focus at height 28 and horizontal radius 20.
 const TILT_SIN=28/Math.hypot(28,20),TILT_COS=20/Math.hypot(28,20);
 const finite=(n:number,fallback:number)=>Number.isFinite(n)?n:fallback;
@@ -15,8 +16,8 @@ export function normalizedYaw(yaw=0):number{const turn=Math.PI*2;return ((finite
 export function cameraExtent(zoom:number,v:MapViewport,yaw=0){const x=zoom*v.width/v.height/2,z=zoom/TILT_SIN/2,c=Math.abs(Math.cos(yaw)),s=Math.abs(Math.sin(yaw));return {x:c*x+s*z,z:s*x+c*z};}
 export function cameraEye(c:MapCamera){const yaw=normalizedYaw(c.yaw);return {x:c.x+20*Math.sin(yaw),y:28,z:c.z+20*Math.cos(yaw)};}
 export function clampMapCamera(c:MapCamera,v:MapViewport):MapCamera{
- const edge=MAP_HALF-.5,yaw=normalizedYaw(c.yaw),unit=cameraExtent(1,v,yaw),maxZoom=Math.min(48,edge/unit.x,edge/unit.z);
- const zoom=Math.min(maxZoom,boundedZoom(finite(c.zoom,18))),extent=cameraExtent(zoom,v,yaw);
+ const edge=MAP_HALF-.5,yaw=normalizedYaw(c.yaw),unit=cameraExtent(1,v,yaw),maxZoom=Math.min(MAX_MAP_ZOOM,edge/unit.x,edge/unit.z);
+ const zoom=Math.min(maxZoom,boundedZoom(finite(c.zoom,DEFAULT_MAP_ZOOM))),extent=cameraExtent(zoom,v,yaw);
  return {zoom,yaw,x:Math.max(-edge+extent.x,Math.min(edge-extent.x,finite(c.x,0))),z:Math.max(-edge+extent.z,Math.min(edge-extent.z,finite(c.z,0)))};
 }
 /** Full precision stage coordinates; never invert a cached, integer-rounded render matrix. */

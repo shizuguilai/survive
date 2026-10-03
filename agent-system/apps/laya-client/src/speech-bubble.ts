@@ -3,7 +3,7 @@ export class SpeechBubble{
  readonly root:any;private label:any;private key='';width=0;height=0;
  constructor(parent:any){
   const L=(globalThis as any).Laya;this.root=new L.Sprite();this.root.mouseEnabled=false;this.root.visible=false;parent.addChild(this.root);
-  this.label=new L.Text();this.label.font='Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';this.label.fontSize=14;this.label.leading=3;this.label.wordWrap=true;this.label.align='center';this.label.color='#263747';this.label.mouseEnabled=false;this.label.pos(14,10);this.root.addChild(this.label);
+  this.label=new L.Text();this.label.font='Camp Extension, Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';this.label.fontSize=14;this.label.leading=3;this.label.wordWrap=true;this.label.align='center';this.label.color='#263747';this.label.mouseEnabled=false;this.label.pos(14,10);this.root.addChild(this.label);
  }
  show(text:string,thought:boolean,alpha=1):void{
   const key=(thought?'thought:':'speech:')+text;

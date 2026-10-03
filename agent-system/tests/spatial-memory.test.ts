@@ -20,6 +20,14 @@ test('Map retains previously seen resources while unseen resource changes stay u
  const w=scene(),r=w.residents[0];samplePerception(w);const remembered=structuredClone(r.spatialMemory!.landmarks);r.heading=Math.PI;w.objects[0].resources=0;w.objects[0].position.x=80;w.tick=4;samplePerception(w);for(const [ref,landmark]of Object.entries(remembered))assert.deepEqual(r.spatialMemory!.landmarks[ref],landmark);
  const before=hashCanonical(w);const map=buildSpatialContext(r)!;map.cells[0].x=1000;assert.equal(hashCanonical(w),before);
 });
+test('Personally seen crops and poultry remain valid private landmarks outside the former map edge',()=>{
+ const w=scene(),r=w.residents[0];r.position={x:35,y:0,z:35};r.heading=0;
+ w.objects=[{id:'rice-test',kind:'crop',crop:{kind:'rice',stage:'mature',growth:1,plantedTick:0,cycles:0},position:{x:39,y:0,z:35},width:1,height:1,depth:1,resourceKind:'food',resources:5,appearance:'成熟的水稻'},
+ {id:'duck-test',kind:'animal',animal:{kind:'duck',heading:0,activity:'idle',phaseStartedTick:0,phaseUntilTick:20,phase:0},position:{x:38,y:0,z:36},width:.5,height:.6,depth:.7,resources:0,appearance:'一只鸭子'}];
+ samplePerception(w);const map=buildSpatialContext(r)!;assert.ok(map.landmarks.some(l=>l.kind==='crop'&&l.state==='remembered'));assert.ok(map.landmarks.some(l=>l.kind==='animal'));assert.ok(!map.cells.some(c=>c.state==='blocked'));validateCharacterContext(buildContext(w,r));
+ r.heading=Math.PI;w.objects[0].resources=0;w.objects[0].crop!.stage='harvested';w.objects[1].position.z=44;w.tick=4;samplePerception(w);
+ assert.deepEqual(buildSpatialContext(r)!.landmarks,map.landmarks,'unseen crop harvests and animal motion cannot update private maps');
+});
 test('Map and trail stay bounded; snapshot restoration retains structured and text memories independently',()=>{
  const w=scene(),r=w.residents[0];for(let i=0;i<400;i++){r.position.x=i*2;rememberFootstep(r,i);rememberMapCell(r,{x:i*2,y:0,z:4},i);}
  assert.ok(Object.keys(r.spatialMemory!.cells).length<=MAP_CELL_LIMIT);assert.equal(r.spatialMemory!.trail.length,MAP_TRAIL_LIMIT);const copy=JSON.parse(JSON.stringify(r));assert.deepEqual(buildSpatialContext(copy),buildSpatialContext(r));assert.ok(copy.memories.some((m:any)=>m.ref==='memory_background'));

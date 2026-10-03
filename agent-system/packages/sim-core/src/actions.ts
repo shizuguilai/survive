@@ -8,8 +8,9 @@ import {onBreak,isInside,restRecovery} from './living.ts';
 import {HOUSE_STEPS,houseSteps,taskTitle} from './recipes.ts';
 import {readBoard,ownReceipt,creditGather,RESOURCE_LABELS,claimHome} from './camp.ts';
 import {navigationPath,movementBlocked,floorHeight} from './navigation.ts';
-import {rememberMapCell} from './spatial-memory.ts';
+import {rememberMapCell,rememberLandmark} from './spatial-memory.ts';
 import { applyEquipmentAction } from './character.ts';
+import {harvestCrop} from './agriculture.ts';
 export const IMPLEMENTED_ACTIONS = ['home_care','survey','craft','exchange','withdraw','build','haul','read_notice','accept_task','decline_task','eat','continue','walk','look','listen','gather','rest','speak','wait','equip_item','unequip_item'];
 const distance=(a:Vec3,b:Vec3)=>Math.hypot(a.x-b.x,a.z-b.z);
 const angleDelta=(from:number,to:number)=>Math.atan2(Math.sin(to-from),Math.cos(to-from));
@@ -113,15 +114,24 @@ export function stepActions(world:World,nextTick:number):string[] {
         }
         case 'gather':{
           const object=world.objects.find(o=>o.id===knowledge!.entityId);
-          if(!object||!['tree','rock','berry'].includes(object.kind)){fail(world,resident,progress,nextTick,'这个目标不是可采集资源，不能对它执行gather。');due.add(resident.id);break;}
+          if(!object||!['tree','rock','berry','crop'].includes(object.kind)){fail(world,resident,progress,nextTick,'这个目标不是可采集资源，不能对它执行gather。');due.add(resident.id);break;}
+          if(object.kind==='crop'&&object.crop?.stage!=='mature'){fail(world,resident,progress,nextTick,'眼前的作物尚未成熟，需要等到成熟后再收割。');due.add(resident.id);break;}
           if(distance(resident.position,object.position)>1.8){fail(world,resident,progress,nextTick,'我距离这个采集目标太远，需要先实际走到它附近。');due.add(resident.id);break;}
+          resident.heading=Math.atan2(object.position.z-resident.position.z,object.position.x-resident.position.x);
           const period=gatherPeriod(resident,object.resourceKind??'wood');
           if(progress.elapsedTicks%period===0){
             if(object.resources<=0){fail(world,resident,progress,nextTick,'眼前已没有可取的资源。');due.add(resident.id);break;}
             if(resident.supplies&&resident.inventory>=30){fail(world,resident,progress,nextTick,'采集袋已满（30份），需要先消耗食物或停止采集。');due.add(resident.id);break;}
             object.maxResources??=object.resources;object.resources--;resident.inventory++;progress.producedUnits=(progress.producedUnits??0)+1;addSkill(resident,'gathering');
+            harvestCrop(object,nextTick);
+            if(object.kind==='crop'){
+              // The worker personally handled this patch; short stubble can fall
+              // below the visual cone, but their own completed harvest is known.
+              knowledge!.description=object.appearance;knowledge!.lastSeenTick=nextTick;knowledge!.descriptionSeenTick=nextTick;
+              rememberLandmark(resident,knowledge!.ref,'crop',object.position,nextTick,object.resources<=0);
+            }
             const kind=object.resourceKind??'wood';if(resident.supplies){resident.supplies[kind]=(resident.supplies[kind]??0)+1;creditGather(world,resident,kind);}resident.fatigue=Math.min(1,resident.fatigue+0.005);
-            if(progress.producedUnits>=params.amount)progress.done=true;
+            if(progress.producedUnits>=params.amount||object.kind==='crop'&&object.resources<=0)progress.done=true;
           }
           break;
         }
@@ -170,7 +180,7 @@ export function stepActions(world:World,nextTick:number):string[] {
           progress.done=true;break;
         }
         case 'eat':{
-          if(knowledge!.entityId!==`supply-food-${resident.id}`||!(resident.supplies?.food)){fail(world,resident,progress,nextTick,'我没有可食用的自有浆果。');due.add(resident.id);break;}
+          if(knowledge!.entityId!==`supply-food-${resident.id}`||!(resident.supplies?.food)){fail(world,resident,progress,nextTick,'我没有可食用的自有食物。');due.add(resident.id);break;}
           if(progress.elapsedTicks%20===0){resident.supplies.food--;resident.inventory--;resident.hunger=Math.max(0,resident.hunger-.16);if(Math.floor(progress.elapsedTicks/20)>=params.amount||!resident.supplies.food)progress.done=true;}break;
         }
         case 'rest':{

@@ -4,6 +4,7 @@ import {build} from 'esbuild';
 import {createCrewWorld} from '../packages/sim-core/src/world.ts';
 import {hashCanonical} from '../packages/contracts/src/canonical.ts';
 import {clampMapCamera,groundAtScreen,projectToStage,cameraFootprint,beginMapPinch,moveMapPinch,worldToMinimap,minimapToWorld} from '../apps/laya-client/src/map-camera.ts';
+import {MAP_HALF,DEFAULT_MAP_ZOOM,MAX_MAP_ZOOM} from '../packages/sim-core/src/map-config.ts';
 const viewport={x:0,y:84,width:1280,height:570};
 const approx=(a:number,b:number)=>assert.ok(Math.abs(a-b)<1e-8,`${a} != ${b}`);
 test('Map projection is exact between input events without a refreshed renderer, for both sidebar layouts',()=>{
@@ -15,11 +16,18 @@ test('Map projection is exact between input events without a refreshed renderer,
  }
 });
 test('All pan and zoom limits keep the entire visible ground within the terrain, including malformed values',()=>{
- for(const yaw of [NaN,...Array.from({length:8},(_,i)=>i*Math.PI/4)])for(const left of [0,292])for(const zoom of [NaN,Infinity,1,9,18,48,1000])for(const x of [-1e6,0,1e6])for(const z of [-1e6,0,1e6]){
+ for(const yaw of [NaN,...Array.from({length:8},(_,i)=>i*Math.PI/4)])for(const left of [0,292])for(const zoom of [NaN,Infinity,1,9,18,DEFAULT_MAP_ZOOM,MAX_MAP_ZOOM,1000])for(const x of [-1e6,0,1e6])for(const z of [-1e6,0,1e6]){
   const v={...viewport,x:left,width:1280-left},c=clampMapCamera({x,z,zoom,yaw},v),b=cameraFootprint(c,v);
-  assert.ok(Object.values(c).every(Number.isFinite));assert.ok(b.minX>=-27.50001&&b.maxX<=27.50001&&b.minZ>=-27.50001&&b.maxZ<=27.50001);
-  for(const p of b.corners!){assert.ok(Math.abs(p.x)<=27.50001&&Math.abs(p.z)<=27.50001);}
+  const edge=MAP_HALF-.5+.00001;
+  assert.ok(Object.values(c).every(Number.isFinite));assert.ok(b.minX>=-edge&&b.maxX<=edge&&b.minZ>=-edge&&b.maxZ<=edge);
+  for(const p of b.corners!){assert.ok(Math.abs(p.x)<=edge&&Math.abs(p.z)<=edge);}
  }
+});
+test('The wider default reveals more land and the expanded map supports views beyond the old edge',()=>{
+ const current=clampMapCamera({x:0,z:0,zoom:DEFAULT_MAP_ZOOM},viewport),old=cameraFootprint({x:0,z:0,zoom:20},viewport),visible=cameraFootprint(current,viewport);
+ assert.equal(current.zoom,32);assert.ok((visible.maxX-visible.minX)>(old.maxX-old.minX)*1.5);
+ const edge=clampMapCamera({x:100,z:100,zoom:9},viewport);assert.ok(edge.x>28&&edge.z>28);
+ const square={x:0,y:0,width:600,height:600};assert.equal(clampMapCamera({x:0,z:0,zoom:MAX_MAP_ZOOM},square).zoom,MAX_MAP_ZOOM);
 });
 test('Two-finger translation keeps scale, spacing jitter is ignored, and real pinching preserves the point under the fingers',()=>{
  for(const yaw of Array.from({length:8},(_,i)=>i*Math.PI/4)){
@@ -36,8 +44,8 @@ test('At the map boundary the camera responds immediately to a reversed drag',()
  const back=moveMapPinch(p,[{...a,pos:{x:2440,y:350}},{...b,pos:{x:2640,y:350}}],viewport)!;assert.ok(back.x>edge.x);assert.equal(back.zoom,edge.zoom);
 });
 test('Minimap positions round-trip and dragging beyond it clamps to the map',()=>{
- for(const p of [{x:0,z:0},{x:28,z:-28},{x:-7,z:19}]){const q=minimapToWorld(worldToMinimap(p,176),176);approx(p.x,q.x);approx(p.z,q.z);}
- assert.deepEqual(minimapToWorld({x:-500,y:500},176),{x:-28,z:28});
+ for(const p of [{x:0,z:0},{x:MAP_HALF,z:-MAP_HALF},{x:-7,z:19},{x:43,z:-37}]){const q=minimapToWorld(worldToMinimap(p,176),176);approx(p.x,q.x);approx(p.z,q.z);}
+ assert.deepEqual(minimapToWorld({x:-500,y:500},176),{x:-MAP_HALF,z:MAP_HALF});
 });
 
 const L:any={stage:{mouseX:0,mouseY:0},Vector3:class{x:number;y:number;z:number;constructor(x:number,y:number,z:number){this.x=x;this.y=y;this.z=z;}}};(globalThis as any).Laya=L;
@@ -78,7 +86,7 @@ test('Rotating the actual view orbits the camera and preserves screen-relative d
 });
 test('Landmark labels stay fixed when a resident walks through them, and published tasks retain every entry and scroll offset',()=>{
  const v=view(),w=v.state.world,board=w.objects.find((o:any)=>o.kind==='board'),label:any={pos(x:number,y:number){this.x=x;this.y=y;}};
- Object.assign(v,{art:{render(){},residentTop(){return null;}},objects:new Map(),residents:new Map(),nameLabels:new Map(),placeLabels:new Map([[board.id,label]]),drawMinimap(){},positionBubbles(){}});
+ Object.assign(v,{art:{render(){},residentTop(){return null;}},objects:new Map(),residents:new Map(),nameLabels:new Map(),placeLabels:new Map([[board.id,label]]),drawMinimap(){},drawZones(){},positionBubbles(){}});
  ObserverView.prototype.positionLabels.call(v);const location={x:label.x,y:label.y};w.residents[0].position={...board.position,z:board.position.z+1};ObserverView.prototype.positionLabels.call(v);assert.deepEqual({x:label.x,y:label.y},location);
  const seed=w.camp.tasks[0];w.camp.tasks=Array.from({length:20},(_,i)=>({...seed,id:'target-'+i,note:'目标说明'+i+'，完整说明不应被截断。'.repeat(5)}));
  const body={text:'',scrollY:85};Object.assign(v,{labels:{taskList:body},taskScroll:{set(y:number){body.scrollY=y;}}});v.renderTaskList(v.state);

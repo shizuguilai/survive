@@ -2,6 +2,7 @@ import type { Resident, World } from './domain.ts';
 import {advanceLiving,daylightAt} from './living.ts';
 import {postTask} from './camp.ts';
 import { createCharacterState } from './character.ts';
+import {advanceAgriculture} from './agriculture.ts';
 export function createWorld(options: {seed?:number;runId?:string} = {}): World {
   const residents: Resident[] = [
     makeResident('resident-a', '阿林', -1, 0, '小禾'),
@@ -29,6 +30,7 @@ function makeResident(id:string,name:string,x:number,heading:number,friend:strin
 export function cloneWorld(world:World):World { return structuredClone(world); }
 /** Deterministic environment update; never consults wall clocks or engine timers. */
 export function advanceEnvironment(world:World):void {
+  advanceAgriculture(world);
   for(const resident of world.residents){ resident.hunger=Math.min(1,resident.hunger+(world.camp?0.00012:0.000005)); resident.fatigue=Math.min(1,resident.fatigue+(world.camp?0.00003:0.000002)); }
   for(const resident of world.residents){if((resident.health??100)<=0)continue;
     const previous=resident.health??100;resident.health=Math.max(0,Math.min(100,previous+(resident.hunger>=.9?-.015:resident.hunger<.5&&resident.fatigue<.4?.002:0)));

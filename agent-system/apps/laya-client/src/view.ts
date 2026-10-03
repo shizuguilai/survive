@@ -1,4 +1,6 @@
 import {PaintedWorld,loadCampArt} from './painted-world.ts';
+import {CROP_LABELS,ANIMAL_LABELS,zoneKind,zoneConflict} from '../../../packages/sim-core/src/agriculture.ts';
+import {DEFAULT_MAP_ZOOM} from '../../../packages/sim-core/src/map-config.ts';
 import {zoneOverlayGeometry} from './zone-overlay.ts';
 import {Minimap} from './minimap.ts';
 import {ThoughtCadence} from './thought-cadence.ts';
@@ -11,7 +13,7 @@ import {drawIcon} from './hud-icons.ts';
 import {boundedZoom,cycleHit} from './interaction.ts';
 import {zoneBounds,validateZone,homeSites} from '../../../packages/sim-core/src/housing.ts';
 import {resourceCapacity,resourceStage} from '../../../packages/sim-core/src/resources.ts';
-import type {Resident,WorldObject,ResidentialBounds} from '../../../packages/sim-core/src/domain.ts';
+import type {Resident,WorldObject,ResidentialBounds,ZoneKind,CropKind,AnimalKind} from '../../../packages/sim-core/src/domain.ts';
 import {createTerrain} from './terrain.ts';
 import {controlSettings,DEFAULT_CONTROL,type ControlSettings} from '../../../packages/contracts/src/command.ts';
 import type { World, SensoryOverlay } from '../../../packages/sim-core/src/domain.ts';
@@ -50,6 +52,7 @@ export type ViewState = {
 // uses platform input facilities; no game scene, HUD, or controls use DOM rendering.
 const L:any=(globalThis as any).Laya;
 const WIDTH=1280,HEIGHT=720,SIDE=292,TOP=68,BOTTOM=646;
+const ZONE_LABELS:Record<ZoneKind,string>={residential:'居住区',planting:'种植区',pasture:'畜牧区'};
 const palette={ink:'#f5f8f5',muted:'#b9c9d2',paper:'#21394c',panel:'#273f53',line:'#345670',mint:'#b8df78',amber:'#f8da93'};
 type HistoryRow=JournalEntry&{title:string;evidence?:JournalEntry[]};
 type NativeButton={root:any;label:any;set(text:string):void};
@@ -64,8 +67,8 @@ export async function initialize(api:ViewCallbacks):Promise<ObserverView>{
   }
   L.stage.designWidth=WIDTH;L.stage.designHeight=HEIGHT;L.stage.scaleMode='showall';L.stage.screenMode='horizontal';
   L.stage.alignH='center';L.stage.alignV='middle';L.stage.bgColor=palette.paper;
-  if(typeof document!=='undefined'&&document.fonts)await document.fonts.load('14px Camp Sans').catch(()=>{});
-  const loading=new L.Text();loading.text='正在载入营地…';loading.font='Camp Sans, Arial';loading.fontSize=22;loading.color='#edf4da';loading.width=WIDTH;loading.align='center';loading.y=HEIGHT/2-15;L.stage.addChild(loading);
+  if(typeof document!=='undefined'&&document.fonts)await Promise.all([document.fonts.load('14px Camp Sans'),document.fonts.load('14px Camp Extension','丰产养割卜啄幼影扑散植牧玉田畜禽种稻翅耕苗萝途鸡鸭鹅')]).catch(()=>{});
+  const loading=new L.Text();loading.text='正在载入营地…';loading.font='Camp Extension, Camp Sans, Arial';loading.fontSize=22;loading.color='#edf4da';loading.width=WIDTH;loading.align='center';loading.y=HEIGHT/2-15;L.stage.addChild(loading);
   try{await loadCampArt();loading.destroy();}catch(error){loading.text='营地素材加载未完成，请刷新重试。';throw error;}
   return new ObserverView(api);
 }
@@ -80,7 +83,7 @@ export class ObserverView {
   private controlPanel:any;private controlDraft=controlSettings(null);
   private memoryPanel:any;private memoryMap!:MemoryMapView;
   private planner:any;private taskNote:any;private draftResource:TaskDraft['resource']='wood';private draftAmount=8;
-  private draftKind:'gather'|'craft'|'residential'='gather';private draftRecipe='stone_axe';
+  private draftKind:'gather'|'craft'|ZoneKind='gather';private draftRecipe='stone_axe';private draftCrop:CropKind='rice';private draftAnimal:AnimalKind|'mixed'='mixed';
   private historyPanel:any;private workshopPanel:any;private historyFilter:JournalCategory|'all'|'summary'='action';private historyPage=0;private historyAllRuns=true;private historyDetail:HistoryRow|null=null;
   private historyRows:any[]=[];private displayedHistory:HistoryRow[]=[];private historySnapshot:JournalEntry[]|null=null;private historySnapshotScope='';private historySummaryRunId='';private historyCache='';
   private state:ViewState|null=null;private token:any;
@@ -89,10 +92,10 @@ export class ObserverView {
   private residentDetails:any;private objectDetails:any;private inventoryPanel:any;
   private statBars:any[]=[];private statValues:any[]=[];private selectedObject:string|null=null;
   private nightShade:any;private daylightLight:any;private lifePanel:any;private statusPanel:any;private inventoryScroll:NativeTextScroll|null=null;private lifeScroll:NativeTextScroll|null=null;private statusScroll:NativeTextScroll|null=null;private taskScroll:NativeTextScroll|null=null;
-  private resourceRail:any;private resourceExpanded=true;private showRoofs=true;
+  private resourceRail:any;private resourceExpanded=true;private showRoofs=true;private showZones=false;
   private zoneOverlay:any;private zoneDrawing=false;private zoneStart:{x:number;z:number}|null=null;private zoneDraft:ResidentialBounds|null=null;private zoneRevision='';
   private pinch:MapPinch|null=null;private pendingPinch:MapTouch[]|null=null;private suppressTap=false;private minimap:Minimap|null=null;
-  private art:PaintedWorld;private markers:any;private sceneInput:any;private zoom=20;private yaw=0;private captionPanel:any;
+  private art:PaintedWorld;private markers:any;private sceneInput:any;private zoom=DEFAULT_MAP_ZOOM;private yaw=0;private captionPanel:any;
 
   constructor(private api:ViewCallbacks){
     this.scene=new L.Scene3D();this.scene.name='Survive — 认知观察场';L.stage.addChild(this.scene);
@@ -111,6 +114,7 @@ export class ObserverView {
     this.senseLines=new L.PixelLineSprite3D(1200,'有限感知参考');this.scene.addChild(this.senseLines);
     this.selection=new L.PixelLineSprite3D(72,'selected resident');this.scene.addChild(this.selection);
     try{this.showRoofs=globalThis.localStorage?.getItem('survive_roofs_v1')!=='hidden';}catch{}
+    try{this.showZones=globalThis.localStorage?.getItem('survive_zones_v1')==='shown';}catch{}
     this.art=new PaintedWorld();L.stage.addChild(this.art.root);
     this.zoneOverlay=new L.Sprite();this.zoneOverlay.name='Residential zone overlay';this.zoneOverlay.mouseEnabled=false;L.stage.addChild(this.zoneOverlay);
     this.root=new L.Sprite();this.root.name='Observer UI';L.stage.addChild(this.root);
@@ -125,7 +129,7 @@ export class ObserverView {
 
   private color(hex:string,alpha=1):any{const h=parseInt(hex.slice(1),16);return new L.Color((h>>16&255)/255,(h>>8&255)/255,(h&255)/255,alpha);}
   private text(parent:any,text:string,x:number,y:number,size=16,color=palette.ink,width=250):any{
-    const t=new L.Text();t.text=text;t.pos(x,y);t.font='Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;t.mouseEnabled=false;parent.addChild(t);return t;
+    const t=new L.Text();t.text=text;t.pos(x,y);t.font='Camp Extension, Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial, sans-serif';t.fontSize=size;t.color=color;t.width=width;t.wordWrap=true;t.leading=5;t.mouseEnabled=false;parent.addChild(t);return t;
   }
   private panel(parent:any,x:number,y:number,w:number,h:number,color:string,r=0):any{
     const s=new L.Sprite();s.pos(x,y);s.size(w,h);
@@ -135,7 +139,7 @@ export class ObserverView {
   private button(id:string,text:string,x:number,y:number,w:number,click:()=>void,bright=false):NativeButton{
     const h=42,r=this.panel(this.root,x,y,w,h,bright?palette.mint:palette.line,12);r.mouseEnabled=true;r.name=id;r.hitArea=new L.Rectangle(0,0,w,h);
     r.graphics.drawRoundRect(2,2,w-4,16,10,10,3,3,bright?'#ccea98':'#436985');
-    const glyphs:Record<string,string>={quickHistory:'▤',quickMap:'◈',quickSenses:'◉',start:'▶',pause:'Ⅱ',retry:'⟳',stop:'■',workshop:'⚒',tasks:'▦',rotateLeft:'↶',rotateReset:'⟳',rotateRight:'↷',roofToggle:'◉',connect:'↗',control:'⚙',stockToggle:'▣'};
+    const glyphs:Record<string,string>={quickHistory:'▤',quickMap:'◈',quickSenses:'◉',start:'▶',pause:'Ⅱ',retry:'⟳',stop:'■',workshop:'⚒',tasks:'▦',rotateLeft:'↶',rotateReset:'⟳',rotateRight:'↷',connect:'↗',control:'⚙',stockToggle:'▣'};
     const glyph=glyphs[id],inset=glyph?25:0;
     if(glyph){const icon=this.text(r,glyph,9,8,21,bright?'#264628':'#f1f6f8',26);icon.align='center';icon.bold=true;}
     const t=this.text(r,text,inset,12,14,bright?'#263e2c':'#f5f8fc',w-inset-3);t.align='center';t.bold=true;t.mouseEnabled=false;
@@ -192,8 +196,9 @@ export class ObserverView {
     this.button('rotateReset','复位',941,133,64,()=>this.setYaw(0));
     this.button('rotateRight','右转',1010,133,64,()=>this.setYaw(this.yaw+Math.PI/4));
     this.button('workshop','工作台配方',794,81,149,()=>{this.hideModals();this.workshopPanel.visible=true;});
-    this.button('tasks','规划 / 居住区',1074,81,191,()=>{this.hideModals();this.planner.visible=true;},true);
-    this.button('roofToggle',this.showRoofs?'屋顶：显示':'屋顶：隐藏',1081,133,184,()=>{this.showRoofs=!this.showRoofs;this.buttons.roofToggle.set(this.showRoofs?'屋顶：显示':'屋顶：隐藏');for(const node of this.objects.values())node.setRoofVisible(this.showRoofs);this.positionLabels();try{globalThis.localStorage?.setItem('survive_roofs_v1',this.showRoofs?'shown':'hidden');}catch{}});
+    this.button('tasks','规划 / 区域',1074,81,191,()=>{this.hideModals();this.planner.visible=true;},true);
+    this.button('roofToggle',this.showRoofs?'屋顶：开':'屋顶：关',1081,133,89,()=>{this.showRoofs=!this.showRoofs;this.buttons.roofToggle.set(this.showRoofs?'屋顶：开':'屋顶：关');for(const node of this.objects.values())node.setRoofVisible(this.showRoofs);this.positionLabels();try{globalThis.localStorage?.setItem('survive_roofs_v1',this.showRoofs?'shown':'hidden');}catch{}});
+    this.button('zoneToggle',this.showZones?'区域：开':'区域：关',1176,133,89,()=>{this.showZones=!this.showZones;this.drawZones();this.drawMinimap();this.updateZoneHint();try{globalThis.localStorage?.setItem('survive_zones_v1',this.showZones?'shown':'hidden');}catch{}});
     this.buildResourceRail();this.buildObjectDetails();
     this.button('zoneConfirm','确认居住区',610,147,140,()=>this.commitZone()).root.visible=false;
     this.button('zoneCancel','取消圈地',759,147,120,()=>this.cancelZone()).root.visible=false;
@@ -239,11 +244,17 @@ export class ObserverView {
   private renderObject(state:ViewState):void{
     const o=state.world.objects.find(o=>o.id===this.selectedObject);this.objectDetails.visible=!!o;this.residentDetails.visible=!o;if(!o)return;
     const names:Record<string,string>={tree:'树木',rock:'岩石',berry:'浆果丛',house:'木石小屋',plot:'住宅工地',board:'公告板 / 仓储',pond:'池塘',workbench:'工作台',wall:'石墙'};
-    this.labels.objectName.text=['house','plot'].includes(o.kind)?homeDesign(o.homeDesign,o.ownerId).name:names[o.kind];this.labels.objectType.text=o.ownerId?(state.world.residents.find(r=>r.id===o.ownerId)?.name??'居民')+'的住处':'地图物体';
+    this.labels.objectName.text=['house','plot'].includes(o.kind)?homeDesign(o.homeDesign,o.ownerId).name:o.crop?CROP_LABELS[o.crop.kind]:o.animal?ANIMAL_LABELS[o.animal.kind]:names[o.kind];this.labels.objectType.text=o.ownerId?(state.world.residents.find(r=>r.id===o.ownerId)?.name??'居民')+'的住处':'地图物体';
     if(['tree','rock','berry'].includes(o.kind)){
       const capacity=resourceCapacity(o),resource=o.resourceKind??(o.kind==='tree'?'wood':o.kind==='rock'?'stone':'food');
       this.labels.objectStock.text=`${RESOURCE_LABELS[resource]}剩余 ${o.resources} / ${capacity}`;
       this.labels.objectDetail.text=(o.resources<=0?'已经采空。':`还可采集 ${o.resources} 份。\n剩余 ${Math.round(o.resources/capacity*100)}% · ${resourceStage(o)<=2?'已明显减少':'资源充足'}`)+'\n\n'+(o.kind==='tree'?'采伐后树冠减少，树干出现切口并倾斜；采空留下树桩。':o.kind==='rock'?'采掘后岩石逐步缩小，采空留下碎石。':'采收后枝上的浆果逐步减少。');
+    }else if(o.crop){
+      const c=o.crop,stage={seedling:'幼苗',growing:'生长中',mature:'已成熟',harvested:'已收割'}[c.stage];
+      this.labels.objectType.text='种植区 · '+stage;this.labels.objectStock.text=c.stage==='mature'?`可收割食物 ${o.resources} 份`:c.stage==='harvested'?'休耕 · 等待重新发苗':`生长进度 ${Math.round(c.growth*100)}%`;
+      this.labels.objectDetail.text='幼苗 → 生长 → 成熟 → 收割\n\n居民发现成熟作物后，可以走近收割并搬运入库。收完后休耕，再重新生长。\n已收割 '+c.cycles+' 轮';
+    }else if(o.animal){
+      this.labels.objectType.text='畜牧区 · 自由活动';this.labels.objectStock.text={walk:'正在散步',peck:'正在啄食',idle:'正在休息',flap:'正在扑翅'}[o.animal.activity];this.labels.objectDetail.text='在划定的畜牧区内散步、啄食和扑翅。\n\n活动随营地时间推进，暂停时一起停下。';
     }else if(['house','plot'].includes(o.kind)){
       this.labels.objectStock.text=o.kind==='house'?'已竣工 · 可进入休息':`施工 ${o.buildStage??0} / 3`;
       const project=state.world.camp?.tasks.find(t=>t.id===o.projectId);this.labels.objectDetail.text=`大小 ${o.width}×${o.depth} · ${o.homeLevel??1}级\n`+(o.kind==='house'?`整洁度 ${Math.round((o.cleanliness??1)*100)}%\n家具：${Object.entries(FURNITURE).filter(([k])=>o.furniture?.[k as keyof typeof FURNITURE]).map(([,f])=>f.label).join('、')||'尚未添置'}\n柜内：${materialText(o.stored??{})||'空'}`:`下一步：${project?houseSteps(project)[project.progress]?.label:'地基'}\n材料${project?.reserved?'已预留':'从仓储扣除'}`)+'\n\n右上角可隐藏屋顶，观察屋内生活。';
@@ -296,30 +307,37 @@ export class ObserverView {
     const body=`现在的心愿\n${residentThought(w,r)}\n住房喜好：${design.name}\n\n身体与心情（100%最好）\n饱腹感 ${Math.round((1-r.hunger)*100)}%    精力 ${Math.round((1-r.fatigue)*100)}%    心情 ${Math.round((r.mood??.75)*100)}%\n${onBreak(w,r)?`正在${r.living?.breakKind==='tantrum'?'冷静':'罢工'} · 还需${Math.ceil(((r.living?.breakUntil??0)-w.tick)/20)}模拟秒\n`:''}\n心情的原因\n${moodReasons(w,r).map(s=>'· '+s).join('\n')}\n\n自己的住处\n${h?`${h.width}×${h.depth} · ${h.homeLevel??1}级住宅 · 整洁度${Math.round((h.cleanliness??1)*100)}%\n${furniture}\n\n个人柜子（24份容量）\n${materialText(h.stored??{})||'暂无存放物资'}`:project?`正在施工 ${project.progress}/${project.amount} · ${houseSteps(project)[project.progress]?.label??''}`:'还没有自己的住处。请在「规划 / 居住区」圈出可用空地。'}\n\n下一步生活\n${h&&level>(h.homeLevel??1)?`希望改建到${targetSize.width}×${targetSize.depth}，先备足${materialText(houseCost(level,h.homeDesign))}并检查居住区空地。`:(h?.homeLevel===3?'目前已是宽敞住宅，继续照料家具与整洁。':'居民会逐步添置家具；住满一个模拟日后可能想扩建。')}\n夜间与精力不足时优先休息，床能加快恢复。长期缺少住房、食物和休息会降低心情；归零会短暂罢工，或在自家发脾气损坏家具。\n\n当前安排\n${r.goal}`;
     if(this.labels.lifeBody.text!==body){const y=this.labels.lifeBody.scrollY;this.labels.lifeBody.text=body;this.lifeScroll?.set(y);}
   }
-  private beginZone():void{this.hideModals();this.zoneDrawing=true;this.zoneDraft=null;this.zoneStart=null;this.drag=null;this.drawZones();this.updateZoneHint();}
-  private cancelZone():void{this.zoneDrawing=false;this.zoneDraft=null;this.zoneStart=null;this.drag=null;this.hudDirty=true;this.drawZones();this.updateZoneHint();}
-  private commitZone():void{if(!this.zoneDraft||validateZone(this.zoneDraft))return;const accepted=this.api.onTask({kind:'residential',resource:'wood',amount:1,note:'',bounds:{...this.zoneDraft}});if(accepted!==false)this.cancelZone();}
+  private draftZoneKind():ZoneKind{return this.draftKind==='planting'||this.draftKind==='pasture'?this.draftKind:'residential';}
+  private zoneError(bounds:ResidentialBounds):string|null{return validateZone(bounds,this.draftZoneKind()==='residential'?6:4)??(this.state?zoneConflict(this.state.world,bounds,this.draftZoneKind()):null);}
+  private beginZone():void{this.hideModals();this.zoneDrawing=true;this.zoneDraft=null;this.zoneStart=null;this.drag=null;this.drawZones();this.drawMinimap();this.updateZoneHint();}
+  private cancelZone():void{this.zoneDrawing=false;this.zoneDraft=null;this.zoneStart=null;this.drag=null;this.hudDirty=true;this.drawZones();this.drawMinimap();this.updateZoneHint();}
+  private commitZone():void{if(!this.zoneDraft||this.zoneError(this.zoneDraft))return;const kind=this.draftZoneKind(),accepted=this.api.onTask({kind,resource:kind==='residential'?'wood':'food',amount:1,note:this.taskNote?.text??'',bounds:{...this.zoneDraft},...(kind==='planting'?{cropKind:this.draftCrop}:kind==='pasture'?{animalKind:this.draftAnimal}:{})});if(accepted!==false)this.cancelZone();}
   private updateZoneHint():void{
     this.buttons.zoneCancel.root.visible=this.zoneDrawing;this.buttons.zoneConfirm.root.visible=this.zoneDrawing;this.labels.zoneHint.visible=this.zoneDrawing;
-    if(!this.zoneDrawing)return;const error=this.zoneDraft?validateZone(this.zoneDraft):'单指拖出范围，再确认';
-    this.buttons.zoneConfirm.root.mouseEnabled=!!this.zoneDraft&&!error;this.buttons.zoneConfirm.root.alpha=error ? .45 : 1;
-    this.labels.zoneHint.text=(error??`${this.zoneDraft!.maxX-this.zoneDraft!.minX}×${this.zoneDraft!.maxZ-this.zoneDraft!.minZ}格 · 约${this.state?homeSites(this.state.world,this.zoneDraft!).length:0}间基础小屋`)+'\n蓝色已划区 · 金色当前选区 · 同类可重叠';
+    this.buttons.zoneToggle.set(this.zoneDrawing?'区域：规划':this.showZones?'区域：开':'区域：关');
+    this.buttons.zoneToggle.root.mouseEnabled=!this.zoneDrawing;
+    if(!this.zoneDrawing)return;const kind=this.draftZoneKind(),error=this.zoneDraft?this.zoneError(this.zoneDraft):'单指拖出范围，再确认';
+    this.buttons.zoneConfirm.set('确认'+ZONE_LABELS[kind]);this.buttons.zoneConfirm.root.mouseEnabled=!!this.zoneDraft&&!error;this.buttons.zoneConfirm.root.alpha=error ? .45 : 1;
+    const detail=kind==='residential'?`约${this.state&&this.zoneDraft?homeSites(this.state.world,this.zoneDraft).length:0}间基础小屋`:kind==='planting'?CROP_LABELS[this.draftCrop]+' · 确认后播种':ANIMAL_LABELS[this.draftAnimal]+' · 确认后放养';
+    this.labels.zoneHint.text=(error??`${this.zoneDraft!.maxX-this.zoneDraft!.minX}×${this.zoneDraft!.maxZ-this.zoneDraft!.minZ}格 · ${detail}`)+'\n金色当前选区 · 同类可重叠';
   }
   private drawZones():void{
-    const zones=this.state?.world.camp?.zones??[],viewport=this.mapViewport(),key=JSON.stringify([zones.map(z=>z.bounds),this.zoneDraft,this.zoneDrawing,this.mapCamera(),viewport]);if(key===this.zoneRevision)return;this.zoneRevision=key;
-    this.zoneOverlay.pos(viewport.x,viewport.y);this.zoneOverlay.scrollRect=new L.Rectangle(0,0,viewport.width,viewport.height);const g=this.zoneOverlay.graphics;g.clear();
+    const zones=this.state?.world.camp?.zones??[],viewport=this.mapViewport(),key=JSON.stringify([zones.map(z=>[z.bounds,zoneKind(z)]),this.zoneDraft,this.zoneDrawing,this.showZones,this.draftZoneKind(),this.mapCamera(),viewport]);if(key===this.zoneRevision)return;this.zoneRevision=key;
+    this.zoneOverlay.visible=this.showZones||this.zoneDrawing;this.zoneOverlay.pos(viewport.x,viewport.y);this.zoneOverlay.scrollRect=new L.Rectangle(0,0,viewport.width,viewport.height);const g=this.zoneOverlay.graphics;g.clear();if(!this.zoneOverlay.visible)return;
     const project=(p:{x:number;z:number})=>{const q=this.project({...p,y:.055});return {x:q.x-viewport.x,y:q.y-viewport.y};};
     const corners=(b:ResidentialBounds)=>[{x:b.minX,z:b.minZ},{x:b.maxX,z:b.minZ},{x:b.maxX,z:b.maxZ},{x:b.minX,z:b.maxZ}].map(project);
     const line=(a:{x:number;z:number},b:{x:number;z:number},color:string,width:number)=>{const p=project(a),q=project(b);g.drawLine(p.x,p.y,q.x,q.y,color,width);};
-    const union=zoneOverlayGeometry(zones.map(z=>z.bounds));
-    for(const b of union.fills)g.drawPoly(0,0,corners(b).flatMap(p=>[p.x,p.y]),this.zoneDrawing?'rgba(24,126,255,0.24)':'rgba(24,126,255,0.15)');
-    for(const [a,b]of union.edges)line(a,b,'#102c48',6);
-    for(const [a,b]of union.edges)line(a,b,'#65ddff',3);
+    for(const kind of ['residential','planting','pasture'] as const){
+      const union=zoneOverlayGeometry(zones.filter(z=>zoneKind(z)===kind).map(z=>z.bounds)),color={residential:'#d4bceb',planting:'#d6ed9b',pasture:'#f2d49b'}[kind],fill={residential:'rgba(174,133,204,0.10)',planting:'rgba(133,174,81,0.10)',pasture:'rgba(221,174,93,0.10)'}[kind];
+      for(const b of union.fills)g.drawPoly(0,0,corners(b).flatMap(p=>[p.x,p.y]),fill);
+      for(const [a,b]of union.edges)line(a,b,'rgba(37,52,36,0.75)',4);
+      for(const [a,b]of union.edges)line(a,b,color,2);
+    }
     if(this.zoneDraft){
-      const b=this.zoneDraft,invalid=!!validateZone(b),points=corners(b),flat=points.flatMap(p=>[p.x,p.y]),border=invalid?'#ff8f9a':'#ffe88a';
-      g.drawPoly(0,0,flat,invalid?'rgba(255,71,93,0.27)':'rgba(255,185,38,0.28)','#30230c',7);g.drawPoly(0,0,flat,null,border,3);
-      for(let x=Math.ceil(b.minX/2)*2;x<b.maxX;x+=2)line({x,z:b.minZ},{x,z:b.maxZ},invalid?'rgba(255,200,205,0.5)':'rgba(255,238,183,0.5)',1);
-      for(let z=Math.ceil(b.minZ/2)*2;z<b.maxZ;z+=2)line({x:b.minX,z},{x:b.maxX,z},invalid?'rgba(255,200,205,0.5)':'rgba(255,238,183,0.5)',1);
+      const b=this.zoneDraft,invalid=!!this.zoneError(b),points=corners(b),flat=points.flatMap(p=>[p.x,p.y]),border=invalid?'#ff8f9a':'#ffe88a';
+      g.drawPoly(0,0,flat,invalid?'rgba(255,71,93,0.22)':'rgba(255,215,102,0.16)','#30230c',5);g.drawPoly(0,0,flat,null,border,2);
+      for(let x=Math.ceil(b.minX/2)*2;x<b.maxX;x+=2)line({x,z:b.minZ},{x,z:b.maxZ},invalid?'rgba(255,200,205,0.5)':'rgba(255,238,183,0.4)',1);
+      for(let z=Math.ceil(b.minZ/2)*2;z<b.maxZ;z+=2)line({x:b.minX,z},{x:b.maxX,z},invalid?'rgba(255,200,205,0.5)':'rgba(255,238,183,0.4)',1);
       for(const p of points)g.drawCircle(p.x,p.y,4,border,'#30230c',2);
     }
   }
@@ -343,10 +361,12 @@ export class ObserverView {
     this.text(this.planner,'规划营地',344,166,23,'#f1f4dc',500);
     this.text(this.planner,'把目标写上公告板，居民亲自阅读后，自主接取、备料与执行。',344,205,13,palette.muted,840);
     const add=(id:string,label:string,x:number,y:number,w:number,fn:()=>void)=>this.modalButton(this.planner,id,label,x,y,w,fn);
-    for(const [i,kind]of (['gather','craft','residential'] as const).entries())add('kind-'+kind,['采集物资','制作工具','划居住区'][i],344+i*131,239,121,()=>{this.draftKind=kind;});
+    for(const [i,kind]of (['gather','craft','residential','planting','pasture'] as const).entries())add('kind-'+kind,['采集','制作','居住区','种植区','畜牧区'][i],344+i*76,239,70,()=>{this.draftKind=kind;});
     this.labels.draftTitle=this.text(this.planner,'',344,292,17,'#f1f4dc',385);
     for(const [i,resource]of (['wood','stone','food'] as const).entries())add('task-'+resource,RESOURCE_LABELS[resource],344+i*125,330,115,()=>{this.draftResource=resource;});
     for(const [i,recipe]of RECIPES.filter(r=>r.kind==='craft').entries())add('recipe-'+recipe.id,recipe.label,344+i*184,330,174,()=>{this.draftRecipe=recipe.id;});
+    for(const [i,kind]of (['rice','wheat','corn','carrot'] as const).entries())add('crop-'+kind,CROP_LABELS[kind],344+i*96,330,86,()=>{this.draftCrop=kind;});
+    for(const [i,kind]of (['chicken','duck','goose','mixed'] as const).entries())add('animal-'+kind,kind==='mixed'?'混养':ANIMAL_LABELS[kind],344+i*96,330,86,()=>{this.draftAnimal=kind;});
     this.labels.zonePlanner=this.text(this.planner,'',344,329,14,palette.mint,374);
     add('amount','数量 8',344,379,110,()=>{this.draftAmount=this.draftKind==='craft'?(this.draftAmount>=3?1:this.draftAmount+1):(this.draftAmount>=20?4:this.draftAmount+4);});
     this.labels.requirements=this.text(this.planner,'',469,379,12,'#c9d8bd',250);this.labels.requirements.height=40;
@@ -356,7 +376,7 @@ export class ObserverView {
     this.text(this.planner,'上下滑动查看全部',1030,248,12,palette.muted,174);
     this.labels.taskList=this.text(this.planner,'',756,282,14,'#e5f1df',421);this.taskScroll=new NativeTextScroll(this.labels.taskList,this.planner,1186,282,207);
     this.labels.stock=this.text(this.planner,'',756,496,13,palette.amber,442);
-    add('publishTask','发布目标',344,535,204,()=>{if(this.draftKind==='residential'){this.beginZone();return;}this.api.onTask({kind:this.draftKind,resource:this.draftResource,amount:this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount,note:this.taskNote.text,recipeId:this.draftRecipe});this.taskNote.text='';});
+    add('publishTask','发布目标',344,535,204,()=>{if(this.draftKind!=='gather'&&this.draftKind!=='craft'){this.beginZone();return;}this.api.onTask({kind:this.draftKind,resource:this.draftResource,amount:this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount,note:this.taskNote.text,recipeId:this.draftRecipe});this.taskNote.text='';});
     add('closeTasks','返回观察',1062,535,142,()=>{this.planner.visible=false;});
     this.labels.taskNotice=this.text(this.planner,'',565,538,11,palette.amber,480);this.labels.taskNotice.height=35;
   }
@@ -370,7 +390,7 @@ export class ObserverView {
     this.modalButton(this.workshopPanel,'closeWorkshop','返回观察',881,545,147,()=>{this.workshopPanel.visible=false;});
   }
   private renderTaskList(state:ViewState):void{
-    const text=[...(state.world.camp?.tasks??[])].reverse().map(t=>`${t.status==='done'?'✓':'○'} ${taskTitle(t)} ${t.progress}/${t.amount}${t.kind==='house'&&t.status==='open'?' · 待'+(houseSteps(t)[t.progress]?.label??'下一阶段'):''}\n   ${t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'尚无人接受'}${t.note?' · '+t.note:''}`).join('\n\n')||'还没有发布目标。';
+    const text=[...(state.world.camp?.tasks??[])].reverse().map(t=>`${t.status==='done'?'✓':'○'} ${taskTitle(t)} ${t.progress}/${t.amount}${t.kind==='house'&&t.status==='open'?' · 待'+(houseSteps(t)[t.progress]?.label??'下一阶段'):''}\n   ${t.kind==='planting'?'已播种':t.kind==='pasture'?'已放养':t.acceptedBy.map(id=>state.world.residents.find(r=>r.id===id)?.name).join('、')||'尚无人接受'}${t.note?' · '+t.note:''}`).join('\n\n')||'还没有发布目标。';
     if(this.labels.taskList.text!==text){const y=this.labels.taskList.scrollY;this.labels.taskList.text=text;this.taskScroll?.set(y);}
   }
   private residentPage():number{return Math.floor(Math.max(0,this.state?.world.residents.findIndex(r=>r.id===this.state?.selectedId)??0)/2)*2;}
@@ -495,8 +515,8 @@ export class ObserverView {
   private mapCamera(){return {x:this.offset.x,z:this.offset.z,zoom:this.zoom,yaw:this.yaw};}
   private setYaw(value:number):void{this.resetMapGesture();this.yaw=normalizedYaw(value);this.moveCamera();this.positionLabels();}
   private resetMapGesture():void{this.pinch=null;this.pendingPinch=null;this.drag=null;this.suppressTap=false;this.zoneStart=null;}
-  private focusCamp():void{const p=this.state?.world.objects.find(o=>o.kind==='board')?.position;this.resetMapGesture();this.offset={x:p?.x??0,z:p?.z??0};this.zoom=20;this.moveCamera();this.positionLabels();}
-  private drawMinimap():void{if(this.state)this.minimap?.render(this.state.world,this.state.selectedId,cameraFootprint(this.mapCamera(),this.mapViewport()));}
+  private focusCamp():void{const p=this.state?.world.objects.find(o=>o.kind==='board')?.position;this.resetMapGesture();this.offset={x:p?.x??0,z:p?.z??0};this.zoom=DEFAULT_MAP_ZOOM;this.moveCamera();this.positionLabels();}
+  private drawMinimap():void{if(this.state)this.minimap?.render(this.state.world,this.state.selectedId,cameraFootprint(this.mapCamera(),this.mapViewport()),this.showZones||this.zoneDrawing);}
   private setZoom(value:number):void{this.flushPinch();this.zoom=boundedZoom(value);this.moveCamera();this.positionLabels();}
   private groundAt(x:number,y:number):{x:number;z:number}{return groundAtScreen({x,y},this.mapCamera(),this.mapViewport());}
   private touches(e:any):any[]{return (e?.touches??[]).filter((t:any)=>t.began&&t.downTargets?.includes(this.sceneInput));}
@@ -511,7 +531,7 @@ export class ObserverView {
     if(ts.length>=2){if(!this.pinch){const [a,b]=this.touchPoints(ts);this.pinch=beginMapPinch(a,b,this.mapCamera(),this.mapViewport());this.pendingPinch=null;}this.suppressTap=true;this.drag=null;this.zoneStart=null;return;}
     if(this.pinch)return;this.suppressTap=false;
     const x=e?.stageX??L.stage.mouseX,y=e?.stageY??L.stage.mouseY;
-    this.drag={id:e?.touchId,x,y,ox:this.offset.x,oz:this.offset.z,moved:false};if(this.zoneDrawing){this.zoneStart=this.groundAt(x,y);this.zoneDraft=null;}
+    this.drag={id:e?.touchId,x,y,ox:this.offset.x,oz:this.offset.z,moved:false};if(this.zoneDrawing){this.zoneStart=this.groundAt(x,y);this.zoneDraft=null;this.drawZones();this.updateZoneHint();}
   }
   private pointerMove(e:any):void{
     if(this.pinch){this.pendingPinch=this.touchPoints(this.touches(e));return;}
@@ -559,7 +579,7 @@ export class ObserverView {
     }
     const ids=new Set(world.objects.map(o=>o.id));
     for(const [id,node]of this.objects)if(!ids.has(id)){node.dispose();this.objects.delete(id);this.objectSignatures.delete(id);this.placeLabels.get(id)?.destroy();this.placeLabels.delete(id);}
-    for(const o of world.objects){const signature=[o.kind,o.buildStage,o.width,o.depth,o.homeDesign,o.position.x,o.position.z,JSON.stringify(o.furniture),resourceStage(o)].join(':');if(this.objectSignatures.get(o.id)!==signature){this.objects.get(o.id)?.dispose();const node=new WorldMesh(o);this.scene.addChild(node.node);node.setRoofVisible(this.showRoofs);this.objects.set(o.id,node);this.objectSignatures.set(o.id,signature);}this.objects.get(o.id)?.setNight(dayClock(world.tick).night);
+    for(const o of world.objects){const signature=o.kind==='crop'||o.kind==='animal'?[o.kind,o.crop?.kind,o.animal?.kind,o.zoneId,o.width,o.depth].join(':'):[o.kind,o.buildStage,o.width,o.depth,o.homeDesign,o.position.x,o.position.z,JSON.stringify(o.furniture),resourceStage(o)].join(':');if(this.objectSignatures.get(o.id)!==signature){this.objects.get(o.id)?.dispose();const node=new WorldMesh(o);this.scene.addChild(node.node);node.setRoofVisible(this.showRoofs);this.objects.set(o.id,node);this.objectSignatures.set(o.id,signature);}this.objects.get(o.id)?.update(o,world.tick);this.objects.get(o.id)?.setNight(dayClock(world.tick).night);
       if(['board','workbench','plot','house','pond'].includes(o.kind)){let label=this.placeLabels.get(o.id);if(!label){label=this.text(this.markers,'',0,0,12,'#365346',168);label.align='center';label.color='#e7ddbf';label.stroke=2;label.strokeColor='#30382b';label.width=150;label.padding=[3,5,3,5];this.placeLabels.set(o.id,label);}label.text=o.kind==='board'?'公告板 · 仓储':o.kind==='workbench'?'工作台':o.kind==='pond'?'池塘':o.kind==='house'?(world.residents.find(r=>r.id===o.ownerId)?.name??'公共')+'的小屋':`小屋施工 · ${o.buildStage??0}/3`;}
     }
     this.drawZones();this.positionLabels();
@@ -616,19 +636,25 @@ export class ObserverView {
     this.buttons.senses.set(`感官 ${state.showSenses?'开':'关'}`);this.buttons.quickSenses.set(`感官 ${state.showSenses?'开':'关'}`);
     this.buttons.pause.set(/PAUS|STOP|暂停/i.test(state.status)?'继续':'暂停');
     this.labels.error.text=state.controlNotice?state.controlNotice:state.error?state.error.slice(0,260)+(state.status==='ERROR_PAUSED'?'\n世界保持冻结，可修正连接后重试。':''):state.mode==='UNCONFIGURED'?'这是静态观察场。请先配置模型服务并连接网关。\n连接真实模型后，居民才会自主相遇、交流。':'';
-    this.labels.caption.text=this.zoneDrawing?'圈选居住区 · 单指拖出范围，双指调整地图':state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'双指平移 · 捏合缩放 · 小地图定位':'两名居民 · 两棵树 · 一堵墙';
+    this.labels.caption.text=this.zoneDrawing?'圈选'+ZONE_LABELS[this.draftZoneKind()]+' · 单指拖出范围，双指调整地图':state.mode==='REPLAY'?'回放现场 · 按模拟时间播放':state.world.camp?'双指平移 · 捏合缩放 · 小地图定位':'两名居民 · 两棵树 · 一堵墙';
     const tasks=state.world.camp?.tasks??[],recipe=RECIPES.find(r=>r.id===this.draftRecipe)!;
-    this.buttons.publishTask.set(this.draftKind==='residential'?'到地图圈选居住区':this.draftKind==='craft'?`发布${recipe.label}制作目标`:`发布${RESOURCE_LABELS[this.draftResource]}目标`);
-    for(const kind of ['gather','craft','residential'])this.buttons['kind-'+kind].label.color=kind===this.draftKind?'#14271b':'#314030';
+    const isZone=this.draftKind!=='gather'&&this.draftKind!=='craft',kind=this.draftZoneKind();
+    this.buttons.publishTask.set(isZone?'到地图圈选'+ZONE_LABELS[kind]:this.draftKind==='craft'?`发布${recipe.label}制作目标`:`发布${RESOURCE_LABELS[this.draftResource]}目标`);
+    for(const type of ['gather','craft','residential','planting','pasture']){const label=this.buttons['kind-'+type].label;label.color=type===this.draftKind?'#14271b':'#314030';label.underline=type===this.draftKind;}
     for(const resource of ['wood','stone','food']){this.buttons['task-'+resource].root.visible=this.draftKind==='gather';this.buttons['task-'+resource].set((this.draftResource===resource?'● ':'')+RESOURCE_LABELS[resource as TaskDraft['resource']]);}
     for(const entry of RECIPES.filter(r=>r.kind==='craft')){this.buttons['recipe-'+entry.id].root.visible=this.draftKind==='craft';this.buttons['recipe-'+entry.id].set((this.draftRecipe===entry.id?'● ':'')+entry.label);}
+    for(const c of ['rice','wheat','corn','carrot'] as const){this.buttons['crop-'+c].root.visible=this.draftKind==='planting';this.buttons['crop-'+c].set((c===this.draftCrop?'● ':'')+CROP_LABELS[c]);}
+    for(const a of ['chicken','duck','goose','mixed'] as const){this.buttons['animal-'+a].root.visible=this.draftKind==='pasture';this.buttons['animal-'+a].set((a===this.draftAnimal?'● ':'')+(a==='mixed'?'混养':ANIMAL_LABELS[a]));}
     this.labels.zonePlanner.visible=this.draftKind==='residential';this.labels.zonePlanner.text='单指拖出矩形区域 · 自由选择位置和大小\n双指同向平移 · 张合缩放地图';
-    this.buttons.amount.root.visible=this.draftKind!=='residential';this.buttons.amount.set('数量 '+(this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount));
-    this.labels.draftTitle.text=this.draftKind==='residential'?'居住区 · 居民按需申请自己的住处':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
-    this.labels.requirements.pos(this.draftKind==='residential'?344:469,379);this.labels.requirements.width=this.draftKind==='residential'?374:250;
-    this.labels.requirements.text=this.draftKind==='residential'?'住处大小和用料因人而异 · 区域至少6×6格':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
-    this.labels.draftHelp.text=this.draftKind==='residential'?'划区后确认，居民阅读公告后自主申请、备料与建房。同类区域可重叠圈选，重复范围不新增；树石、池塘及已有建筑会被避开。':this.draftKind==='craft'?'先读工作台配方；消耗自己的随身材料。成品归制作者，需要自行持握。':'采集计入目标，入库由居民自主搬运。';
-    this.labels.taskSummary.text=`营地目标 ${tasks.filter(t=>t.status==='done').length}/${tasks.filter(t=>t.kind!=='residential').length} 已完成 · 居住区${state.world.camp?.zones?.length??0}${state.pendingTasks?` · ${state.pendingTasks}项待写入公告`:''}`;
+    this.buttons.amount.root.visible=!isZone;this.buttons.amount.set('数量 '+(this.draftKind==='craft'?Math.min(3,this.draftAmount):this.draftAmount));
+    this.labels.draftTitle.text=this.draftKind==='planting'?'选择作物 · 从幼苗长到丰收':this.draftKind==='pasture'?'选择家禽 · 散步、啄食与扑翅':this.draftKind==='residential'?'居住区 · 居民按需申请自己的住处':this.draftKind==='craft'?'制作并由居民自行装备工具':'采集营地的基础物资';
+    this.labels.requirements.pos(isZone?344:469,379);this.labels.requirements.width=isZone?374:250;
+    this.labels.requirements.text=this.draftKind==='planting'?'幼苗 → 生长 → 成熟 → 收割 → 重新发苗\n区域至少4×4格 · 避开建筑和其他用途区域':this.draftKind==='pasture'?'单一品种或鸡鸭鹅混养 · 区域至少4×4格\n家禽在区内自由活动，暂停时一起停下':this.draftKind==='residential'?'住处大小和用料因人而异 · 区域至少6×6格':this.draftKind==='craft'?'每件：'+materialText(recipe.cost):'居民可自由选择参与';
+    this.taskNote.visible=!isZone;
+    this.labels.draftHelp.text=this.draftKind==='planting'?'确认后播种；成熟后居民可亲自收割食物并搬入仓储。区域标记可用右上角开关显示或隐藏。':this.draftKind==='pasture'?'确认后放养；家禽会走动、低头啄食和扑翅。区域标记可随时隐藏，不影响它们的活动。':this.draftKind==='residential'?'划区后确认，居民自主申请、备料与建房。同类区域可重叠圈选，重复范围不新增。':this.draftKind==='craft'?'先读工作台配方；消耗自己的随身材料。成品归制作者，需要自行持握。':'采集计入目标，入库由居民自主搬运。';
+    const goals=tasks.filter(t=>!['residential','planting','pasture'].includes(t.kind??'')),zones=state.world.camp?.zones??[];
+    this.labels.taskSummary.text=`目标 ${goals.filter(t=>t.status==='done').length}/${goals.length} · 住${zones.filter(z=>zoneKind(z)==='residential').length} 种${zones.filter(z=>zoneKind(z)==='planting').length} 牧${zones.filter(z=>zoneKind(z)==='pasture').length}${state.pendingTasks?` · 待发布${state.pendingTasks}`:''}`;
+
     this.renderTaskList(state);
     this.labels.stock.text='公共仓储：'+(materialText(state.world.camp?.stock??{})||'暂无材料');
     this.labels.taskNotice.text=state.pendingTasks?`已排队${state.pendingTasks}项，世界恢复后写入`:(state.error??'').slice(0,70);

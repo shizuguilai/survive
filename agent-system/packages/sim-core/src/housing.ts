@@ -1,12 +1,13 @@
 import type {World,ResidentialBounds,Resident,WorldObject} from './domain.ts';
+import {MAP_BUILD_LIMIT} from './map-config.ts';
 import {designedHomeSize} from './home-design.ts';
 export function zoneBounds(a:{x:number;z:number},b:{x:number;z:number}):ResidentialBounds{
-  return {minX:Math.max(-27,Math.floor(Math.min(a.x,b.x))),maxX:Math.min(27,Math.ceil(Math.max(a.x,b.x))),minZ:Math.max(-27,Math.floor(Math.min(a.z,b.z))),maxZ:Math.min(27,Math.ceil(Math.max(a.z,b.z)))};
+  return {minX:Math.max(-MAP_BUILD_LIMIT,Math.floor(Math.min(a.x,b.x))),maxX:Math.min(MAP_BUILD_LIMIT,Math.ceil(Math.max(a.x,b.x))),minZ:Math.max(-MAP_BUILD_LIMIT,Math.floor(Math.min(a.z,b.z))),maxZ:Math.min(MAP_BUILD_LIMIT,Math.ceil(Math.max(a.z,b.z)))};
 }
-export function validateZone(bounds:ResidentialBounds):string|null{
-  if(!bounds||![bounds.minX,bounds.maxX,bounds.minZ,bounds.maxZ].every(Number.isFinite))return '请在地图上拖出有效的居住区';
-  if(bounds.minX < -27||bounds.maxX > 27||bounds.minZ < -27||bounds.maxZ > 27)return '居住区必须位于地图内';
-  if(bounds.maxX-bounds.minX<6||bounds.maxZ-bounds.minZ<6)return '区域至少需要6×6格，给小屋和出入口留出空间';
+export function validateZone(bounds:ResidentialBounds,minimum=6):string|null{
+  if(!bounds||![bounds.minX,bounds.maxX,bounds.minZ,bounds.maxZ].every(Number.isFinite))return '请在地图上拖出有效的区域';
+  if(bounds.minX < -MAP_BUILD_LIMIT||bounds.maxX > MAP_BUILD_LIMIT||bounds.minZ < -MAP_BUILD_LIMIT||bounds.maxZ > MAP_BUILD_LIMIT)return '区域必须位于地图内';
+  if(bounds.maxX-bounds.minX<minimum||bounds.maxZ-bounds.minZ<minimum)return `区域至少需要${minimum}×${minimum}格`;
   return null;
 }
 /** Repainting existing residential land does not create another notice or zone. */
@@ -41,6 +42,7 @@ export const ownHomeProject=(w:World,r:Resident)=>w.camp?.tasks.find(t=>t.kind==
 
 export function homeFits(w:World,b:ResidentialBounds,p:{x:number;z:number},size:{width:number;depth:number},ignoreId?:string):boolean{
  if(p.x-size.width/2-.6<b.minX||p.x+size.width/2+.6>b.maxX||p.z-size.depth/2-.7<b.minZ||p.z+size.depth/2+1.7>b.maxZ)return false;
+ if(w.camp?.zones?.some(z=>(z.kind??'residential')!=='residential'&&p.x+size.width/2+.6>z.bounds.minX&&p.x-size.width/2-.6<z.bounds.maxX&&p.z+size.depth/2+1.7>z.bounds.minZ&&p.z-size.depth/2-.7<z.bounds.maxZ))return false;
  if(w.camp?.tasks.some(t=>{if(!t.renovation||t.status!=='open'||!t.targetPosition||ignoreId&&w.objects.find(o=>o.projectId===t.id)?.id===ignoreId)return false;const reserved=designedHomeSize(t.homeLevel,t.homeDesign);return Math.abs(t.targetPosition.x-p.x)<size.width/2+reserved.width/2+1.2&&Math.abs(t.targetPosition.z-p.z)<size.depth/2+reserved.depth/2+2.4;}))return false;
  return !w.objects.some(o=>{
   if(o.id===ignoreId||(o.resourceKind&&o.resources<=0))return false;

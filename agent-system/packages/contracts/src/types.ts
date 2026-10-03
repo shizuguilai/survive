@@ -8,7 +8,7 @@ export type Decision = {
 };
 export type Observation = {obsRef:string;experiencedWhen:string;certainty:'uncertain'|'likely'|'clear';modality:'visual'|'auditory'|'bodily';detail:Record<string,any>};
 export type Memory = {ref:string;kind:'direct'|'hearsay'|'belief'|'summary';text:string;evidenceRefs:string[];experiencedWhen:string};
-export type SpatialMemoryContext={frame:'personal_start_relative';cellSize:number;currentCell:{x:number;z:number};cells:{x:number;z:number;state:'seen'|'visited'|'blocked'}[];trail:{x:number;z:number}[];landmarks:{knownRef:string;kind:'tree'|'wall'|'rock'|'berry'|'board'|'pond'|'workbench'|'plot'|'house'|'person';x:number;z:number;state:'remembered'|'depleted';lastObservedWhen:string}[]};
+export type SpatialMemoryContext={frame:'personal_start_relative';cellSize:number;currentCell:{x:number;z:number};cells:{x:number;z:number;state:'seen'|'visited'|'blocked'}[];trail:{x:number;z:number}[];landmarks:{knownRef:string;kind:'tree'|'wall'|'rock'|'berry'|'board'|'pond'|'workbench'|'plot'|'house'|'crop'|'animal'|'person';x:number;z:number;state:'remembered'|'depleted';lastObservedWhen:string}[]};
 export type CharacterContext = {
   spatialMemory?:SpatialMemoryContext;
   schemaVersion:'1.0.0'; identity:{name:string;background:string;personality:string;personalGoal:string};

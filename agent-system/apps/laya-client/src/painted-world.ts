@@ -26,7 +26,7 @@ export class PaintedWorld{
   let entry=this.sprites.get(id);if(entry)return entry;
   const L=(globalThis as any).Laya,root=new L.Sprite(),shadow=new L.Sprite(),image=new L.Sprite(),gear=new L.Text();
   root.name='Painted '+id;root.mouseEnabled=false;root.addChild(shadow);root.addChild(image);root.addChild(gear);this.root.addChild(root);
-  gear.font='Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial';gear.fontSize=11;gear.color='#fffbe7';gear.stroke=2;gear.strokeColor='#2c3e32';gear.mouseEnabled=false;
+  gear.font='Camp Extension, Camp Sans, Noto Sans CJK SC, Microsoft YaHei, Arial';gear.fontSize=11;gear.color='#fffbe7';gear.stroke=2;gear.strokeColor='#2c3e32';gear.mouseEnabled=false;
   entry={root,shadow,image,gear,key:'',frame:''};this.sprites.set(id,entry);return entry;
  }
  render(world:World,camera:MapCamera,viewport:MapViewport,_roofs:boolean):void{

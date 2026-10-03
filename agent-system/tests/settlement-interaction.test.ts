@@ -88,7 +88,7 @@ test('Construction hands animate from action ticks only, and restore idle when f
  const r=createCrewWorld(2).residents[0];r.plan=[{action:{op:'build',params:{},stage:0},startedTick:1,elapsedTicks:4,emittedChars:0,done:false}];const pose=workPose(r),before=hashCanonical(r);assert.ok(pose.active);for(let i=0;i<100;i++)assert.deepEqual(workPose(r),pose);assert.equal(hashCanonical(r),before);r.plan[0].elapsedTicks=9;assert.notDeepEqual(workPose(r),pose);r.plan[0].done=true;assert.equal(workPose(r).active,false);
 });
 test('Pinch spread zooms in with bounded limits and taps cycle all stacked candidates',()=>{
- assert.equal(pinchZoom(18,100,200),9);assert.equal(pinchZoom(18,100,50),36);assert.equal(pinchZoom(18,100,1),48);
+ assert.equal(pinchZoom(18,100,200),9);assert.equal(pinchZoom(18,100,50),36);assert.equal(pinchZoom(18,100,1),72);
  const hits=[{id:'a',distance:0},{id:'b',distance:0},{id:'c',distance:2}];assert.equal(cycleHit(hits,'a'),'b');assert.equal(cycleHit(hits,'b'),'c');assert.equal(cycleHit(hits,'c'),'a');assert.equal(cycleHit([],''),null);
 });
 test('Resource display retains original capacity and crosses half-depleted and empty stages',()=>{

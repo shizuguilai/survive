@@ -6,7 +6,7 @@ import {houseCost,materialText} from './recipes.ts';
 import {homeDesign} from './home-design.ts';
 export function renovationSite(w:World,r:Resident,h:WorldObject,level:number){
  const knownZones=new Set(Object.values(r.known).map(k=>k.entityId));
- const zones=(w.camp?.zones??[]).filter(z=>z.id===h.zoneId||knownZones.has(z.taskId));
+ const zones=(w.camp?.zones??[]).filter(z=>(z.kind??'residential')==='residential'&&(z.id===h.zoneId||knownZones.has(z.taskId)));
  const size=homeSize(level,h.homeDesign),current=zones.find(z=>homeFits(w,z.bounds,h.position,size,h.id));
  if(current)return {zone:current,position:{...h.position}};
  for(const zone of zones){const p=homeSites(w,zone.bounds,size,h.id)[0];if(p)return {zone,position:{...p,y:0}};}

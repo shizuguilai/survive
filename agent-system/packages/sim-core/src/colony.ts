@@ -26,7 +26,7 @@ export class ColonyProvider implements BrainProvider{
  }
  private localPlan(r:CommandRequest):CommandPlan{
   const tasks=[...r.tasks].reverse();
-  return {summary:'本地算法：优先新任务，按缺料补给、实际加工与施工执行',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:tasks.find(t=>t.title.includes(p.name+'的住处'))?.id??p.options.find(o=>o.id==='home-care')?.id??tasks.find(t=>p.options.some(o=>o.id===t.id))?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
+  return {summary:'本地算法：优先新任务，按缺料补给、实际加工与施工执行',assignments:r.reports.map((p,i)=>({residentId:p.residentId,objective:p.knownLandmarks.some(k=>k.includes('已成熟')&&k.includes('收割'))&&r.stock.food<24?'stock-food':tasks.find(t=>t.title.includes(p.name+'的住处'))?.id??p.options.find(o=>o.id==='home-care')?.id??tasks.find(t=>p.options.some(o=>o.id===t.id))?.id??(['stock-wood','stock-stone','stock-food'][i%3])}))};
  }
  async decideBatch(requests:BrainRequest[],world:World,signal?:AbortSignal):Promise<BrainResponse[]>{
   signal?.throwIfAborted();this.lastTick=world.tick;
@@ -49,7 +49,7 @@ export class ColonyProvider implements BrainProvider{
     const person=world.residents.find(r=>r.id===a.residentId)!;
     const own=world.camp?.tasks.find(t=>t.ownerId===person.id&&t.status==='open');
     if(own)a.objective=own.id;
-    else if(nextHomeCare(world,person))a.objective='home-care';
+    else if(nextHomeCare(world,person)&&a.objective!=='stock-food')a.objective='home-care';
     else if(person.homeId&&world.camp?.tasks.find(t=>t.id===a.objective)?.kind==='residential')a.objective='stock-wood';
    }
    this.orders=new Map(plan.assignments.map(a=>[a.residentId,{objective:a.objective,startProgress:world.camp?.tasks.find(t=>t.id===a.objective)?.progress??0,startTick:world.tick,done:false,failures:0,blocked:new Set<string>()}]));
@@ -73,8 +73,8 @@ export class ColonyProvider implements BrainProvider{
   if(r.actionFeedback.length){o.failures++;const last=[...r.plan].reverse().find(p=>p.done)?.action;const ref=last?.params.targetRef;if(ref&&!r.actionFeedback.some(x=>x.includes('太远')))o.blocked.add(ref);}
   const gather=(kind:ResourceKind,amount:number):Action[]=>{
    const type=kind==='wood'?'tree':kind==='stone'?'rock':'berry';
-   const refs=new Set(Object.values(r.spatialMemory?.landmarks??{}).filter(l=>l.kind===type&&l.state!=='depleted').map(l=>l.knownRef));
-   const target=known.filter(k=>refs.has(k.ref)&&!o.blocked.has(k.ref)&&!k.description.includes('采空')).sort((a,b)=>dist(r,a)-dist(r,b))[0];
+   const refs=new Set(Object.values(r.spatialMemory?.landmarks??{}).filter(l=>(l.kind===type||kind==='food'&&l.kind==='crop')&&l.state!=='depleted').map(l=>l.knownRef));
+   const target=known.filter(k=>refs.has(k.ref)&&!o.blocked.has(k.ref)&&!k.description.includes('采空')).sort((a,b)=>(kind==='food'?Number(b.description.includes('已成熟'))-Number(a.description.includes('已成熟')):0)||dist(r,a)-dist(r,b))[0];
    if(!target)return explore();return at(target,action('gather',{targetRef:target.ref,amount:Math.max(1,Math.min(amount,8,30-r.inventory))}));
   };
   const explore=():Action[]=>{
@@ -99,7 +99,7 @@ export class ColonyProvider implements BrainProvider{
   }
   if(o.done)return [wait()];
   if(r.inventory>=26){const kind=(['wood','stone','food'] as const).find(k=>r.supplies?.[k]);if(kind)return deposit(kind);}
-  if(o.objective.startsWith('stock-')){const kind=o.objective.slice(6) as ResourceKind;return (r.supplies?.[kind]??0)>=this.settings.phaseUnits?deposit(kind):gather(kind,this.settings.phaseUnits-(r.supplies?.[kind]??0));}
+  if(o.objective.startsWith('stock-')){const kind=o.objective.slice(6) as ResourceKind;return (r.supplies?.[kind]??0)>=(kind==='food'?Math.min(2,this.settings.phaseUnits):this.settings.phaseUnits)?deposit(kind):gather(kind,this.settings.phaseUnits-(r.supplies?.[kind]??0));}
   const task=w.camp?.tasks.find(t=>t.id===o.objective);
   if(!task)return explore();
   if(task.kind==='residential'&&(r.homeId||w.camp?.tasks.some(t=>t.ownerId===r.id))){o.done=true;return [wait()];}
