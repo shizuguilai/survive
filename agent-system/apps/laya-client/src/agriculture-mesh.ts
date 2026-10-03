@@ -3,6 +3,14 @@ import type {WorldObject} from '../../../packages/sim-core/src/domain.ts';
 type Crop=NonNullable<WorldObject['crop']>;
 type Animal=NonNullable<WorldObject['animal']>;
 const clamp=(n:number,min=0,max=1)=>Math.max(min,Math.min(max,n));
+// Layout variation is stable across reloads and never consumes the simulation's random stream.
+function cropVariation(id:string,salt:number):number{let hash=2166136261^salt;for(let i=0;i<id.length;i++)hash=Math.imul(hash^id.charCodeAt(i),16777619);return (hash>>>0)/4294967295;}
+const leafColors=['#416f35','#64943d','#8cb549','#adc961'];
+const dryLeafColors=['#807446','#99894f','#aea064','#c0ae70'];
+const wheatLeafColors=['#8f8240','#aca24b','#c6b15c','#d5bd70'];
+const riceLeafColors=['#617f39','#7c9b43','#a0ad4e','#b6bd5c'];
+const ripeGrainColors=['#c2963d','#d8b44d','#efd275'];
+const greenGrainColors=['#87a345','#a4b855','#b5c86c'];
 
 /** Render poses use the authoritative simulation tick. Pausing the world freezes every detail. */
 export function cropPose(crop:Crop,tick:number,offset=0){
@@ -35,9 +43,9 @@ function retain(L:any):Palette{let palette=palettes.get(L);if(!palette){palette=
 export class AgricultureMesh{
  readonly node:any;
  private readonly L:any;private readonly palette:Palette;private disposed=false;
- private plants:{node:any;stem?:any;head?:any;leaves:any[];offset:number}[]=[];
+ private plants:{node:any;stem?:any;head?:any;grains:any[];leaves:{node:any;tone:number}[];offset:number;heading:number;size:number}[]=[];
  private sparks:{node:any;angle:number}[]=[];private glints:any[]=[];
- private bed:any;private soil:any;private seeds:any[]=[];
+ private seeds:any[]=[];
  private body:any;private birdHead:any;private wings:any[]=[];private legs:any[]=[];
  private cropKind?:Crop['kind'];private animalKind?:Animal['kind'];private headBase=0;
  constructor(object:WorldObject){
@@ -68,26 +76,46 @@ export class AgricultureMesh{
  private turn(node:any,x:number,y:number,z:number):void{node.transform.localRotationEuler=this.vector(x,y,z);}
  private createCrop(object:WorldObject):void{
   const kind=this.cropKind!,rice=kind==='rice',w=Math.max(.85,object.width),d=Math.max(.85,object.depth);
-  this.bed=this.group('prepared planting bed');
-  this.part('planting bed rim','box','#968259',0,.016,0,w,.052,d,this.bed);
-  this.soil=this.part(rice?'shallow rice paddy':'tilled earth','box','#79694c',0,.048,0,w-.09,.025,d-.09,this.bed);
-  for(const side of [-1,1])this.part(rice?'paddy bank':'soil furrow','box',rice?'#adad73':'#a28b5d',side*w*.28,.065,0,rice?.045:.07,.014,d-.13,this.bed);
-  if(rice)for(let i=0;i<2;i++)this.glints.push(this.part('paddy water glint','box','#c1ddd5',-.23+i*.43,.07,-.28+i*.54,.24,.008,.025,this.bed));
-  for(let i=0;i<3;i++)this.seeds.push(this.part('sown seed','sphere','#e5c278',(i-1)*w*.25,.082,(i%2?1:-1)*d*.16,.047,.023,.067,this.bed));
+  // A work target is spaced two metres from its neighbours. Fill its bed with a readable
+  // canopy instead of shrinking decorative plants to the narrow interaction footprint.
+  this.node.transform.localScale=this.vector(1.85,1,1.85);
+  // Soil belongs to the joined GardenGround surface, never to a rectangular crop tile.
+  if(rice)for(let i=0;i<2;i++)this.glints.push(this.part('paddy water glint','sphere','#b5d6c0',-.23+i*.43,.066,-.28+i*.54,.13,.004,.015));
+  for(let i=0;i<3;i++){const seed=this.part('sown seed','sphere','#e5c278',(i-1)*w*.22,.07,(i%2?1:-1)*d*.13,.037,.018,.055);this.turn(seed,0,cropVariation(object.id,90+i)*180,0);this.seeds.push(seed);}
   const count=kind==='corn'?2:3;
   for(let i=0;i<count;i++){
-   const angle=i*Math.PI*2/count+.4,x=Math.cos(angle)*w*.22,z=Math.sin(angle)*d*.22;
-   const plant=this.group(`${kind} growth`,x,.075,z),leaves:any[]=[];let stem:any,head:any;
+   const angle=i*Math.PI*2/count+.35,x=Math.cos(angle)*w*.175+(cropVariation(object.id,17+i)-.5)*.065,z=Math.sin(angle)*d*.175+(cropVariation(object.id,31+i)-.5)*.065;
+   const plant=this.group(`${kind} growth`,x,.065,z),leaves:{node:any;tone:number}[]=[],grains:any[]=[];let stem:any,head:any;
+   const heading=cropVariation(object.id,44+i)*65+i*113,size=.94+cropVariation(object.id,63+i)*.12;
+   const leaf=(name:string,tone:number,x:number,y:number,z:number,sx:number,sy:number,sz:number,rx:number,ry:number,rz:number)=>{const node=this.part(name,'sphere',leafColors[tone],x,y,z,sx,sy,sz,plant);this.turn(node,rx,ry,rz);leaves.push({node,tone});return node;};
    if(kind==='carrot'){
-    head=this.part('orange carrot shoulder','cone','#d98c3e',0,.065,0,.105,.25,.105,plant,true);this.turn(head,180,0,0);
-    for(let j=0;j<3;j++){const leaf=this.part('carrot feather leaf','sphere',j===1?'#8a9d51':'#607f43',(j-1)*.06,.31,0,.055,.29,.035,plant);this.turn(leaf,0,j*60,(j-1)*-28);leaves.push(leaf);}
+    head=this.group('orange carrot shoulder',0,0,0,plant);
+    const root=this.part('tapered carrot root','cone','#d98b35',0,.055,0,.105,.23,.10,head);this.turn(root,180,0,0);
+    this.part('sunlit carrot shoulder','sphere','#f0ac47',-.02,.125,.008,.092,.065,.084,head);
+    for(let j=0;j<5;j++){const a=j*Math.PI*2/5,tilt=48+(j%2)*9;leaf('carrot feather leaf',j%3,Math.sin(a)*.09,.255,Math.cos(a)*.09,.125,.23,.087,Math.cos(a)*tilt,j*72,-Math.sin(a)*tilt);}
+    leaf('carrot crown leaf',3,-.025,.315,.012,.10,.15,.085,-12,15,12);
+   }else if(kind==='corn'){
+    stem=this.part('corn stalk','cylinder','#64943d',0,.52,0,.032,1.04,.028,plant);
+    for(let j=0;j<4;j++){const side=j%2===0?-1:1;leaf('broad corn leaf',j%3,side*.10,.34+Math.floor(j/2)*.27,(j%2?1:-1)*.025,.095,.335,.067,side*9,j*41,-side*(53-j*3));}
+    head=this.group('corn cob',.10,.62,.012,plant);this.turn(head,0,0,-18);
+    grains.push(this.part('golden corn kernels','sphere',ripeGrainColors[1],0,0,0,.082,.225,.077,head));
+    this.part('corn husk','sphere','#67913c',-.038,-.085,-.027,.069,.165,.070,head);
+    const tassel=this.part('corn tassel','sphere','#b7b76a',0,1.065,0,.048,.12,.037,plant);grains.push(tassel);
    }else{
-    const corn=kind==='corn',height=corn?1.48:kind==='wheat'?.93:.85;
-    stem=this.part(`${kind} stalk`,'cylinder','#82924c',0,height*.48,0,corn?.035:.022,height,.022,plant);
-    for(const side of [-1,1]){const leaf=this.part(corn?'broad corn leaf':`${kind} blade`,'sphere',side<0?'#627f43':'#93a353',side*(corn?.16:.095),height*(corn?.48:.43),0,corn?.085:.034,corn?.44:.32,corn?.05:.025,plant);this.turn(leaf,side*14,side*22,-side*(corn?44:32));leaves.push(leaf);}
-    head=this.part(corn?'corn cob':rice?'drooping rice panicle':'wheat grain head','sphere','#dcc477',rice?.09:corn?.13:0,corn?.84:height+.035,0,corn?.085:rice?.063:.067,corn?.23:rice?.175:.19,corn?.085:.052,plant,true);this.turn(head,0,0,corn?-18:rice?38:-8);
+    const height=rice?.68:.77;
+    stem=this.part(`${kind} stalk`,'cylinder','#7c9845',0,height*.48,0,.021,height,.022,plant);
+    const bladeCount=rice?5:4;
+    for(let j=0;j<bladeCount;j++){const a=j*2.4,tilt=19+(j%3)*12;leaf(`${kind} blade`,j%4,Math.sin(a)*.04,.275+(j%2)*.055,Math.cos(a)*.04,rice?.068:.078,rice?.33:.28,.055,Math.cos(a)*tilt,j*137,-Math.sin(a)*tilt);}
+    head=this.group(rice?'drooping rice panicle':'wheat grain head',0,height,0,plant);
+    if(rice){
+     const bend=this.part('bent rice neck','sphere','#8e9e49',.046,.018,0,.032,.13,.025,head);this.turn(bend,0,0,-52);
+     for(let j=0;j<2;j++){const grain=this.part('hanging rice kernels','sphere',ripeGrainColors[j+1],.092+j*.057,-.022-j*.085,j*.012,.046,.12,.040,head);this.turn(grain,7,12,-25+j*15);grains.push(grain);}
+    }else{
+     grains.push(this.part('central wheat ear','sphere',ripeGrainColors[1],0,.07,0,.067,.175,.050,head));
+     for(const side of [-1,1]){const grain=this.part('wheat ear kernels','sphere',ripeGrainColors[side<0?0:2],side*.047,.012,side*.013,.036,.12,.037,head);this.turn(grain,0,0,side*-20);grains.push(grain);}
+    }
    }
-   this.plants.push({node:plant,stem,head,leaves,offset:i*2.2+x});
+   this.plants.push({node:plant,stem,head,grains,leaves,offset:i*2.2+x,heading,size});
   }
   for(let i=0;i<3;i++){const node=this.part('harvest grain fleck','sphere','#eed694',0,.5,0,.04,.075,.04);this.sparks.push({node,angle:i*Math.PI*2/3});node.active=false;}
  }
@@ -121,17 +149,17 @@ export class AgricultureMesh{
   this.node.transform.position=this.vector(object.position.x,object.position.y,object.position.z);
   if(object.kind==='crop'&&object.crop){
    const crop=object.crop,carrot=this.cropKind==='carrot',pose=cropPose(crop,tick);
-   this.bed.active=pose.prepared;
-   this.soil.meshRenderer.sharedMaterial=this.material(pose.wet?(this.cropKind==='rice'?'#6e9891':'#61533c'):'#95805a');
    for(const seed of this.seeds)seed.active=pose.seeds;
    for(const plant of this.plants){
-    const pose=cropPose(crop,tick,plant.offset);plant.node.active=pose.sprouted;plant.node.transform.localScale=this.vector(pose.spread,pose.height,pose.spread);this.turn(plant.node,pose.sway*.45,0,pose.sway);
-    if(plant.stem)plant.stem.meshRenderer.sharedMaterial=this.material(pose.gold?'#b6a75c':pose.dry?'#a49a62':'#82924c');
-    for(const leaf of plant.leaves)leaf.meshRenderer.sharedMaterial=this.material(pose.gold&&!carrot?'#a6a05a':pose.dry?'#989366':'#759149');
-    if(plant.head){plant.head.active=carrot?crop.stage!=='harvested':pose.grain>0;const headScale=carrot?1:Math.max(.12,pose.grain);plant.head.transform.localScale=this.vector(carrot?.105:(this.cropKind==='corn'?.085:this.cropKind==='rice'?.063:.067)*headScale,carrot?.25:(this.cropKind==='corn'?.23:this.cropKind==='rice'?.175:.19)*headScale,carrot?.105:(this.cropKind==='corn'?.085:.052)*headScale);if(!carrot)plant.head.meshRenderer.sharedMaterial=this.material(pose.gold?'#ddbd66':'#acb96a');}
+    const pose=cropPose(crop,tick,plant.offset);plant.node.active=pose.sprouted&&!(carrot&&crop.stage==='harvested');plant.node.transform.localScale=this.vector(pose.spread*plant.size,pose.height*plant.size*(carrot?1.45:1.3),pose.spread*plant.size);this.turn(plant.node,pose.sway*.45,plant.heading,pose.sway);
+    if(plant.stem)plant.stem.meshRenderer.sharedMaterial=this.material(pose.dry?'#a49a62':pose.gold?'#a7a353':'#719344');
+    const colors=pose.dry?dryLeafColors:pose.gold&&this.cropKind==='wheat'?wheatLeafColors:pose.gold&&this.cropKind==='rice'?riceLeafColors:leafColors;
+    for(const leaf of plant.leaves)leaf.node.meshRenderer.sharedMaterial=this.material(colors[leaf.tone]);
+    if(plant.head){plant.head.active=carrot?crop.stage!=='harvested'&&crop.growth>.3:pose.grain>0;const headScale=carrot?.45+crop.growth*.55:Math.max(.12,pose.grain)*1.12;plant.head.transform.localScale=this.vector(headScale,headScale,headScale);}
+    for(let i=0;i<plant.grains.length;i++){plant.grains[i].active=pose.grain>0;plant.grains[i].meshRenderer.sharedMaterial=this.material((pose.gold?ripeGrainColors:greenGrainColors)[i%3]);}
    }
    for(const spark of this.sparks){spark.node.active=pose.harvest>0;const distance=(1-pose.harvest)*.5;spark.node.transform.localPosition=this.vector(Math.cos(spark.angle)*distance,.25+Math.sin((1-pose.harvest)*Math.PI)*.6,Math.sin(spark.angle)*distance);spark.node.transform.localScale=this.vector(.04*pose.harvest,.075*pose.harvest,.04*pose.harvest);this.turn(spark.node,pose.harvestAge*11,spark.angle*90,pose.harvestAge*7);}
-   for(let i=0;i<this.glints.length;i++){this.glints[i].active=pose.wet;this.glints[i].transform.localScale=this.vector(.20+Math.sin(tick*.045+i)*.04,.008,.025);}
+   for(let i=0;i<this.glints.length;i++){this.glints[i].active=pose.wet;this.glints[i].transform.localScale=this.vector(.12+Math.sin(tick*.045+i)*.018,.004,.015);}
   }else if(object.kind==='animal'&&object.animal&&this.body){
    const animal=object.animal,pose=animalPose(animal,tick),goose=this.animalKind==='goose';
    this.node.transform.rotationEuler=this.vector(0,90-animal.heading*180/Math.PI,0);

@@ -1,4 +1,4 @@
-import {PaintedWorld,loadCampArt} from './painted-world.ts';
+import {PaintedWorld,loadCampArt,soilTexture} from './painted-world.ts';
 import {CROP_LABELS,ANIMAL_LABELS,zoneKind,zoneConflict} from '../../../packages/sim-core/src/agriculture.ts';
 import {DEFAULT_MAP_ZOOM} from '../../../packages/sim-core/src/map-config.ts';
 import {zoneOverlayGeometry} from './zone-overlay.ts';
@@ -15,6 +15,7 @@ import {zoneBounds,validateZone,homeSites} from '../../../packages/sim-core/src/
 import {resourceCapacity,resourceStage} from '../../../packages/sim-core/src/resources.ts';
 import type {Resident,WorldObject,ResidentialBounds,ZoneKind,CropKind,AnimalKind} from '../../../packages/sim-core/src/domain.ts';
 import {createTerrain} from './terrain.ts';
+import {GardenGround} from './garden-ground.ts';
 import {controlSettings,DEFAULT_CONTROL,type ControlSettings} from '../../../packages/contracts/src/command.ts';
 import type { World, SensoryOverlay } from '../../../packages/sim-core/src/domain.ts';
 import {RESOURCE_LABELS,type TaskDraft} from '../../../packages/sim-core/src/camp.ts';
@@ -94,6 +95,7 @@ export class ObserverView {
   private nightShade:any;private daylightLight:any;private lifePanel:any;private statusPanel:any;private inventoryScroll:NativeTextScroll|null=null;private lifeScroll:NativeTextScroll|null=null;private statusScroll:NativeTextScroll|null=null;private taskScroll:NativeTextScroll|null=null;
   private resourceRail:any;private resourceExpanded=true;private showRoofs=true;private showZones=false;
   private zoneOverlay:any;private zoneDrawing=false;private zoneStart:{x:number;z:number}|null=null;private zoneDraft:ResidentialBounds|null=null;private zoneRevision='';
+  private garden:GardenGround;
   private pinch:MapPinch|null=null;private pendingPinch:MapTouch[]|null=null;private suppressTap=false;private minimap:Minimap|null=null;
   private art:PaintedWorld;private markers:any;private sceneInput:any;private zoom=DEFAULT_MAP_ZOOM;private yaw=0;private captionPanel:any;
 
@@ -111,6 +113,7 @@ export class ObserverView {
     const light=new L.Sprite3D('Daylight');this.scene.addChild(light);
     light.transform.rotationEuler=new L.Vector3(-55,25,0);const dl=light.addComponent(L.DirectionLightCom);this.daylightLight=dl;dl.color=new L.Color(1,.92,.76,1);dl.intensity=.65;
     this.scene.addChild(createTerrain(L));
+    this.garden=new GardenGround(soilTexture());this.scene.addChild(this.garden.node);
     this.senseLines=new L.PixelLineSprite3D(1200,'有限感知参考');this.scene.addChild(this.senseLines);
     this.selection=new L.PixelLineSprite3D(72,'selected resident');this.scene.addChild(this.selection);
     try{this.showRoofs=globalThis.localStorage?.getItem('survive_roofs_v1')!=='hidden';}catch{}
@@ -576,6 +579,7 @@ export class ObserverView {
     for(let i=0;i<64;i++){if(dashed&&i%2)continue;const a=i/64*Math.PI*2,b=(i+1)/64*Math.PI*2;this.line(target,{x:p.x+Math.cos(a)*radius,y:.035,z:p.z+Math.sin(a)*radius},{x:p.x+Math.cos(b)*radius,y:.035,z:p.z+Math.sin(b)*radius},color);}
   }
   private drawWorld(world:World):void{
+    this.garden.update(world);
     this.daylightLight.intensity=.16+world.daylight*.64;this.scene.ambientColor=new L.Color(.24+world.daylight*.32,.28+world.daylight*.31,.38+world.daylight*.26,1);this.nightShade.graphics.clear();this.nightShade.graphics.drawRect(this.sceneLeft,TOP,WIDTH-this.sceneLeft,BOTTOM-TOP,'#0c1734');this.nightShade.alpha=(1-world.daylight)*.46;
     const liveIds=new Set(world.residents.map(r=>r.id));
     for(const [id,node]of this.residents){if(!liveIds.has(id)){node.dispose();this.residents.delete(id);this.nameLabels.get(id)?.destroy();this.nameLabels.delete(id);this.speechLabels.get(id)?.destroy();this.speechLabels.delete(id);}}

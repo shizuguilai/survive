@@ -46,5 +46,25 @@
       "villagers-atlas.png.03.part",
       "villagers-atlas.png.04.part"
     ]
+  },
+  {
+    "name": "garden-soil.png",
+    "bytes": 2461165,
+    "sha256": "c93794fa419a534cfa09f444d2eec45c46ff08320e5145558064f6bacdf8a006",
+    "parts": [
+      "garden-soil.png.00.part",
+      "garden-soil.png.01.part",
+      "garden-soil.png.02.part",
+      "garden-soil.png.03.part",
+      "garden-soil.png.04.part",
+      "garden-soil.png.05.part",
+      "garden-soil.png.06.part",
+      "garden-soil.png.07.part",
+      "garden-soil.png.08.part",
+      "garden-soil.png.09.part",
+      "garden-soil.png.10.part",
+      "garden-soil.png.11.part",
+      "garden-soil.png.12.part"
+    ]
   }
 ]

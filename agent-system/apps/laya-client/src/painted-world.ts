@@ -4,18 +4,19 @@ import {projectToStage,type MapCamera,type MapViewport} from './map-camera.ts';
 import atlas from './art-atlas.json' with {type:'json'};
 
 type Frame={texture:any;width:number;height:number;anchor:number[]};
-const frames=new Map<string,Frame>();let grass:any;
+const frames=new Map<string,Frame>();let grass:any;let soil:any;
 export async function loadCampArt():Promise<void>{
  const L=(globalThis as any).Laya;
- const names=['grass.png','scenery-atlas.png'];
+ const names=['grass.png','scenery-atlas.png','garden-soil.png'];
  const images=await Promise.all(names.map(name=>L.loader.load('assets/art/'+name,L.Loader.IMAGE)));
  if(images.some(image=>!image))throw Error('营地画面素材加载失败，请刷新重试。');
- grass=images[0];
+ grass=images[0];soil=images[2];
  for(const item of atlas.assets.scenery.sprites){
   const [x,y,width,height]=item.rect;frames.set(item.name,{texture:L.Texture.createFromTexture(images[1],x,y,width,height),width,height,anchor:item.anchor});
  }
 }
 export function grassTexture():any{return grass;}
+export function soilTexture():any{return soil;}
 export function artFrame(name:string):Frame|undefined{return frames.get(name);}
 /** Painted observer layer. All positions/poses come from simulation, never from wall time. */
 export class PaintedWorld{

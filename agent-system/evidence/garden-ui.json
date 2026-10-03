@@ -1,0 +1,154 @@
+{
+  "mode": "EXPLICIT_VISUAL_FIXTURE",
+  "fixture": "Six planting zones created with postTask; growth stages and cleared scenery explicitly injected only for visual comparison. No autonomous farming or full gameplay-cycle claim.",
+  "results": [
+    {
+      "width": 1536,
+      "height": 864,
+      "dpr": 1,
+      "initial": {
+        "defaultZoom": 32,
+        "expectedZoom": 32,
+        "zoneShown": false,
+        "zoneCount": 6,
+        "crops": 54,
+        "stages": [
+          "fallow",
+          "growing",
+          "mature",
+          "seedling",
+          "sown",
+          "tilled"
+        ],
+        "kinds": [
+          "carrot",
+          "corn",
+          "rice",
+          "wheat"
+        ],
+        "groundRoots": 1,
+        "groundChildren": [
+          "Natural cultivated garden ground",
+          "Continuous garden soil",
+          "Soft earthen garden border",
+          "Garden edge meadow",
+          "Watered rice earth"
+        ],
+        "oldSquareRims": 0,
+        "nativeCrops": true
+      },
+      "layout": {
+        "beds": 6,
+        "prepared": 53,
+        "connections": 70,
+        "allAdjacentCellsJoined": true,
+        "fallowStaysGrass": true
+      },
+      "inspection": {
+        "id": "zone-1-crop-0",
+        "visible": true,
+        "text": "开垦 → 播种 → 取水浇灌\n养护 → 成熟 → 收割\n\n每一步都由居民到场完成。生长期需补水，缺水时停长；收割后需要重新耕作。\n已收割 0 轮",
+        "realCrop": true
+      },
+      "defaultAndCloseZoom": true,
+      "rotationDegrees": 45,
+      "pausedVisualsStable": true,
+      "viewControlsDoNotMutateWorld": true,
+      "noDecorativeWorldIds": true,
+      "sameCropInstances": true,
+      "sameGroundChildren": true,
+      "errors": [],
+      "missing": [],
+      "screenshots": [
+        "local-evidence/garden-default-1536.png",
+        "local-evidence/garden-close-1536.png",
+        "local-evidence/garden-rotated-45-1536.png",
+        "local-evidence/garden-regions-shown-1536.png",
+        "local-evidence/garden-crop-inspector-1536.png"
+      ]
+    },
+    {
+      "width": 844,
+      "height": 390,
+      "dpr": 2,
+      "initial": {
+        "defaultZoom": 32,
+        "expectedZoom": 32,
+        "zoneShown": false,
+        "zoneCount": 6,
+        "crops": 54,
+        "stages": [
+          "fallow",
+          "growing",
+          "mature",
+          "seedling",
+          "sown",
+          "tilled"
+        ],
+        "kinds": [
+          "carrot",
+          "corn",
+          "rice",
+          "wheat"
+        ],
+        "groundRoots": 1,
+        "groundChildren": [
+          "Natural cultivated garden ground",
+          "Continuous garden soil",
+          "Soft earthen garden border",
+          "Garden edge meadow",
+          "Watered rice earth"
+        ],
+        "oldSquareRims": 0,
+        "nativeCrops": true
+      },
+      "layout": {
+        "beds": 6,
+        "prepared": 53,
+        "connections": 70,
+        "allAdjacentCellsJoined": true,
+        "fallowStaysGrass": true
+      },
+      "inspection": {
+        "id": "zone-1-crop-0",
+        "visible": true,
+        "text": "开垦 → 播种 → 取水浇灌\n养护 → 成熟 → 收割\n\n每一步都由居民到场完成。生长期需补水，缺水时停长；收割后需要重新耕作。\n已收割 0 轮",
+        "realCrop": true
+      },
+      "defaultAndCloseZoom": true,
+      "rotationDegrees": 45,
+      "pausedVisualsStable": true,
+      "viewControlsDoNotMutateWorld": true,
+      "noDecorativeWorldIds": true,
+      "sameCropInstances": true,
+      "sameGroundChildren": true,
+      "errors": [],
+      "missing": [],
+      "screenshots": [
+        "local-evidence/garden-default-844.png",
+        "local-evidence/garden-close-844.png",
+        "local-evidence/garden-rotated-45-844.png",
+        "local-evidence/garden-regions-shown-844.png",
+        "local-evidence/garden-crop-inspector-844.png"
+      ]
+    }
+  ],
+  "physicalDevice": "not_run",
+  "realModel": "not_run_visual_only",
+  "manualVisualReview": {
+    "inspected": [
+      "local-evidence/garden-close-1536.png",
+      "local-evidence/garden-default-1536.png",
+      "local-evidence/garden-close-844.png",
+      "local-evidence/garden-rotated-45-1536.png"
+    ],
+    "findings": [
+      "Brown soil texture is visibly mapped instead of a flat dark fill.",
+      "Prepared plots merge into six broad beds with grass walking lanes and softly uneven outlines.",
+      "Mature crop clusters are fuller and remain visible above soil in frontal and rotated views.",
+      "Watered rice ground is continuous; the prior repeated dark circular patches are absent.",
+      "Undug ground remains grass; no crop inspector obstruction, holes, or detached bed rims were observed."
+    ],
+    "scope": "Local desktop/mobile browser emulation with injected visual growth stages; no physical-device or autonomous-farming claim."
+  }
+}

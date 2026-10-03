@@ -24,21 +24,21 @@ const snapshot=(node:Node)=>JSON.stringify(all(node).map(n=>({name:n.name,active
 const crop=(kind='rice'):any=>({id:`crop-${kind}`,kind:'crop',position:{x:3,y:0,z:4},width:1.2,depth:1.2,height:.95,appearance:kind,resources:0,crop:{kind,stage:'seedling',growth:0,plantedTick:10,cycles:0}});
 const animal=(kind='chicken'):any=>({id:`animal-${kind}`,kind:'animal',position:{x:3,y:0,z:4},width:.5,depth:.7,height:.6,appearance:kind,resources:0,animal:{kind,heading:0,activity:'walk',phaseStartedTick:10,phaseUntilTick:100,phase:1}});
 
-test('A reserved field has no prepared ground or plants until the corresponding real work stage',()=>{
- install();const object=crop();Object.assign(object.crop,{stage:'fallow',moisture:0});const mesh=new WorldMesh(object),parts=all(mesh.node),bed=parts.find(n=>n.name==='prepared planting bed')!,plants=parts.filter(n=>n.name==='rice growth'),seeds=parts.filter(n=>n.name==='sown seed'),glints=parts.filter(n=>n.name==='paddy water glint');
- const geometryCount=geometries.length,before=hashCanonical(object);assert.equal(bed.active,false);assert.ok(plants.every(n=>!n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));assert.equal(hashCanonical(object),before);
- object.crop.stage='tilled';mesh.update(object,20);assert.equal(bed.active,true);assert.ok(plants.every(n=>!n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));
+test('Crop meshes leave joined soil to GardenGround and only show seeds or plants after actual work',()=>{
+ install();const object=crop();Object.assign(object.crop,{stage:'fallow',moisture:0});const mesh=new WorldMesh(object),parts=all(mesh.node),plants=parts.filter(n=>n.name==='rice growth'),seeds=parts.filter(n=>n.name==='sown seed'),glints=parts.filter(n=>n.name==='paddy water glint');
+ const geometryCount=geometries.length,before=hashCanonical(object);assert.equal(parts.some(n=>/planting bed|tilled earth|soil furrow|paddy bank|shallow rice paddy/.test(n.name)),false);assert.ok(plants.every(n=>!n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));assert.equal(hashCanonical(object),before);
+ object.crop.stage='tilled';mesh.update(object,20);assert.ok(plants.every(n=>!n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));
  object.crop.stage='sown';mesh.update(object,30);assert.ok(seeds.every(n=>n.active));assert.ok(plants.every(n=>!n.active));assert.ok(glints.every(n=>!n.active));
  Object.assign(object.crop,{stage:'seedling',moisture:1,lastWateredTick:40});mesh.update(object,40);assert.ok(plants.every(n=>n.active));assert.ok(seeds.every(n=>!n.active));assert.ok(glints.every(n=>n.active));
- const soil=parts.find(n=>n.name==='shallow rice paddy')!,wet=soil.meshRenderer.sharedMaterial.albedoColor;object.crop.moisture=0;mesh.update(object,45);assert.ok(glints.every(n=>!n.active));assert.notDeepEqual(soil.meshRenderer.sharedMaterial.albedoColor,wet);
+ const leaf=parts.find(n=>n.name==='rice blade')!,wet=leaf.meshRenderer.sharedMaterial.albedoColor;object.crop.moisture=0;mesh.update(object,45);assert.ok(glints.every(n=>!n.active));assert.notDeepEqual(leaf.meshRenderer.sharedMaterial.albedoColor,wet);
  const frame=snapshot(mesh.node);mesh.update(object,45);assert.equal(snapshot(mesh.node),frame);assert.deepEqual(all(mesh.node),parts);assert.equal(geometries.length,geometryCount);mesh.dispose();
 });
 
 test('Crop growth, golden ripeness and brief harvest flecks update without rebuilding or mutating world state',()=>{
  install();const object=crop(),mesh=new WorldMesh(object),parts=all(mesh.node),growth=parts.find(n=>n.name==='rice growth')!,head=parts.find(n=>n.name==='drooping rice panicle')!,initialScale=growth.transform.localScale.y,created=geometries.length;
- assert.equal(head.active,false);assert.ok(parts.some(n=>n.name==='shallow rice paddy'));assert.ok(parts.filter(n=>n.geometry).length<=30);
+ assert.equal(head.active,false);assert.ok(parts.filter(n=>n.geometry).length<=36);
  object.crop.stage='growing';object.crop.growth=.65;mesh.update(object,70);assert.ok(growth.transform.localScale.y>initialScale);assert.equal(head.active,true);
- const green=head.meshRenderer.sharedMaterial.albedoColor;object.crop.stage='mature';object.crop.growth=1;object.resources=5;mesh.update(object,100);assert.notDeepEqual(head.meshRenderer.sharedMaterial.albedoColor,green);
+ const kernels=parts.find(n=>n.name==='hanging rice kernels')!,green=kernels.meshRenderer.sharedMaterial.albedoColor;object.crop.stage='mature';object.crop.growth=1;object.resources=5;mesh.update(object,100);assert.notDeepEqual(kernels.meshRenderer.sharedMaterial.albedoColor,green);
  const matureHeight=growth.transform.localScale.y;object.crop.stage='harvested';object.crop.harvestedTick=101;object.crop.growth=0;object.resources=0;
  const before=hashCanonical(object);mesh.update(object,103);assert.equal(head.active,false);assert.ok(growth.transform.localScale.y<matureHeight/3);assert.ok(parts.some(n=>n.name==='harvest grain fleck'&&n.active));
  const frame=snapshot(mesh.node);mesh.update(object,103);assert.equal(snapshot(mesh.node),frame);mesh.update(object,130);assert.equal(parts.some(n=>n.name==='harvest grain fleck'&&n.active),false);
@@ -47,7 +47,7 @@ test('Crop growth, golden ripeness and brief harvest flecks update without rebui
 
 test('Each plant has its own silhouette and all poultry poses freeze on the same simulation tick',()=>{
  install();const variants=[['rice','drooping rice panicle'],['wheat','wheat grain head'],['corn','corn cob'],['carrot','orange carrot shoulder']];
- for(const [kind,part] of variants){const mesh=new WorldMesh(crop(kind));assert.ok(all(mesh.node).some(n=>n.name===part));assert.ok(all(mesh.node).filter(n=>n.geometry).length<=30);mesh.dispose();}
+ for(const [kind,part] of variants){const mesh=new WorldMesh(crop(kind));assert.ok(all(mesh.node).some(n=>n.name===part));assert.ok(all(mesh.node).filter(n=>n.geometry).length<=36);mesh.dispose();}
  for(const kind of ['chicken','duck','goose']){
   const object=animal(kind),mesh=new WorldMesh(object),parts=all(mesh.node),before=hashCanonical(object);mesh.update(object,12);const frame=snapshot(mesh.node);mesh.update(object,12);assert.equal(snapshot(mesh.node),frame);mesh.update(object,15);assert.notEqual(snapshot(mesh.node),frame);assert.equal(hashCanonical(object),before);
   const legs=parts.filter(n=>n.name.startsWith('poultry leg'));assert.equal(legs.length,2);assert.equal(legs[0].transform.localRotationEuler.x,-legs[1].transform.localRotationEuler.x);
@@ -55,6 +55,22 @@ test('Each plant has its own silhouette and all poultry poses freeze on the same
   object.animal.activity='flap';mesh.update(object,17);assert.ok(Math.abs(parts.find(n=>n.name==='poultry wing -1')!.transform.localRotationEuler.z)>5);
   object.position.x=7;object.animal.heading=Math.PI/2;mesh.update(object,17);assert.equal(mesh.node.transform.position.x,7);assert.equal(mesh.node.transform.rotationEuler.y,0);
   assert.ok(parts.some(n=>n.name===({chicken:'red chicken comb',duck:'broad duck bill',goose:'long goose neck'} as Record<string,string>)[kind]));assert.ok(parts.filter(n=>n.geometry).length<=30);mesh.dispose();
+ }
+});
+
+test('Natural crop clusters keep broad multitone leaves and stable per-field variation',()=>{
+ install();
+ for(const kind of ['rice','wheat','corn','carrot']){
+  const object=crop(kind);Object.assign(object.crop,{stage:'mature',growth:1,moisture:1});
+  const first=new WorldMesh(object),same=new WorldMesh(object),other=new WorldMesh({...object,id:object.id+'-next'});
+  const leaves=all(first.node).filter(n=>/blade|broad corn leaf|carrot.*leaf/.test(n.name));
+  assert.ok(leaves.length>=8);assert.ok(new Set(leaves.map(n=>JSON.stringify(n.meshRenderer.sharedMaterial.albedoColor))).size>=3);
+  assert.ok(leaves.every(n=>n.transform.localScale.x>=.05));
+  assert.equal(snapshot(first.node),snapshot(same.node));
+  const poses=(m:any)=>all(m.node).filter(n=>n.name.endsWith(' growth')).map(n=>n.transform);
+  assert.notDeepEqual(poses(first),poses(other));
+  assert.ok(poses(first).every(p=>Math.abs(p.localPosition.x)<.3&&Math.abs(p.localPosition.z)<.3));
+  first.dispose();same.dispose();other.dispose();
  }
 });
 

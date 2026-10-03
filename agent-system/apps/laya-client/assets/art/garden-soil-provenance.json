@@ -1,0 +1,9 @@
+{
+  "tool": "image_gen.imagegen built-in",
+  "generatedSource": "exec-39523cff-e790-47db-95ee-f8c03de85dc1.png",
+  "output": "garden-soil.png",
+  "reference": "User uploaded 1000008973.png; viewed as style reference only, not composited.",
+  "prompt": "Use case: stylized-concept. Asset type: production 3D game ground albedo texture. Generate ONE seamless square 1024x1024 texture of freshly tilled garden soil viewed exactly straight down. A cozy painterly storybook village farming game style: warm muted rich umber brown earth, softly hand-painted irregular small earth clods, subtle ochre and dark brown brush dabs, tiny sparse pebble speckles and soft granular detail. The whole square is continuous soil, an even mid-brown value across the entire surface. Texture scale should be subtle and readable beneath lush crops at an overhead game camera distance. Perfectly tileable horizontally and vertically, edge colors and patterns match, naturally irregular and non-directional. Flat diffuse ambient lighting only; no light direction, no cast shadows, no baked lighting gradient, no bright center, no vignette. STRICT: no plants, no grass, no leaves, no crops, no seedlings, no flowers, no wood, no fence, no paths, no planting rows or furrows, no border or outline, no bed shape, no hole, no islands, no symbols, no writing, no text, no UI, no watermark. This is only a full-bleed painterly warm brown soil material, not a rendered scene or mockup.",
+  "bytes": 2461165,
+  "sha256": "c93794fa419a534cfa09f444d2eec45c46ff08320e5145558064f6bacdf8a006"
+}
